@@ -12,18 +12,23 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as AppHomeRouteImport } from './routes/_app/home'
 import { Route as AppMentorsRouteImport } from './routes/_app/mentors'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as OnboardingIndexRouteImport } from './routes/onboarding/index'
 import { Route as OnboardingTermsRouteImport } from './routes/onboarding/terms'
-import { Route as AppMentorIndexRouteImport } from './routes/_app/mentor/index'
-import { Route as AppStudentIndexRouteImport } from './routes/_app/student/index'
+import { Route as AppApplicationsIndexRouteImport } from './routes/_app/applications/index'
+import { Route as AppApplicationsApplicationIdRouteImport } from './routes/_app/applications/$applicationId'
+import { Route as AppMeIndexRouteImport } from './routes/_app/me/index'
+import { Route as AppMeEditRouteImport } from './routes/_app/me/edit'
+import { Route as AppMePreviewRouteImport } from './routes/_app/me/preview'
 import { Route as OnboardingMentorExtraRouteImport } from './routes/onboarding/mentor/extra'
 import { Route as OnboardingMentorProfileRouteImport } from './routes/onboarding/mentor/profile'
 import { Route as OnboardingMentorVerifyRouteImport } from './routes/onboarding/mentor/verify'
 import { Route as OnboardingStudentExtraRouteImport } from './routes/onboarding/student/extra'
 import { Route as OnboardingStudentProfileRouteImport } from './routes/onboarding/student/profile'
 import { Route as OnboardingStudentVerifyRouteImport } from './routes/onboarding/student/verify'
+import { Route as AppApplicationsApplicationIdShareRouteImport } from './routes/_app/applications/$applicationId/share'
 import { Route as AppMentorsMentorIdApplyRouteImport } from './routes/_app/mentors/$mentorId/apply'
 
 const IndexRoute = IndexRouteImport.update({
@@ -39,6 +44,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppHomeRoute = AppHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppMentorsRoute = AppMentorsRouteImport.update({
   id: '/mentors',
@@ -60,14 +70,30 @@ const OnboardingTermsRoute = OnboardingTermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => OnboardingRoute,
 } as any)
-const AppMentorIndexRoute = AppMentorIndexRouteImport.update({
-  id: '/mentor/',
-  path: '/mentor/',
+const AppApplicationsIndexRoute = AppApplicationsIndexRouteImport.update({
+  id: '/applications/',
+  path: '/applications/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppStudentIndexRoute = AppStudentIndexRouteImport.update({
-  id: '/student/',
-  path: '/student/',
+const AppApplicationsApplicationIdRoute =
+  AppApplicationsApplicationIdRouteImport.update({
+    id: '/applications/$applicationId',
+    path: '/applications/$applicationId',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppMeIndexRoute = AppMeIndexRouteImport.update({
+  id: '/me/',
+  path: '/me/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMeEditRoute = AppMeEditRouteImport.update({
+  id: '/me/edit',
+  path: '/me/edit',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMePreviewRoute = AppMePreviewRouteImport.update({
+  id: '/me/preview',
+  path: '/me/preview',
   getParentRoute: () => AppRoute,
 } as any)
 const OnboardingMentorExtraRoute = OnboardingMentorExtraRouteImport.update({
@@ -101,6 +127,12 @@ const OnboardingStudentVerifyRoute = OnboardingStudentVerifyRouteImport.update({
   path: '/student/verify',
   getParentRoute: () => OnboardingRoute,
 } as any)
+const AppApplicationsApplicationIdShareRoute =
+  AppApplicationsApplicationIdShareRouteImport.update({
+    id: '/share',
+    path: '/share',
+    getParentRoute: () => AppApplicationsApplicationIdRoute,
+  } as any)
 const AppMentorsMentorIdApplyRoute = AppMentorsMentorIdApplyRouteImport.update({
   id: '/$mentorId/apply',
   path: '/$mentorId/apply',
@@ -110,34 +142,44 @@ const AppMentorsMentorIdApplyRoute = AppMentorsMentorIdApplyRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRouteWithChildren
+  '/home': typeof AppHomeRoute
   '/mentors': typeof AppMentorsRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/onboarding/terms': typeof OnboardingTermsRoute
   '/onboarding/': typeof OnboardingIndexRoute
+  '/applications/$applicationId': typeof AppApplicationsApplicationIdRouteWithChildren
+  '/me/edit': typeof AppMeEditRoute
+  '/me/preview': typeof AppMePreviewRoute
   '/onboarding/mentor/extra': typeof OnboardingMentorExtraRoute
   '/onboarding/mentor/profile': typeof OnboardingMentorProfileRoute
   '/onboarding/mentor/verify': typeof OnboardingMentorVerifyRoute
   '/onboarding/student/extra': typeof OnboardingStudentExtraRoute
   '/onboarding/student/profile': typeof OnboardingStudentProfileRoute
   '/onboarding/student/verify': typeof OnboardingStudentVerifyRoute
-  '/mentor/': typeof AppMentorIndexRoute
-  '/student/': typeof AppStudentIndexRoute
+  '/applications/': typeof AppApplicationsIndexRoute
+  '/me/': typeof AppMeIndexRoute
+  '/applications/$applicationId/share': typeof AppApplicationsApplicationIdShareRoute
   '/mentors/$mentorId/apply': typeof AppMentorsMentorIdApplyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/home': typeof AppHomeRoute
   '/mentors': typeof AppMentorsRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/onboarding/terms': typeof OnboardingTermsRoute
   '/onboarding': typeof OnboardingIndexRoute
+  '/applications/$applicationId': typeof AppApplicationsApplicationIdRouteWithChildren
+  '/me/edit': typeof AppMeEditRoute
+  '/me/preview': typeof AppMePreviewRoute
   '/onboarding/mentor/extra': typeof OnboardingMentorExtraRoute
   '/onboarding/mentor/profile': typeof OnboardingMentorProfileRoute
   '/onboarding/mentor/verify': typeof OnboardingMentorVerifyRoute
   '/onboarding/student/extra': typeof OnboardingStudentExtraRoute
   '/onboarding/student/profile': typeof OnboardingStudentProfileRoute
   '/onboarding/student/verify': typeof OnboardingStudentVerifyRoute
-  '/mentor': typeof AppMentorIndexRoute
-  '/student': typeof AppStudentIndexRoute
+  '/applications': typeof AppApplicationsIndexRoute
+  '/me': typeof AppMeIndexRoute
+  '/applications/$applicationId/share': typeof AppApplicationsApplicationIdShareRoute
   '/mentors/$mentorId/apply': typeof AppMentorsMentorIdApplyRoute
 }
 export interface FileRoutesById {
@@ -145,18 +187,23 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/onboarding': typeof OnboardingRouteWithChildren
+  '/_app/home': typeof AppHomeRoute
   '/_app/mentors': typeof AppMentorsRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/onboarding/terms': typeof OnboardingTermsRoute
   '/onboarding/': typeof OnboardingIndexRoute
+  '/_app/applications/$applicationId': typeof AppApplicationsApplicationIdRouteWithChildren
+  '/_app/me/edit': typeof AppMeEditRoute
+  '/_app/me/preview': typeof AppMePreviewRoute
   '/onboarding/mentor/extra': typeof OnboardingMentorExtraRoute
   '/onboarding/mentor/profile': typeof OnboardingMentorProfileRoute
   '/onboarding/mentor/verify': typeof OnboardingMentorVerifyRoute
   '/onboarding/student/extra': typeof OnboardingStudentExtraRoute
   '/onboarding/student/profile': typeof OnboardingStudentProfileRoute
   '/onboarding/student/verify': typeof OnboardingStudentVerifyRoute
-  '/_app/mentor/': typeof AppMentorIndexRoute
-  '/_app/student/': typeof AppStudentIndexRoute
+  '/_app/applications/': typeof AppApplicationsIndexRoute
+  '/_app/me/': typeof AppMeIndexRoute
+  '/_app/applications/$applicationId/share': typeof AppApplicationsApplicationIdShareRoute
   '/_app/mentors/$mentorId/apply': typeof AppMentorsMentorIdApplyRoute
 }
 export interface FileRouteTypes {
@@ -164,52 +211,67 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/onboarding'
+    | '/home'
     | '/mentors'
     | '/auth/callback'
     | '/onboarding/terms'
     | '/onboarding/'
+    | '/applications/$applicationId'
+    | '/me/edit'
+    | '/me/preview'
     | '/onboarding/mentor/extra'
     | '/onboarding/mentor/profile'
     | '/onboarding/mentor/verify'
     | '/onboarding/student/extra'
     | '/onboarding/student/profile'
     | '/onboarding/student/verify'
-    | '/mentor/'
-    | '/student/'
+    | '/applications/'
+    | '/me/'
+    | '/applications/$applicationId/share'
     | '/mentors/$mentorId/apply'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/home'
     | '/mentors'
     | '/auth/callback'
     | '/onboarding/terms'
     | '/onboarding'
+    | '/applications/$applicationId'
+    | '/me/edit'
+    | '/me/preview'
     | '/onboarding/mentor/extra'
     | '/onboarding/mentor/profile'
     | '/onboarding/mentor/verify'
     | '/onboarding/student/extra'
     | '/onboarding/student/profile'
     | '/onboarding/student/verify'
-    | '/mentor'
-    | '/student'
+    | '/applications'
+    | '/me'
+    | '/applications/$applicationId/share'
     | '/mentors/$mentorId/apply'
   id:
     | '__root__'
     | '/'
     | '/_app'
     | '/onboarding'
+    | '/_app/home'
     | '/_app/mentors'
     | '/auth/callback'
     | '/onboarding/terms'
     | '/onboarding/'
+    | '/_app/applications/$applicationId'
+    | '/_app/me/edit'
+    | '/_app/me/preview'
     | '/onboarding/mentor/extra'
     | '/onboarding/mentor/profile'
     | '/onboarding/mentor/verify'
     | '/onboarding/student/extra'
     | '/onboarding/student/profile'
     | '/onboarding/student/verify'
-    | '/_app/mentor/'
-    | '/_app/student/'
+    | '/_app/applications/'
+    | '/_app/me/'
+    | '/_app/applications/$applicationId/share'
     | '/_app/mentors/$mentorId/apply'
   fileRoutesById: FileRoutesById
 }
@@ -243,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/home': {
+      id: '/_app/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AppHomeRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/mentors': {
       id: '/_app/mentors'
       path: '/mentors'
@@ -271,18 +340,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingTermsRouteImport
       parentRoute: typeof OnboardingRoute
     }
-    '/_app/mentor/': {
-      id: '/_app/mentor/'
-      path: '/mentor'
-      fullPath: '/mentor/'
-      preLoaderRoute: typeof AppMentorIndexRouteImport
+    '/_app/applications/': {
+      id: '/_app/applications/'
+      path: '/applications'
+      fullPath: '/applications/'
+      preLoaderRoute: typeof AppApplicationsIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/student/': {
-      id: '/_app/student/'
-      path: '/student'
-      fullPath: '/student/'
-      preLoaderRoute: typeof AppStudentIndexRouteImport
+    '/_app/applications/$applicationId': {
+      id: '/_app/applications/$applicationId'
+      path: '/applications/$applicationId'
+      fullPath: '/applications/$applicationId'
+      preLoaderRoute: typeof AppApplicationsApplicationIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/me/': {
+      id: '/_app/me/'
+      path: '/me'
+      fullPath: '/me/'
+      preLoaderRoute: typeof AppMeIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/me/edit': {
+      id: '/_app/me/edit'
+      path: '/me/edit'
+      fullPath: '/me/edit'
+      preLoaderRoute: typeof AppMeEditRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/me/preview': {
+      id: '/_app/me/preview'
+      path: '/me/preview'
+      fullPath: '/me/preview'
+      preLoaderRoute: typeof AppMePreviewRouteImport
       parentRoute: typeof AppRoute
     }
     '/onboarding/mentor/extra': {
@@ -327,6 +417,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingStudentVerifyRouteImport
       parentRoute: typeof OnboardingRoute
     }
+    '/_app/applications/$applicationId/share': {
+      id: '/_app/applications/$applicationId/share'
+      path: '/share'
+      fullPath: '/applications/$applicationId/share'
+      preLoaderRoute: typeof AppApplicationsApplicationIdShareRouteImport
+      parentRoute: typeof AppApplicationsApplicationIdRoute
+    }
     '/_app/mentors/$mentorId/apply': {
       id: '/_app/mentors/$mentorId/apply'
       path: '/$mentorId/apply'
@@ -349,16 +446,40 @@ const AppMentorsRouteWithChildren = AppMentorsRoute._addFileChildren(
   AppMentorsRouteChildren,
 )
 
+interface AppApplicationsApplicationIdRouteChildren {
+  AppApplicationsApplicationIdShareRoute: typeof AppApplicationsApplicationIdShareRoute
+}
+
+const AppApplicationsApplicationIdRouteChildren: AppApplicationsApplicationIdRouteChildren =
+  {
+    AppApplicationsApplicationIdShareRoute:
+      AppApplicationsApplicationIdShareRoute,
+  }
+
+const AppApplicationsApplicationIdRouteWithChildren =
+  AppApplicationsApplicationIdRoute._addFileChildren(
+    AppApplicationsApplicationIdRouteChildren,
+  )
+
 interface AppRouteChildren {
+  AppHomeRoute: typeof AppHomeRoute
   AppMentorsRoute: typeof AppMentorsRouteWithChildren
-  AppMentorIndexRoute: typeof AppMentorIndexRoute
-  AppStudentIndexRoute: typeof AppStudentIndexRoute
+  AppApplicationsApplicationIdRoute: typeof AppApplicationsApplicationIdRouteWithChildren
+  AppMeEditRoute: typeof AppMeEditRoute
+  AppMePreviewRoute: typeof AppMePreviewRoute
+  AppApplicationsIndexRoute: typeof AppApplicationsIndexRoute
+  AppMeIndexRoute: typeof AppMeIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppHomeRoute: AppHomeRoute,
   AppMentorsRoute: AppMentorsRouteWithChildren,
-  AppMentorIndexRoute: AppMentorIndexRoute,
-  AppStudentIndexRoute: AppStudentIndexRoute,
+  AppApplicationsApplicationIdRoute:
+    AppApplicationsApplicationIdRouteWithChildren,
+  AppMeEditRoute: AppMeEditRoute,
+  AppMePreviewRoute: AppMePreviewRoute,
+  AppApplicationsIndexRoute: AppApplicationsIndexRoute,
+  AppMeIndexRoute: AppMeIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
