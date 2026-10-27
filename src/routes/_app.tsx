@@ -3,7 +3,12 @@ import { useSession } from "@/lib/session";
 
 /**
  * 온보딩을 마친 사용자만 들어오는 서비스 본편 레이아웃.
- * TODO: beforeLoad 에서 미완료 사용자를 /onboarding 으로 redirect
+ *
+ * TODO: beforeLoad 에서
+ *  - 세션이 없으면 `/login?redirect=<현재 경로>` 로. 랜딩(`/`)이 아니다 —
+ *    딥링크로 들어온 사람에게 role 선택 화면을 보여줄 이유가 없고,
+ *    이렇게 두면 알림톡뿐 아니라 모든 딥링크가 복귀 지점을 얻는다
+ *  - 온보딩 미완료 사용자는 `/onboarding` 으로
  */
 export const Route = createFileRoute("/_app")({
   component: RouteComponent,
