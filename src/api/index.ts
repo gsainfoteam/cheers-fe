@@ -9,8 +9,9 @@
  *  - tokens.ts    토큰 저장소 (localStorage, 탭 간 동기화)
  *  - user / student / graduated / cheers / file — 명세의 섹션과 1:1
  *
- * 백엔드가 OpenAPI 를 내보내지 않으므로 `dto.ts` 와 `schema.ts` 는 손으로
- * 유지한다. 명세가 바뀌면 같은 PR 에서 함께 고칠 것.
+ * 백엔드 OpenAPI 는 `GET /api-docs-json` 에 있다. `dto.ts` 와 `schema.ts` 는
+ * 그걸 손으로 옮긴 것이므로, 명세가 바뀌면 받아서 대조하고 같은 PR 에서
+ * 함께 고칠 것.
  */
 
 export { api } from "./client";
@@ -20,7 +21,9 @@ export {
   ContractError,
   isApiError,
   isContractError,
+  isEmailAlreadyRegistered,
   remainingAttemptsOf,
+  retryAvailableAtOf,
   unwrap,
 } from "./errors";
 export { createQueryClient } from "./query-client";
@@ -48,6 +51,7 @@ export {
 } from "./user";
 export {
   studentDepartmentsQuery,
+  studentInterestsQuery,
   useSendStudentVerifyCode,
   useSubmitStudentInfo,
   useVerifyStudentCode,

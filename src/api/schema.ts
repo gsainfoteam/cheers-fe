@@ -3,18 +3,18 @@ import type * as dto from "./dto";
 /**
  * 백엔드 API 계약.
  *
- * 백엔드가 Swagger(OpenAPI) JSON 을 내보내지 않으므로, 이 파일과 `dto.ts` 가
- * 프론트가 가진 유일한 계약서다. API 명세서를 손으로 옮긴 것이고, 손으로
- * 유지한다. **명세서가 바뀌면 같은 PR 에서 여기도 고친다.**
+ * 백엔드가 `GET /api-docs-json` 으로 OpenAPI 3.0 을 내보낸다. 이 파일은 그중
+ * `/api/v1` 구간을 손으로 옮긴 것이고, 손으로 유지한다 (manager API 는 프론트가
+ * 쓰지 않아 넣지 않았다). **명세가 바뀌면 `/api-docs-json` 과 대조해 같은 PR 에서
+ * 여기도 고친다.**
  *
  * 역할 나누기
  *  - `dto.ts`  응답 모양. zod 스키마라서 런타임에도 검사된다
  *  - 이 파일   경로 · 쿼리 · 요청 본문. 전부 컴파일 시점에 잡히므로 타입만 있으면 된다
  *
- * POST 의 성공 응답은 200 이 아니라 **201** 이다 (NestJS 기본값). 실제 호출로
- * consent · verify/send-code · verify/code 에서 확인했다. `unwrap` 은 상태 코드가
- * 아니라 `response.ok` 로 판단하므로 런타임 동작과는 무관하지만, 계약서가
- * 사실과 달라서는 안 된다.
+ * POST 의 성공 응답은 대부분 **201** 이다 (NestJS 기본값). 예외가 하나 있다 —
+ * `share-contact` 만 200 이다. `unwrap` 은 상태 코드가 아니라 `response.ok` 로
+ * 판단하므로 런타임 동작과는 무관하지만, 계약서가 사실과 달라서는 안 된다.
  */
 
 type Json<T> = { content: { "application/json": T } };
@@ -27,6 +27,13 @@ type ContactRequest = {
   email?: string | null;
   /** `kakao_enabled` 가 true 면 필수 */
   phone?: string | null;
+};
+
+/** presigned URL 발급 요청. 명함 · 첨부가 같은 모양을 쓴다 */
+type UploadUrlRequest = {
+  content_type: string;
+  /** byte. 서명에 묶이므로 실제로 올릴 파일 크기와 같아야 한다 */
+  size: number;
 };
 
 /** 이력서 / 포트폴리오 (요청) */
@@ -46,11 +53,16 @@ export interface paths {
     /** OAuth 로그인. Authorization 불필요 */
     post: {
       requestBody: Json<{
-        provider: "google" | "apple" | "naver";
+        /** 지금은 google 만 받는다. apple · naver 는 400 */
+        provider: "google";
+        /** 웹에서 먼저 고른 유형. 가입을 마친(active) 유저에게는 무시된다 */
         type: "student" | "graduated";
-        /** google / apple: id token, naver: access token */
+        /** google ID token */
         token: string;
-        /** google / apple 필수 (최대 256자). 로그인 시작 때 만든 nonce 원문 */
+        /**
+         * 로그인 시작 때 만든 nonce 원문. google 은 필수다
+         * (provider 에는 SHA-256 hex 를 넘긴다)
+         */
         nonce?: string;
       }>;
       responses: {
@@ -60,11 +72,16 @@ export interface paths {
   };
 
   "/api/v1/user/refresh": {
-    /** Access token 갱신. Authorization 불필요. refresh token 도 함께 교체된다 */
+    /**
+     * Access token 갱신. Authorization 불필요.
+     *
+     * refresh token 은 **재발급도 연장도 없다** — 응답에 들어 있지 않고,
+     * 처음 받은 걸 만료(기본 180일)까지 그대로 쓴다.
+     */
     post: {
       requestBody: Json<{ refresh_token: string }>;
       responses: {
-        201: Json<dto.TokenPair>;
+        201: Json<dto.AccessToken>;
       };
     };
   };
@@ -121,6 +138,18 @@ export interface paths {
       requestBody: Json<{ email: string }>;
       responses: {
         201: Json<dto.SendCodeResult>;
+        /** 이미 다른 계정이 인증한 이메일. `error_code` 는 항상 EMAIL_ALREADY_REGISTERED */
+        409: Json<{
+          statusCode: number;
+          message: string;
+          error_code: string;
+        }>;
+        /** 재전송 대기 중이거나 발송 횟수 초과 */
+        429: Json<{
+          statusCode: number;
+          message: string;
+          retry_available_at: string;
+        }>;
       };
     };
   };
@@ -130,8 +159,12 @@ export interface paths {
       requestBody: Json<{ code: string }>;
       responses: {
         201: Json<dto.OkResult>;
-        /** 코드가 틀림. 남은 시도 횟수를 함께 준다 */
-        400: Json<{ remaining_attempts: number }>;
+        /** 형식 오류 또는 코드 불일치. 불일치일 때만 남은 시도 횟수가 붙는다 */
+        400: Json<{
+          statusCode: number;
+          message: string;
+          remaining_attempts?: number;
+        }>;
       };
     };
   };
@@ -141,6 +174,15 @@ export interface paths {
       requestBody?: never;
       responses: {
         200: Json<dto.DepartmentList>;
+      };
+    };
+  };
+
+  "/api/v1/user/student/interests": {
+    get: {
+      requestBody?: never;
+      responses: {
+        200: Json<dto.InterestList>;
       };
     };
   };
@@ -165,14 +207,23 @@ export interface paths {
     };
   };
 
-  "/api/v1/file/upload-url": {
+  /**
+   * 명함 업로드용 presigned PUT URL. 현업자만 호출할 수 있다.
+   * 예전의 `POST /api/v1/file/upload-url` + `purpose` 를 대체한다.
+   */
+  "/api/v1/file/business-card/upload-url": {
     post: {
-      requestBody: Json<{
-        purpose: "business_card" | "attachment";
-        content_type: string;
-        /** byte. 실제로 올릴 파일 크기와 같아야 한다 */
-        size: number;
-      }>;
+      requestBody: Json<UploadUrlRequest>;
+      responses: {
+        201: Json<dto.UploadUrl>;
+      };
+    };
+  };
+
+  /** 이력서 · 포트폴리오 업로드용 presigned PUT URL. 재학생만 호출할 수 있다 */
+  "/api/v1/file/attachment/upload-url": {
+    post: {
+      requestBody: Json<UploadUrlRequest>;
       responses: {
         201: Json<dto.UploadUrl>;
       };
@@ -288,13 +339,14 @@ export interface paths {
   };
 
   "/api/v1/cheers/received/{id}/share-contact": {
+    /** 이 API 만 201 이 아니라 **200** 으로 온다 */
     post: {
       parameters: {
         path: { id: string };
       };
       requestBody?: never;
       responses: {
-        201: Json<dto.ShareContactResult>;
+        200: Json<dto.ShareContactResult>;
       };
     };
   };

@@ -16,6 +16,7 @@ export const keys = {
   userInfo: () => ["user", "info"] as const,
   consentList: () => ["user", "consent", "list"] as const,
   studentDepartments: () => ["user", "student", "departments"] as const,
+  studentInterests: () => ["user", "student", "interests"] as const,
 
   cheers: ["cheers"] as const,
   cheersList: (params: { sort?: string; page?: number; size?: number }) =>
