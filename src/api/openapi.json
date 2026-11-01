@@ -1,0 +1,5620 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1/user/oauth/login": {
+      "post": {
+        "operationId": "UserController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 지원하지 않는 provider",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "OAuth 토큰이 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "같은 계정으로 동시에 최초 로그인 중",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "OAuth 로그인 (가입 전이어도 토큰 발급)",
+        "tags": [
+          "내 정보"
+        ]
+      }
+    },
+    "/api/v1/user/refresh": {
+      "post": {
+        "operationId": "UserController_refresh",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "refresh token이 유효하지 않거나 만료됨",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "access token 갱신 (refresh token은 재발급 · 연장 없음. 발급 후 기본 180일이 지나면 다시 로그인)",
+        "tags": [
+          "내 정보"
+        ]
+      }
+    },
+    "/api/v1/user/info": {
+      "get": {
+        "operationId": "UserController_getInfo",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfoDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "내 정보 조회",
+        "tags": [
+          "내 정보"
+        ]
+      }
+    },
+    "/api/v1/user/logout": {
+      "post": {
+        "operationId": "UserController_logout",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogoutRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "로그아웃",
+        "tags": [
+          "내 정보"
+        ]
+      }
+    },
+    "/api/v1/user/withdraw": {
+      "post": {
+        "operationId": "UserController_withdraw",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "탈퇴 요청 (유예기간 뒤 삭제, 유예기간 안에 다시 로그인하면 취소)",
+        "tags": [
+          "내 정보"
+        ]
+      }
+    },
+    "/api/v1/file/business-card/upload-url": {
+      "post": {
+        "operationId": "FileController_createBusinessCardUploadUrl",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadUrlRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadUrlResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 허용되지 않은 파일 형식",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "현업자가 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "파일 크기 초과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "명함 업로드용 presigned PUT URL 발급",
+        "tags": [
+          "파일"
+        ]
+      }
+    },
+    "/api/v1/file/attachment/upload-url": {
+      "post": {
+        "operationId": "FileController_createAttachmentUploadUrl",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadUrlRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadUrlResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 허용되지 않은 파일 형식",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "가입을 마치지 않음, 재학생이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "파일 크기 초과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "이력서 · 포트폴리오 업로드용 presigned PUT URL 발급",
+        "tags": [
+          "파일"
+        ]
+      }
+    },
+    "/api/v1/user/consent/list": {
+      "get": {
+        "operationId": "ConsentController_getList",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentListResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "이용약관 목록과 내 동의 여부",
+        "tags": [
+          "이용약관"
+        ]
+      }
+    },
+    "/api/v1/user/consent": {
+      "post": {
+        "operationId": "ConsentController_updateConsents",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateConsentRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 중복 · 잘못된 약관, 필수 약관 미동의",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "가입 중인데 next_step이 consent가 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "이용약관 동의 저장",
+        "tags": [
+          "이용약관"
+        ]
+      }
+    },
+    "/api/v1/user/student/verify/send-code": {
+      "post": {
+        "operationId": "StudentController_sendCode",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendCodeRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SendCodeResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 허용되지 않은 이메일 도메인",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "재학생이 아님, next_step이 verify가 아님, 이미 가입을 마침",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "이미 다른 계정에서 인증한 이메일",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailAlreadyRegisteredErrorDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "재전송 대기 시간이 지나지 않음, 발송 횟수 초과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SendCodeRateLimitErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "재학생 이메일 인증코드 발송",
+        "tags": [
+          "재학생"
+        ]
+      }
+    },
+    "/api/v1/user/student/verify/code": {
+      "post": {
+        "operationId": "StudentController_verifyCode",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyCodeRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "인증코드 형식 오류, 인증코드가 틀림 (틀린 경우 remaining_attempts 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyCodeErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "재학생이 아님, next_step이 verify가 아님, 이미 가입을 마침",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "진행 중인 인증 요청이 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "인증코드 만료",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "재학생 이메일 인증코드 확인",
+        "tags": [
+          "재학생"
+        ]
+      }
+    },
+    "/api/v1/user/student/departments": {
+      "get": {
+        "operationId": "StudentController_getDepartments",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepartmentListResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "재학생이 아님, 가입 중인데 next_step이 profile이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "인증한 이메일이 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "인증한 이메일의 학교에 속한 학과 목록",
+        "tags": [
+          "재학생"
+        ]
+      }
+    },
+    "/api/v1/user/student/interests": {
+      "get": {
+        "operationId": "StudentController_getInterests",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterestListResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "재학생이 아님, 가입 중인데 next_step이 profile이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "관심 분야 목록",
+        "tags": [
+          "재학생"
+        ]
+      }
+    },
+    "/api/v1/user/student/info": {
+      "post": {
+        "operationId": "StudentController_saveInfo",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveStudentInfoRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignupCompleteResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 다른 학교의 학과, 연락 방법을 고르지 않음, 연락처 누락, 이름 누락, 첨부 파일 key 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "재학생이 아님, 가입 중인데 next_step이 profile이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "인증한 이메일이 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "재학생 추가 정보 저장 (가입 후에는 수정)",
+        "tags": [
+          "재학생"
+        ]
+      }
+    },
+    "/api/v1/user/graduated/verify/business-card": {
+      "post": {
+        "operationId": "GraduatedController_verifyBusinessCard",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyBusinessCardRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 내가 발급받은 key가 아님, 업로드되지 않음, 허용 범위를 벗어난 파일",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "현업자가 아님, 가입 중인데 next_step이 verify가 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "업로드한 명함 제출 (가입 후에는 교체)",
+        "tags": [
+          "현업자"
+        ]
+      }
+    },
+    "/api/v1/user/graduated/info": {
+      "post": {
+        "operationId": "GraduatedController_saveInfo",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GraduatedInfoRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignupCompleteResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 연락처 누락, 이름 누락, 첫 저장인데 nickname 누락",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "현업자가 아님, 가입 중인데 next_step이 profile이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "현업자 추가 정보 저장 (가입 후에는 수정)",
+        "tags": [
+          "현업자"
+        ]
+      }
+    },
+    "/api/v1/cheers": {
+      "get": {
+        "operationId": "CheersStudentController_getGraduatedList",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1부터 시작",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "size",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "recent_joined",
+              "type": "string",
+              "enum": [
+                "recent_joined",
+                "recent_active",
+                "random"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PageResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/CheersCardDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "query 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "가입을 마치지 않음, 재학생이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "현업자 목록",
+        "tags": [
+          "커피챗 · 재학생"
+        ]
+      }
+    },
+    "/api/v1/cheers/request": {
+      "post": {
+        "operationId": "CheersStudentController_createRequest",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateRequestResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "가입을 마치지 않음, 재학생이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "현업자를 찾을 수 없음 (탈퇴 · 탈퇴 유예기간 · 가입 미완료 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "현업자가 연락 설정을 희망하지 않음으로 해둠",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "커피챗 요청 보내기",
+        "tags": [
+          "커피챗 · 재학생"
+        ]
+      }
+    },
+    "/api/v1/cheers/sent": {
+      "get": {
+        "operationId": "CheersStudentController_getSentList",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1부터 시작",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "size",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PageResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/SentRequestDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "query 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "가입을 마치지 않음, 재학생이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "보낸 요청 목록",
+        "tags": [
+          "커피챗 · 재학생"
+        ]
+      }
+    },
+    "/api/v1/cheers/sent/{id}": {
+      "get": {
+        "operationId": "CheersStudentController_getSentDetail",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SentRequestDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "id가 UUID 형식이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "가입을 마치지 않음, 재학생이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "요청이 없거나 내가 보낸 요청이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "보낸 요청 상세",
+        "tags": [
+          "커피챗 · 재학생"
+        ]
+      }
+    },
+    "/api/v1/cheers/received": {
+      "get": {
+        "operationId": "CheersGraduatedController_getReceivedList",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1부터 시작",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "size",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PageResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/ReceivedRequestDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "query 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "가입을 마치지 않음, 현업자가 아님, 명함 인증이 취소됨",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "받은 요청 목록",
+        "tags": [
+          "커피챗 · 현업자"
+        ]
+      }
+    },
+    "/api/v1/cheers/received/{id}": {
+      "get": {
+        "operationId": "CheersGraduatedController_getReceivedDetail",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivedRequestDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "id가 UUID 형식이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "가입을 마치지 않음, 현업자가 아님, 명함 인증이 취소됨",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "요청이 없거나 내가 받은 요청이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "재학생이 탈퇴했거나 탈퇴 유예기간 중",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "받은 요청 상세",
+        "tags": [
+          "커피챗 · 현업자"
+        ]
+      }
+    },
+    "/api/v1/cheers/received/{id}/share-contact": {
+      "post": {
+        "operationId": "CheersGraduatedController_shareContact",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareContactResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "id가 UUID 형식이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "가입을 마치지 않음, 현업자가 아님, 명함 인증이 취소됨",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "요청이 없거나 내가 받은 요청이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "내 연락 설정이 희망하지 않음이라 공유할 연락처가 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "재학생이 탈퇴했거나 탈퇴 유예기간 중",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "내 연락처 공유",
+        "tags": [
+          "커피챗 · 현업자"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "HealthController_live",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResultDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "프로세스 생존 확인 (liveness). DB를 확인하지 않음",
+        "tags": [
+          "상태 확인"
+        ]
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "HealthController_ready",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResultDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "DB에 연결할 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "요청을 받을 수 있는지 확인 (readiness). DB 연결을 확인함",
+        "tags": [
+          "상태 확인"
+        ]
+      }
+    },
+    "/api/manager/v1/auth/login": {
+      "post": {
+        "operationId": "ManagerAuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManagerLoginRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagerLoginResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "IdP가 code 또는 토큰을 거부함",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "admin_account에 없는 이메일",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "어드민 로그인 (IdP code 교환 후 admin_account에 있는 이메일만 허용)",
+        "tags": [
+          "매니저 인증"
+        ]
+      }
+    },
+    "/api/manager/v1/auth/me": {
+      "get": {
+        "operationId": "ManagerAuthController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagerMeResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "현재 매니저 정보",
+        "tags": [
+          "매니저 인증"
+        ]
+      }
+    },
+    "/api/manager/v1/admin-account": {
+      "get": {
+        "operationId": "AdminAccountController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminAccountDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "어드민 계정 목록",
+        "tags": [
+          "어드민 계정"
+        ]
+      },
+      "post": {
+        "operationId": "AdminAccountController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAdminAccountRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminAccountDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, @gm.gist.ac.kr이 아닌 이메일",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "superadmin이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "이미 등록된 이메일",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "어드민 계정 등록 (superadmin 전용)",
+        "tags": [
+          "어드민 계정"
+        ]
+      }
+    },
+    "/api/manager/v1/admin-account/{pk}": {
+      "patch": {
+        "operationId": "AdminAccountController_updateRole",
+        "parameters": [
+          {
+            "name": "pk",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAdminAccountRoleRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminAccountDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "superadmin이 아님, 자기 자신",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "없는 계정",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "어드민 권한 변경 (superadmin 전용, 자기 자신은 불가)",
+        "tags": [
+          "어드민 계정"
+        ]
+      },
+      "delete": {
+        "operationId": "AdminAccountController_remove",
+        "parameters": [
+          {
+            "name": "pk",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "superadmin이 아님, 자기 자신, 대상이 superadmin",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "없는 계정",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "어드민 계정 삭제 (superadmin 전용, 자기 자신 · superadmin은 불가)",
+        "tags": [
+          "어드민 계정"
+        ]
+      }
+    },
+    "/api/manager/v1/interest": {
+      "get": {
+        "operationId": "AdminInterestController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminInterestDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "관심 분야 목록 (sort_order 순)",
+        "tags": [
+          "관심 분야"
+        ]
+      },
+      "post": {
+        "operationId": "AdminInterestController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminInterestNameRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminInterestDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "빈 이름, 50자 초과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "이미 있는 이름",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "관심 분야 추가 (맨 뒤에 붙음)",
+        "tags": [
+          "관심 분야"
+        ]
+      }
+    },
+    "/api/manager/v1/interest/order": {
+      "put": {
+        "operationId": "AdminInterestController_reorder",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderAdminInterestRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminInterestDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "빈 배열, 중복, 정수가 아닌 pk",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "pks가 현재 목록과 다름 (그 사이 추가 · 삭제됨)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "관심 분야 정렬 (전체 pk를 원하는 순서로 보냄)",
+        "tags": [
+          "관심 분야"
+        ]
+      }
+    },
+    "/api/manager/v1/interest/{pk}": {
+      "patch": {
+        "operationId": "AdminInterestController_updateName",
+        "parameters": [
+          {
+            "name": "pk",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminInterestNameRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminInterestDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "잘못된 pk, 빈 이름, 50자 초과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "없는 관심 분야",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "다른 항목이 쓰는 이름",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "관심 분야 이름 수정 (이미 저장된 재학생 프로필의 값은 바뀌지 않음)",
+        "tags": [
+          "관심 분야"
+        ]
+      },
+      "delete": {
+        "operationId": "AdminInterestController_remove",
+        "parameters": [
+          {
+            "name": "pk",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "잘못된 pk",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "없는 관심 분야",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "관심 분야 삭제 (이미 저장된 재학생 프로필의 값은 지워지지 않음)",
+        "tags": [
+          "관심 분야"
+        ]
+      }
+    },
+    "/api/manager/v1/coffee-chat/request": {
+      "get": {
+        "operationId": "ManagerCoffeeChatController_listRequests",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1부터 시작",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "size",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "requested",
+                "viewed",
+                "contact_shared"
+              ]
+            }
+          },
+          {
+            "name": "student_pk",
+            "required": false,
+            "in": "query",
+            "description": "탈퇴 처리로 이름이 지워진 재학생은 이 값으로 찾음",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "student_name",
+            "required": false,
+            "in": "query",
+            "description": "재학생 이름 (부분 일치)",
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "name": "graduated_pk",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "graduated_nickname",
+            "required": false,
+            "in": "query",
+            "description": "현업자 닉네임 (부분 일치)",
+            "schema": {
+              "maxLength": 32,
+              "type": "string"
+            }
+          },
+          {
+            "name": "created_from",
+            "required": false,
+            "in": "query",
+            "description": "이 시각부터 (포함). UTC 오프셋이 있는 ISO 8601",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "created_to",
+            "required": false,
+            "in": "query",
+            "description": "이 시각 전까지 (미포함). UTC 오프셋이 있는 ISO 8601",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PageResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/CoffeeChatRequestDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "query 형식 오류, created_from이 created_to보다 늦음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "커피챗 요청 목록 (최근 요청 순)",
+        "tags": [
+          "어드민 커피챗"
+        ]
+      }
+    },
+    "/api/manager/v1/coffee-chat/request/{pk}": {
+      "get": {
+        "operationId": "ManagerCoffeeChatController_getRequest",
+        "parameters": [
+          {
+            "name": "pk",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoffeeChatRequestDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "pk 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "없는 요청",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "커피챗 요청 상세와 알림 발송 결과",
+        "tags": [
+          "어드민 커피챗"
+        ]
+      }
+    },
+    "/api/manager/v1/coffee-chat/notification-log": {
+      "get": {
+        "operationId": "ManagerCoffeeChatController_listNotificationLogs",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1부터 시작",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "size",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "channel",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "email",
+                "kakao_alimtalk"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "sent",
+                "failed"
+              ]
+            }
+          },
+          {
+            "name": "event",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "coffee_chat_requested",
+                "contact_shared"
+              ]
+            }
+          },
+          {
+            "name": "created_from",
+            "required": false,
+            "in": "query",
+            "description": "이 시각부터 (포함). UTC 오프셋이 있는 ISO 8601",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "created_to",
+            "required": false,
+            "in": "query",
+            "description": "이 시각 전까지 (미포함). UTC 오프셋이 있는 ISO 8601",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PageResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/NotificationLogItemDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "query 형식 오류, created_from이 created_to보다 늦음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "알림 발송 결과 목록 (최근 발송 순)",
+        "tags": [
+          "어드민 커피챗"
+        ]
+      }
+    },
+    "/api/manager/v1/consent": {
+      "get": {
+        "operationId": "ManagerConsentController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConsentTypeDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "약관 종류별 버전 목록",
+        "tags": [
+          "이용약관 관리"
+        ]
+      },
+      "post": {
+        "operationId": "ManagerConsentController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateConsentVersionRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentVersionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "superadmin이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "이미 있는 버전",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "약관 새 버전 등록 (superadmin 전용). 필수 약관이면 동의하지 않은 사용자에게 재동의를 요구함",
+        "tags": [
+          "이용약관 관리"
+        ]
+      }
+    },
+    "/api/manager/v1/consent/{type}/{version}/status": {
+      "get": {
+        "operationId": "ManagerConsentController_getStatus",
+        "parameters": [
+          {
+            "name": "type",
+            "required": true,
+            "in": "path",
+            "description": "약관 종류. 영문 소문자 · 숫자 · _ · -",
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "required": true,
+            "in": "path",
+            "description": "약관 버전. 영문 · 숫자로 시작하고 영문 · 숫자 · . · _ · - 만 사용",
+            "schema": {
+              "maxLength": 32,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentStatusDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "없는 버전",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "버전별 동의 · 철회 현황",
+        "tags": [
+          "이용약관 관리"
+        ]
+      }
+    },
+    "/api/manager/v1/business-card": {
+      "get": {
+        "operationId": "BusinessCardController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1부터 시작",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "size",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PageResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/BusinessCardGraduatedDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "query 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "현업자 명함 현황 목록",
+        "tags": [
+          "현업자 명함"
+        ]
+      }
+    },
+    "/api/manager/v1/business-card/{graduatedPk}": {
+      "get": {
+        "operationId": "BusinessCardController_getImageUrl",
+        "parameters": [
+          {
+            "name": "graduatedPk",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessCardImageUrlDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "graduatedPk가 UUID 형식이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "없는 현업자, 명함이 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "열람 기록 저장 실패 (URL을 발급하지 않음)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "명함 이미지 presigned GET URL 발급 (열람 기록을 남김)",
+        "tags": [
+          "현업자 명함"
+        ]
+      }
+    },
+    "/api/manager/v1/business-card/{graduatedPk}/cancel-verification": {
+      "post": {
+        "operationId": "BusinessCardController_cancelVerification",
+        "parameters": [
+          {
+            "name": "graduatedPk",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "graduatedPk가 UUID 형식이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "superadmin이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "없는 현업자",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "인증된 상태가 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "명함 인증 취소 (superadmin 전용). 현업자가 재업로드하면 다시 인증됨",
+        "tags": [
+          "현업자 명함"
+        ]
+      }
+    },
+    "/api/manager/v1/school": {
+      "get": {
+        "operationId": "SchoolDepartmentController_listSchools",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SchoolDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "학교 목록과 허용 이메일 도메인",
+        "tags": [
+          "학교 · 학과"
+        ]
+      }
+    },
+    "/api/manager/v1/school/{schoolPk}/department": {
+      "get": {
+        "operationId": "SchoolDepartmentController_listDepartments",
+        "parameters": [
+          {
+            "name": "schoolPk",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DepartmentAdminDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "없는 학교",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "학교별 학과 목록 (비활성 학과 포함)",
+        "tags": [
+          "학교 · 학과"
+        ]
+      },
+      "post": {
+        "operationId": "SchoolDepartmentController_createDepartment",
+        "parameters": [
+          {
+            "name": "schoolPk",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDepartmentRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepartmentAdminDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "없는 학교",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "같은 학교에 같은 이름의 학과가 있음 (비활성 학과 포함)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "학과 추가",
+        "tags": [
+          "학교 · 학과"
+        ]
+      }
+    },
+    "/api/manager/v1/school/{schoolPk}/department/{departmentPk}": {
+      "patch": {
+        "operationId": "SchoolDepartmentController_updateDepartment",
+        "parameters": [
+          {
+            "name": "schoolPk",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "departmentPk",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDepartmentRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepartmentAdminDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 바꿀 값이 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "없는 학과, 다른 학교의 학과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "같은 학교에 같은 이름의 학과가 있음 (비활성 학과 포함), 마지막 활성 학과를 비활성화",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "학과 이름 수정 · 비활성화 · 재활성화",
+        "tags": [
+          "학교 · 학과"
+        ]
+      }
+    },
+    "/api/manager/v1/school/{schoolPk}/email-domain": {
+      "put": {
+        "operationId": "SchoolDepartmentController_replaceEmailDomains",
+        "parameters": [
+          {
+            "name": "schoolPk",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceEmailDomainsRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 빈 목록, 도메인 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "superadmin이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "없는 학교",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "인증을 마친 재학생이 있는 도메인을 뺌, 다른 학교의 도메인",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "허용 이메일 도메인 전체 교체 (superadmin 전용)",
+        "tags": [
+          "학교 · 학과"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Cheers API",
+    "description": "",
+    "version": "v1",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "LoginRequestDto": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "description": "지금은 google만 받음. apple · naver는 400",
+            "enum": [
+              "google"
+            ]
+          },
+          "type": {
+            "type": "string",
+            "description": "웹에서 먼저 고른 유형. 가입을 마친(active) 유저는 무시",
+            "enum": [
+              "student",
+              "graduated"
+            ]
+          },
+          "token": {
+            "type": "string",
+            "description": "google / apple: ID token, naver: access token"
+          },
+          "nonce": {
+            "type": "string",
+            "description": "google / apple만 필수: 로그인 시작 때 만든 nonce 원문. provider에는 SHA-256(hex)을 넘김",
+            "maxLength": 256
+          }
+        },
+        "required": [
+          "provider",
+          "type",
+          "token"
+        ]
+      },
+      "LoginResponseDto": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "refresh_token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "access_token",
+          "refresh_token"
+        ]
+      },
+      "ErrorResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "statusCode",
+          "message"
+        ]
+      },
+      "RefreshRequestDto": {
+        "type": "object",
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "description": "로그인 또는 가입 완료 때 받은 refresh token. 만료 전까지 계속 사용"
+          }
+        },
+        "required": [
+          "refresh_token"
+        ]
+      },
+      "RefreshResponseDto": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "새 access token. refresh token은 응답에 없음 (재발급 없음)"
+          }
+        },
+        "required": [
+          "access_token"
+        ]
+      },
+      "DepartmentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "StudentAttachmentDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "nullable": true,
+            "description": "source = file 일 때만. 수정 때 기존 파일을 유지하려면 그대로 다시 보냄"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "cv",
+              "portfolio"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "link",
+              "file"
+            ]
+          },
+          "url": {
+            "type": "string",
+            "description": "source = file 이면 presigned URL"
+          },
+          "file_name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "key",
+          "kind",
+          "source",
+          "url",
+          "file_name"
+        ]
+      },
+      "ContactDto": {
+        "type": "object",
+        "properties": {
+          "email_enabled": {
+            "type": "boolean"
+          },
+          "kakao_enabled": {
+            "type": "boolean"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "email_enabled",
+          "kakao_enabled",
+          "email",
+          "phone"
+        ]
+      },
+      "StudentProfileDto": {
+        "type": "object",
+        "properties": {
+          "department": {
+            "$ref": "#/components/schemas/DepartmentDto"
+          },
+          "interests": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "activities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentAttachmentDto"
+            }
+          },
+          "contact": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "department",
+          "interests",
+          "activities",
+          "attachments",
+          "contact"
+        ]
+      },
+      "StudentInfoDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "verified": {
+            "type": "boolean"
+          },
+          "profile": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudentProfileDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "email",
+          "verified",
+          "profile"
+        ]
+      },
+      "GraduatedProfileDto": {
+        "type": "object",
+        "properties": {
+          "nickname": {
+            "type": "string"
+          },
+          "company": {
+            "type": "string"
+          },
+          "department": {
+            "type": "string"
+          },
+          "job": {
+            "type": "string"
+          },
+          "hashtags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "contact": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "nickname",
+          "company",
+          "department",
+          "job",
+          "hashtags",
+          "links",
+          "contact"
+        ]
+      },
+      "GraduatedInfoDto": {
+        "type": "object",
+        "properties": {
+          "verified": {
+            "type": "boolean"
+          },
+          "profile": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GraduatedProfileDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "verified",
+          "profile"
+        ]
+      },
+      "UserInfoDto": {
+        "type": "object",
+        "properties": {
+          "next_step": {
+            "description": "다음 단계. 가입을 마쳤으면 null. 어드민이 명함 인증을 취소한 active 현업자는 verify",
+            "enum": [
+              "consent",
+              "verify",
+              "profile"
+            ],
+            "type": "string",
+            "nullable": true
+          },
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "student",
+              "graduated"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "active"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "consent_required": {
+            "type": "boolean"
+          },
+          "student": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StudentInfoDto"
+              }
+            ]
+          },
+          "graduated": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GraduatedInfoDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "next_step",
+          "id",
+          "type",
+          "status",
+          "name",
+          "email",
+          "consent_required",
+          "student",
+          "graduated"
+        ]
+      },
+      "LogoutRequestDto": {
+        "type": "object",
+        "properties": {
+          "refresh_token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "refresh_token"
+        ]
+      },
+      "BaseResultDto": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "UploadUrlRequestDto": {
+        "type": "object",
+        "properties": {
+          "content_type": {
+            "type": "string"
+          },
+          "size": {
+            "type": "number",
+            "description": "byte. 실제로 올릴 파일 크기와 같아야 함 (서명에 포함)",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "content_type",
+          "size"
+        ]
+      },
+      "UploadUrlResponseDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "expires_in": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "url",
+          "method",
+          "key",
+          "headers",
+          "expires_in"
+        ]
+      },
+      "ConsentDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "is_required": {
+            "type": "boolean"
+          },
+          "url": {
+            "type": "string"
+          },
+          "agreed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "is_required",
+          "url",
+          "agreed"
+        ]
+      },
+      "ConsentListResponseDto": {
+        "type": "object",
+        "properties": {
+          "consents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsentDto"
+            }
+          }
+        },
+        "required": [
+          "consents"
+        ]
+      },
+      "ConsentAgreementDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "agreed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "agreed"
+        ]
+      },
+      "UpdateConsentRequestDto": {
+        "type": "object",
+        "properties": {
+          "consents": {
+            "minItems": 1,
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsentAgreementDto"
+            }
+          }
+        },
+        "required": [
+          "consents"
+        ]
+      },
+      "SendCodeRequestDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "소문자로 정규화해 저장. plus 주소(a+1@)는 받지 않음",
+            "maxLength": 255,
+            "format": "email",
+            "pattern": "^[^+]+@"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "SendCodeResponseDto": {
+        "type": "object",
+        "properties": {
+          "expires_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "resend_available_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expires_at",
+          "resend_available_at"
+        ]
+      },
+      "EmailAlreadyRegisteredErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number"
+          },
+          "message": {
+            "type": "string"
+          },
+          "error_code": {
+            "type": "string",
+            "description": "항상 \"EMAIL_ALREADY_REGISTERED\""
+          }
+        },
+        "required": [
+          "statusCode",
+          "message",
+          "error_code"
+        ]
+      },
+      "SendCodeRateLimitErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number"
+          },
+          "message": {
+            "type": "string"
+          },
+          "retry_available_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "다시 보낼 수 있는 시각"
+          }
+        },
+        "required": [
+          "statusCode",
+          "message",
+          "retry_available_at"
+        ]
+      },
+      "VerifyCodeRequestDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^\\d{6}$"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "VerifyCodeErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number"
+          },
+          "message": {
+            "type": "string"
+          },
+          "remaining_attempts": {
+            "type": "number",
+            "description": "남은 시도 횟수. 인증코드가 틀렸을 때만 내려 줌"
+          }
+        },
+        "required": [
+          "statusCode",
+          "message"
+        ]
+      },
+      "DepartmentListResponseDto": {
+        "type": "object",
+        "properties": {
+          "departments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DepartmentDto"
+            }
+          }
+        },
+        "required": [
+          "departments"
+        ]
+      },
+      "InterestListResponseDto": {
+        "type": "object",
+        "properties": {
+          "interests": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "interests"
+        ]
+      },
+      "StudentAttachmentRequestDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "cv",
+              "portfolio"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "link",
+              "file"
+            ]
+          },
+          "url": {
+            "type": "string",
+            "description": "source가 link일 때 필수. link: url만 받음, file: key · file_name만 받음 (섞으면 400)",
+            "maxLength": 2048,
+            "format": "uri"
+          },
+          "key": {
+            "type": "string",
+            "description": "source가 file일 때 필수. 업로드 URL 발급 때 받은 key(새 파일) 또는 내 정보 조회가 내려준 key(기존 파일 유지)",
+            "maxLength": 1024
+          },
+          "file_name": {
+            "type": "string",
+            "description": "source가 file일 때 필수",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "kind",
+          "source"
+        ]
+      },
+      "ContactRequestDto": {
+        "type": "object",
+        "properties": {
+          "email_enabled": {
+            "type": "boolean"
+          },
+          "kakao_enabled": {
+            "type": "boolean"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "description": "값이 없으면 null 또는 생략 (\"\" 는 400)",
+            "maxLength": 255,
+            "format": "email"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "\"-\" · 공백을 빼고 저장. 값이 없으면 null 또는 생략 (\"\" 는 400)",
+            "pattern": "^01\\d{8,9}$"
+          }
+        },
+        "required": [
+          "email_enabled",
+          "kakao_enabled"
+        ]
+      },
+      "SaveStudentInfoRequestDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "내 정보의 name이 null일 때(첫 저장)만 필수. 이미 있으면 무시",
+            "maxLength": 64
+          },
+          "department_id": {
+            "type": "number"
+          },
+          "interests": {
+            "minItems": 1,
+            "uniqueItems": true,
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 50
+            }
+          },
+          "activities": {
+            "uniqueItems": true,
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 50
+            }
+          },
+          "attachments": {
+            "maxItems": 10,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentAttachmentRequestDto"
+            }
+          },
+          "contact": {
+            "description": "둘 다 false(\"희망하지 않음\")는 재학생에게 허용하지 않음",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContactRequestDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "department_id",
+          "interests",
+          "contact"
+        ]
+      },
+      "SignupCompleteResponseDto": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string"
+          },
+          "access_token": {
+            "type": "string",
+            "description": "이번 호출로 가입이 완료됐을 때만"
+          },
+          "refresh_token": {
+            "type": "string",
+            "description": "이번 호출로 가입이 완료됐을 때만"
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "VerifyBusinessCardRequestDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "POST /api/v1/file/business-card/upload-url 에서 받은 tmp key",
+            "maxLength": 512
+          }
+        },
+        "required": [
+          "key"
+        ]
+      },
+      "GraduatedInfoRequestDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "내 정보의 name이 null일 때(첫 저장)만 필수. 이미 있으면 무시",
+            "maxLength": 64
+          },
+          "nickname": {
+            "type": "string",
+            "description": "첫 저장에만 필수. 가입 후 변경 불가라 이후 보내면 무시",
+            "pattern": "^[가-힣A-Za-z0-9_]{2,10}$"
+          },
+          "company": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "department": {
+            "type": "string",
+            "description": "비공개 (다른 회원에게 보이지 않음)",
+            "maxLength": 128
+          },
+          "job": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "hashtags": {
+            "description": "\"#\" 없이. 최대 5개, 각 1~20자, 중복 불가. 안 보내면 빈 배열로 교체",
+            "uniqueItems": true,
+            "maxItems": 5,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 20,
+              "pattern": "^[^#]+$"
+            }
+          },
+          "links": {
+            "maxItems": 5,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri",
+              "maxLength": 2048
+            }
+          },
+          "contact": {
+            "$ref": "#/components/schemas/ContactRequestDto"
+          }
+        },
+        "required": [
+          "company",
+          "department",
+          "job",
+          "contact"
+        ]
+      },
+      "PageResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "page": {
+            "type": "number"
+          },
+          "size": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "size",
+          "total"
+        ]
+      },
+      "CheersCardDto": {
+        "type": "object",
+        "properties": {
+          "graduated_id": {
+            "type": "string"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "company": {
+            "type": "string"
+          },
+          "job": {
+            "type": "string"
+          },
+          "hashtags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "last_active_at": {
+            "type": "string"
+          },
+          "can_request": {
+            "type": "boolean",
+            "description": "연락 설정이 \"희망하지 않음\"이면 false"
+          }
+        },
+        "required": [
+          "graduated_id",
+          "nickname",
+          "company",
+          "job",
+          "hashtags",
+          "links",
+          "last_active_at",
+          "can_request"
+        ]
+      },
+      "CreateRequestDto": {
+        "type": "object",
+        "properties": {
+          "graduated_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "message": {
+            "type": "string",
+            "description": "질문 내용. 앞뒤 공백을 지운 뒤 검사",
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "graduated_id",
+          "message"
+        ]
+      },
+      "CreateRequestResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "created_at"
+        ]
+      },
+      "RequestGraduatedDto": {
+        "type": "object",
+        "properties": {
+          "graduated_id": {
+            "type": "string"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "company": {
+            "type": "string"
+          },
+          "job": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "graduated_id",
+          "nickname",
+          "company",
+          "job"
+        ]
+      },
+      "SentRequestDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "graduated": {
+            "$ref": "#/components/schemas/RequestGraduatedDto"
+          },
+          "graduated_withdrawn": {
+            "type": "boolean",
+            "description": "현업자가 탈퇴했거나 탈퇴 유예기간 중이면 true (프론트는 탈퇴 안내를 보여 줌)"
+          },
+          "message": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "contact_shared",
+              "requested",
+              "viewed"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "graduated",
+          "graduated_withdrawn",
+          "message",
+          "status",
+          "created_at"
+        ]
+      },
+      "SharedContactDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "현업자가 탈퇴했거나 탈퇴 유예기간 중이면 \"탈퇴한 계정\", email · phone은 null"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "shared_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "phone",
+          "shared_at"
+        ]
+      },
+      "SentRequestDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "graduated": {
+            "$ref": "#/components/schemas/RequestGraduatedDto"
+          },
+          "graduated_withdrawn": {
+            "type": "boolean",
+            "description": "현업자가 탈퇴했거나 탈퇴 유예기간 중이면 true (프론트는 탈퇴 안내를 보여 줌)"
+          },
+          "message": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "contact_shared",
+              "requested",
+              "viewed"
+            ],
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "shared_contact": {
+            "nullable": true,
+            "description": "공유 전이면 null",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SharedContactDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "graduated",
+          "graduated_withdrawn",
+          "message",
+          "status",
+          "created_at",
+          "shared_contact"
+        ]
+      },
+      "ReceivedRequestDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "student_name": {
+            "type": "string",
+            "description": "재학생이 탈퇴했거나 탈퇴 유예기간 중이면 \"탈퇴한 학생의 신청서입니다\""
+          },
+          "department": {
+            "type": "string",
+            "description": "요청 당시 학과"
+          },
+          "student_withdrawn": {
+            "type": "boolean",
+            "description": "true면 상세를 열람할 수 없음 (프론트는 목록 클릭을 막음)"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "contact_shared",
+              "requested",
+              "viewed"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "student_name",
+          "department",
+          "student_withdrawn",
+          "status",
+          "created_at"
+        ]
+      },
+      "AttachmentDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "cv",
+              "portfolio"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "link",
+              "file"
+            ]
+          },
+          "url": {
+            "type": "string",
+            "description": "source = file 이면 presigned URL"
+          },
+          "file_name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "kind",
+          "source",
+          "url",
+          "file_name"
+        ]
+      },
+      "RequestStudentDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "department": {
+            "type": "string"
+          },
+          "interests": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "activities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttachmentDto"
+            }
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "description": "재학생의 현재 연락 설정에서 고른 값. 고르지 않았으면 null"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "name",
+          "department",
+          "interests",
+          "activities",
+          "attachments",
+          "email",
+          "phone"
+        ]
+      },
+      "ReceivedRequestDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "contact_shared",
+              "requested",
+              "viewed"
+            ]
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "contact_shared_at": {
+            "type": "string",
+            "nullable": true
+          },
+          "student": {
+            "$ref": "#/components/schemas/RequestStudentDto"
+          }
+        },
+        "required": [
+          "id",
+          "message",
+          "status",
+          "created_at",
+          "contact_shared_at",
+          "student"
+        ]
+      },
+      "ShareContactResponseDto": {
+        "type": "object",
+        "properties": {
+          "contact_shared_at": {
+            "type": "string"
+          },
+          "shared_email": {
+            "type": "string",
+            "nullable": true
+          },
+          "shared_phone": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "contact_shared_at",
+          "shared_email",
+          "shared_phone"
+        ]
+      },
+      "ManagerLoginRequestDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "IdP가 콜백으로 보낸 authorization code"
+          },
+          "redirect_uri": {
+            "type": "string",
+            "description": "authorize 요청에 쓴 redirect_uri (같아야 함)"
+          },
+          "code_verifier": {
+            "type": "string",
+            "description": "PKCE code_verifier"
+          }
+        },
+        "required": [
+          "code",
+          "redirect_uri",
+          "code_verifier"
+        ]
+      },
+      "ManagerLoginResponseDto": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "매니저 토큰 (1일). refresh token은 없음"
+          }
+        },
+        "required": [
+          "access_token"
+        ]
+      },
+      "ManagerMeResponseDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "description": "DB의 현재 값",
+            "enum": [
+              "admin",
+              "superadmin"
+            ],
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "email"
+        ]
+      },
+      "AdminAccountDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "enum": [
+              "admin",
+              "superadmin"
+            ],
+            "type": "string"
+          },
+          "pk": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "pk",
+          "email",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "CreateAdminAccountRequestDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "description": "비우면 admin",
+            "enum": [
+              "admin",
+              "superadmin"
+            ],
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "description": "@gm.gist.ac.kr 이메일",
+            "maxLength": 64,
+            "format": "email"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "UpdateAdminAccountRoleRequestDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "enum": [
+              "admin",
+              "superadmin"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      },
+      "AdminInterestDto": {
+        "type": "object",
+        "properties": {
+          "pk": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "sort_order": {
+            "type": "number",
+            "description": "작은 값이 먼저 나옴"
+          }
+        },
+        "required": [
+          "pk",
+          "name",
+          "sort_order"
+        ]
+      },
+      "AdminInterestNameRequestDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "앞뒤 공백을 지운 뒤 1~50자. 같은 이름은 등록할 수 없음",
+            "maxLength": 50
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "ReorderAdminInterestRequestDto": {
+        "type": "object",
+        "properties": {
+          "pks": {
+            "description": "현재 목록의 pk 전체를 원하는 순서로",
+            "minItems": 1,
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+              "type": "number",
+              "maximum": 2147483647,
+              "minimum": 1
+            }
+          }
+        },
+        "required": [
+          "pks"
+        ]
+      },
+      "CoffeeChatRequestStudentDto": {
+        "type": "object",
+        "properties": {
+          "pk": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "탈퇴 처리 후에는 null"
+          },
+          "department": {
+            "type": "string",
+            "description": "요청 당시 학과"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "탈퇴했거나 탈퇴 유예기간 중이면 false"
+          }
+        },
+        "required": [
+          "pk",
+          "name",
+          "department",
+          "active"
+        ]
+      },
+      "CoffeeChatRequestGraduatedDto": {
+        "type": "object",
+        "properties": {
+          "pk": {
+            "type": "string"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "company": {
+            "type": "string"
+          },
+          "job": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "탈퇴했거나 탈퇴 유예기간 중이면 false"
+          }
+        },
+        "required": [
+          "pk",
+          "nickname",
+          "company",
+          "job",
+          "active"
+        ]
+      },
+      "CoffeeChatRequestDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "requested",
+              "viewed",
+              "contact_shared"
+            ],
+            "type": "string"
+          },
+          "pk": {
+            "type": "string"
+          },
+          "student": {
+            "$ref": "#/components/schemas/CoffeeChatRequestStudentDto"
+          },
+          "graduated": {
+            "$ref": "#/components/schemas/CoffeeChatRequestGraduatedDto"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "graduated_viewed_at": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "현업자가 처음 열람한 시각"
+          },
+          "contact_shared_at": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "현업자가 연락처를 공유한 시각"
+          }
+        },
+        "required": [
+          "status",
+          "pk",
+          "student",
+          "graduated",
+          "created_at",
+          "graduated_viewed_at",
+          "contact_shared_at"
+        ]
+      },
+      "NotificationLogDto": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "enum": [
+              "coffee_chat_requested",
+              "contact_shared"
+            ],
+            "type": "string"
+          },
+          "channel": {
+            "enum": [
+              "email",
+              "kakao_alimtalk"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "sent",
+              "failed"
+            ],
+            "type": "string"
+          },
+          "pk": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "실패 사유. 이메일 · 전화번호는 가려서 내려줌"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event",
+          "channel",
+          "status",
+          "pk",
+          "error",
+          "created_at"
+        ]
+      },
+      "CoffeeChatRequestDetailDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "requested",
+              "viewed",
+              "contact_shared"
+            ],
+            "type": "string"
+          },
+          "pk": {
+            "type": "string"
+          },
+          "student": {
+            "$ref": "#/components/schemas/CoffeeChatRequestStudentDto"
+          },
+          "graduated": {
+            "$ref": "#/components/schemas/CoffeeChatRequestGraduatedDto"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "graduated_viewed_at": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "현업자가 처음 열람한 시각"
+          },
+          "contact_shared_at": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "현업자가 연락처를 공유한 시각"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true,
+            "description": "요청 메시지"
+          },
+          "student_viewed_at": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "재학생이 공유받은 연락처를 처음 확인한 시각"
+          },
+          "notifications": {
+            "description": "이 요청의 알림 발송 결과 (최근 순)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationLogDto"
+            }
+          }
+        },
+        "required": [
+          "status",
+          "pk",
+          "student",
+          "graduated",
+          "created_at",
+          "graduated_viewed_at",
+          "contact_shared_at",
+          "message",
+          "student_viewed_at",
+          "notifications"
+        ]
+      },
+      "NotificationLogItemDto": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "enum": [
+              "coffee_chat_requested",
+              "contact_shared"
+            ],
+            "type": "string"
+          },
+          "channel": {
+            "enum": [
+              "email",
+              "kakao_alimtalk"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "sent",
+              "failed"
+            ],
+            "type": "string"
+          },
+          "pk": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "실패 사유. 이메일 · 전화번호는 가려서 내려줌"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "coffee_chat_request_pk": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "event",
+          "channel",
+          "status",
+          "pk",
+          "error",
+          "created_at",
+          "coffee_chat_request_pk"
+        ]
+      },
+      "ConsentVersionListItemDto": {
+        "type": "object",
+        "properties": {
+          "is_latest": {
+            "type": "boolean",
+            "description": "이 종류의 최신 버전 (사용자에게 보여 주는 버전)"
+          },
+          "type": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "is_required": {
+            "type": "boolean"
+          },
+          "url": {
+            "type": "string",
+            "description": "약관 본문 링크"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "is_latest",
+          "type",
+          "version",
+          "is_required",
+          "url",
+          "created_at"
+        ]
+      },
+      "ConsentTypeDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "versions": {
+            "description": "최신 버전부터",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsentVersionListItemDto"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "versions"
+        ]
+      },
+      "CreateConsentVersionRequestDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "약관 종류. 영문 소문자 · 숫자 · _ · -",
+            "maxLength": 64
+          },
+          "version": {
+            "type": "string",
+            "description": "약관 버전. 영문 · 숫자로 시작하고 영문 · 숫자 · . · _ · - 만 사용",
+            "maxLength": 32
+          },
+          "is_required": {
+            "type": "boolean",
+            "description": "필수 약관이면 동의하지 않은 사용자 전원에게 재동의(consent_required)를 요구함"
+          },
+          "url": {
+            "type": "string",
+            "description": "약관 본문 링크 (http, https)",
+            "maxLength": 512,
+            "format": "uri"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "is_required",
+          "url"
+        ]
+      },
+      "ConsentVersionDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "is_required": {
+            "type": "boolean"
+          },
+          "url": {
+            "type": "string",
+            "description": "약관 본문 링크"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "is_required",
+          "url",
+          "created_at"
+        ]
+      },
+      "ConsentStatusDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "agreed_count": {
+            "type": "number",
+            "description": "지금 유효한 동의가 있는 사용자 수. 탈퇴 처리된 사용자는 빼고, 가입 미완료 · 탈퇴 유예 중인 사용자는 포함"
+          },
+          "revoked_count": {
+            "type": "number",
+            "description": "동의했다가 철회한 상태인 사용자 수. 집계 대상은 agreed_count와 같음"
+          },
+          "withdrawn_count": {
+            "type": "number",
+            "description": "동의 이력이 남아 있는 탈퇴 처리된 사용자 수"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "agreed_count",
+          "revoked_count",
+          "withdrawn_count"
+        ]
+      },
+      "BusinessCardGraduatedDto": {
+        "type": "object",
+        "properties": {
+          "signup_status": {
+            "description": "가입 상태. withdrawal_requested: 탈퇴 유예기간 중",
+            "enum": [
+              "pending",
+              "active",
+              "withdrawal_requested"
+            ],
+            "type": "string"
+          },
+          "graduated_pk": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "nickname": {
+            "type": "string",
+            "nullable": true,
+            "description": "추가 정보 입력 전이면 null"
+          },
+          "company": {
+            "type": "string",
+            "nullable": true,
+            "description": "추가 정보 입력 전이면 null"
+          },
+          "job": {
+            "type": "string",
+            "nullable": true,
+            "description": "추가 정보 입력 전이면 null"
+          },
+          "has_business_card": {
+            "type": "boolean",
+            "description": "명함 업로드 여부. 인증을 취소하면 false"
+          },
+          "verified_at": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "명함 인증 시각. 미인증 · 인증 취소면 null"
+          }
+        },
+        "required": [
+          "signup_status",
+          "graduated_pk",
+          "name",
+          "nickname",
+          "company",
+          "job",
+          "has_business_card",
+          "verified_at"
+        ]
+      },
+      "BusinessCardImageUrlDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "명함 이미지 presigned GET URL"
+          },
+          "expires_in": {
+            "type": "number",
+            "description": "URL 만료까지 남은 시간 (초)"
+          }
+        },
+        "required": [
+          "url",
+          "expires_in"
+        ]
+      },
+      "SchoolDto": {
+        "type": "object",
+        "properties": {
+          "pk": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email_domains": {
+            "description": "학교 이메일 인증 시 허용 도메인",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "pk",
+          "name",
+          "email_domains"
+        ]
+      },
+      "DepartmentAdminDto": {
+        "type": "object",
+        "properties": {
+          "pk": {
+            "type": "number"
+          },
+          "school_pk": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "false면 앱의 학과 목록에서 숨기고 새로 고를 수 없음"
+          }
+        },
+        "required": [
+          "pk",
+          "school_pk",
+          "name",
+          "is_active"
+        ]
+      },
+      "CreateDepartmentRequestDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "같은 학교에서 중복 불가 (비활성 학과 포함)",
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateDepartmentRequestDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "같은 학교에서 중복 불가 (비활성 학과 포함). name · is_active 중 하나는 필수",
+            "maxLength": 64
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "false: 비활성화, true: 재활성화"
+          }
+        }
+      },
+      "ReplaceEmailDomainsRequestDto": {
+        "type": "object",
+        "properties": {
+          "email_domains": {
+            "description": "이 목록으로 전체 교체. 1~20개, 소문자로 저장",
+            "uniqueItems": true,
+            "minItems": 1,
+            "maxItems": 20,
+            "example": [
+              "gm.gist.ac.kr"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 128
+            }
+          }
+        },
+        "required": [
+          "email_domains"
+        ]
+      }
+    }
+  }
+}

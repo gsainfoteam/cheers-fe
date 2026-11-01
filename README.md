@@ -38,6 +38,10 @@ The dev server prints a local URL (default `http://localhost:5173`).
 | `bun run build` | Type-check (`tsc -b`) and build to `dist/` |
 | `bun run preview` | Serve the production build locally |
 | `bun run lint` | Run ESLint over the repo |
+| `bun run api:sync` | Pull the OpenAPI doc, regenerate types, check `dto.ts` against it |
+| `bun run api:pull` | Fetch `src/api/openapi.json` from staging (override with `API_DOCS_URL`) |
+| `bun run api:gen` | Regenerate `src/api/schema.gen.ts` from the committed spec |
+| `bun run api:check` | Verify `dto.ts` still matches the spec (fields, nullability, enums) |
 
 ## Project structure
 
@@ -52,6 +56,46 @@ src/
   main.tsx           App entry: creates the router and mounts React
 public/              Served as-is (favicon.svg, icons.svg)
 ```
+
+## API layer
+
+Requests are generated from the backend's OpenAPI doc; responses are hand-written
+zod schemas. The split is deliberate.
+
+| File | Covers | Maintained by |
+| --- | --- | --- |
+| `src/api/openapi.json` | The backend's spec, committed so changes show up in diffs | `api:pull` |
+| `src/api/schema.gen.ts` | Paths, query params, request bodies | `api:gen` — never edit |
+| `src/api/schema.ts` | Thin layer that keeps only `/api/v1` | by hand (rarely changes) |
+| `src/api/dto.ts` | Response shapes, as zod — validated at runtime | by hand |
+
+Responses are not generated because generated types only assert what the spec
+*claims*. The spec and the deployed server have disagreed before (issue #17), and
+the zod layer is what catches that: it throws in dev and logs in production.
+Generation would also drop the `.refine()` constraints the spec cannot express,
+and the comments recording why each field matters.
+
+### When the spec changes
+
+```bash
+bun run api:sync
+```
+
+That pulls the doc, regenerates `schema.gen.ts`, and diffs `dto.ts` against the
+spec. Then:
+
+1. **Review `git diff src/api/openapi.json`** — this is the actual change. Read it
+   before anything else.
+2. **Requests:** nothing to do. If a path or body changed, `tsc` now fails at the
+   call sites that need updating.
+3. **Responses:** `api:check` names each mismatched field. Fix `dto.ts`, and treat
+   each one as a UI question too — a new `*_withdrawn` flag means a screen should
+   probably show something.
+4. **A new response DTO** shows up as "짝이 없습니다". Add the zod schema and a line
+   to `MAP` in `scripts/check-dto-drift.mjs`.
+5. Verify the spec against the real server with `/verify.html` (dev only). The spec
+   is hand-maintained on the backend too, so passing `api:check` means the code
+   matches the *document*, not necessarily the deployment.
 
 ## Conventions
 
