@@ -1,3 +1,4 @@
+import { TokenPairSchema } from "./dto";
 import { API_BASE_URL } from "./env";
 import {
   clearTokens,
@@ -97,15 +98,24 @@ async function rotate(started: Tokens): Promise<string | null> {
     return null;
   }
 
-  if (!response.ok) {
+  if (
+    response.status === 400 ||
+    response.status === 401 ||
+    response.status === 403
+  ) {
     giveUp();
     return null;
   }
+  if (!response.ok) {
+    return null;
+  }
 
-  const next = (await response.json()) as {
-    access_token: string;
-    refresh_token: string;
-  };
+  let next: { access_token: string; refresh_token: string };
+  try {
+    next = TokenPairSchema.parse(await response.json());
+  } catch {
+    return null;
+  }
   setTokens({
     accessToken: next.access_token,
     refreshToken: next.refresh_token,

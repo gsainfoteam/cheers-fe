@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-query";
 import type { z } from "zod";
 import {
+  ApiError,
   api,
   createQueryClient,
   getTokens,
@@ -281,13 +282,7 @@ export function App() {
       );
       // 400 이면 남은 시도 횟수가 함께 온다. 그 파서도 여기서 확인한다
       if (result.status === 400) {
-        const attempts = remainingAttemptsOf(
-          Object.assign(new Error(), {
-            name: "ApiError",
-            status: 400,
-            body: result.body,
-          })
-        );
+        const attempts = remainingAttemptsOf(new ApiError(400, result.body));
         result.issues.push(
           `remainingAttemptsOf() → ${attempts ?? "읽지 못함"}`
         );
@@ -387,6 +382,21 @@ export function App() {
       // 전체 교체 방식이라 현재 값을 모두 다시 보낸다
       const links = profile.attachments.filter((a) => a.source === "link");
       const files = profile.attachments.filter((a) => a.source === "file");
+      if (files.length) {
+        record([
+          {
+            label: "POST /api/v1/user/student/info (수정 · 링크 첨부 추가)",
+            status: "throw",
+            schema: "skipped",
+            issues: [
+              `파일 첨부 ${files.length}건은 되돌려 보낼 수 없어 전송을 중단했습니다 (전체 교체 방식이라 삭제됨)`,
+            ],
+            body: null,
+          },
+        ]);
+        return;
+      }
+
       const attachments = [
         ...links.map((a) => ({
           kind: a.kind,

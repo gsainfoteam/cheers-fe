@@ -80,7 +80,11 @@ export function useSubmitConsent() {
       unwrap(await api.POST("/api/v1/user/consent", { body }), OkResultSchema),
     // next_step 과 consent_required 가 함께 바뀐다. 다음 화면으로 넘어가기 전에
     // 새 값을 받아둬야 가드가 방금 끝낸 단계로 되돌려보내지 않는다
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.user }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: keys.user,
+        refetchType: "all",
+      }),
   });
 }
 
