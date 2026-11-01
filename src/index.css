@@ -3,6 +3,28 @@
 @import "shadcn/tailwind.css";
 
 /*
+ * Noto Sans KR (설계 5.2). 124개 unicode-range 조각으로 나뉘어 있어서
+ * 브라우저가 실제로 그린 글자가 든 조각만 받아간다. 디스크엔 3.7MB 가 있지만
+ * 한 화면이 끌어오는 건 그중 일부다. 한글 폰트를 통짜 파일로 받으면
+ * 첫 화면에서 수 MB 를 물고 들어간다.
+ *
+ * 패키지가 `font-display: swap` 을 이미 박아 두었다. 폰트가 늦으면 폴백으로
+ * 먼저 그리고 나중에 바꿔 끼운다 — 한글은 폴백과 자폭 차이가 커서 글이 한 번
+ * 움직이지만, 글이 안 보이는 것보다는 낫다.
+ */
+@import "@fontsource-variable/noto-sans-kr";
+
+/*
+ * Geist Mono — 피그마 `Cheers / Brand/Micro` 한 스타일만 쓴다. 사원증(선배
+ * 카드) 띠의 `GIST ALUMNI` 같은 10px 영문 라벨이다. 라틴 400 하나면 되므로
+ * 전체 index 가 아니라 서브셋 CSS 를 직접 가리킨다 (woff2 9.9KB).
+ */
+@import "@fontsource/geist-mono/latin-400.css";
+
+/* 피그마에서 옮겨 온 색·타이포·그림자·모서리. 이름 대조표가 파일 머리에 있다. */
+@import "./styles/tokens.css";
+
+/*
  * 라이트 고정 (설계 5.2). 다크 시안이 없으므로 OS 설정과 무관하게 라이트로 렌더한다.
  *
  * 이 선언은 다크 모드 구현이 아니라 그 반대다. Tailwind v4 의 `dark:` 기본값은

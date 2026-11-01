@@ -52,7 +52,7 @@ Tailwind v4이므로 토큰은 `@theme` 에 선언하면 유틸리티가 자동 
 ### 5.2 디자인 제약
 
 - **폭은 두 개뿐이다**: 393(Mobile), 1440(Desktop). 중간 폭 시안은 존재하지 않는다.
-- **폰트는 Noto Sans KR.** 현재 코드에는 Inter가 들어와 있다.
+- **폰트는 Noto Sans KR**이 기본이고, `Brand/Micro` 한 스타일만 **Geist Mono** 10px 다(사원증 띠의 영문 라벨). `Brand/Poster` 의 Geist Bold 70 은 홍보자료 쪽이라 범위 밖. ~~현재 코드에는 Inter가 들어와 있다.~~ → 단계 0에서 제거, 단계 1에서 교체 완료.
 - **타이포 토큰이 폭마다 분리돼 있다.** `Cheers / Task/Title desktop`(40/56/-1.4)과 `Cheers / Task/Title mobile`(32/44/-1.0)이 별개 스타일이다. 즉 브레이크포인트에서 바뀌는 것은 레이아웃만이 아니라 토큰 값이다.
 - **라이트 고정.** 다크 시안이 없으므로 OS 설정과 무관하게 항상 라이트로 렌더한다.
 
@@ -131,19 +131,86 @@ Tailwind v4이므로 토큰은 `@theme` 에 선언하면 유틸리티가 자동 
 - webfont 파일(`.woff2`) 산출물 **0개**.
 - `bun run lint` 통과.
 
-### 단계 1 — 토큰 층
+### 단계 1 — 토큰 층 ✅ 완료 (2026-11-02)
 
 피그마 변수를 Tailwind v4 `@theme` 으로 옮긴다. 색(`--cheers-v05-*`, 브랜드), 간격(4/8/12/16/20/24/32/40/48/64), radius(4/8/12/full), border width, 그림자(`Elevation/Work surface`), 타이포 스케일 전부.
 
+#### 1-a. 폰트 ✅ 완료 (2026-11-02)
+
+`@fontsource-variable/noto-sans-kr` 5.3.1 을 self-host 한다. `--font-sans` 를 `@theme` 에 넣으면 Tailwind preflight 의 `--default-font-family` 가 그걸 가리키므로 **호출부에 `font-sans` 를 붙일 필요가 없다.** 폴백은 OS 한글 글꼴(`Apple SD Gothic Neo`, `Malgun Gothic`) 순서로, 웹폰트가 늦거나 실패해도 두부가 아니라 그 기기 한글 글꼴로 그려진다.
+
+**서브셋 전략: unicode-range 124조각을 그대로 쓴다.** 한글 웹폰트의 진짜 비용은 글리프 수다. 패키지가 Google Fonts 와 같은 방식으로 124개 조각 + `unicode-range` 로 쪼개 두었고, 브라우저는 **실제로 그린 글자가 든 조각만** 받는다. 직접 서브셋(KS X 1001 상용 2,350자)을 떠서 한 덩이로 만드는 방법도 있지만, 빌드 단계를 하나 더 얹고 폰트 버전이 바뀔 때마다 다시 떠야 한다 — 혼자 하는 작업에서 질 부담이 아니다.
+
+측정값:
+
+- `dist` 에 woff2 124개 / 3.7MB. 단 **전부 받지 않는다.** 흔히 쓰는 조각(115~119번, 라틴·숫자와 고빈도 한글)이 14~17KB 씩이라 한 화면이 실제로 끌어오는 건 대략 70~170KB.
+- 대신 `@font-face` 124벌이 CSS 로 들어온다: 빌드 CSS 23,494B → 103,938B (gzip 29,952B). 늘어난 80KB 중 77%가 `@font-face` 블록이다.
+- 한글 커버리지 확인: `가`(U+AC00)·`스` → 119번, `취` → 117번, `한` → 118번, `힣` → 2번. 라틴·숫자도 119번에 같이 있어 첫 조각 하나가 영문과 고빈도 한글을 같이 덮는다.
+
+gzip 24KB 가 렌더 블로킹 CSS 에 얹히는 게 나중에 문제가 되면, 조각 중 한자(U+4E00~, U+F9xx) 구간 35벌을 빼는 선택지가 있다. 지금은 안 한다 — 회사명·이름에 한자가 섞일 수 있고, 조각 번호는 폰트 버전이 바뀌면 달라지는 값이라 하드코딩하면 깨진다.
+
+#### 1-b. 간격 — 토큰을 만들지 않기로 했다
+
+피그마 간격 스케일 4/8/12/16/20/24/32/40/48/64 는 **Tailwind v4 기본 스케일(`--spacing: 0.25rem`)의 1/2/3/4/5/6/8/10/12/16 과 정확히 같다.** 전부 4의 배수라 하나도 빠짐없이 기본 유틸로 떨어진다.
+
+따라서 `--spacing-*` 를 따로 선언하지 않는다. 선언하면 같은 값에 이름이 두 벌(`p-4` 와 `p-md`) 생기고, 어느 쪽을 쓸지가 화면마다 갈린다. 4절이 경계하는 "토큰을 깔고도 안 쓰는" 상태의 변종이다. **`p-4` = 16px 이 곧 피그마 토큰이다.**
+
+#### 1-c. 색·그림자·모서리·타이포 ✅ 완료
+
 폭마다 값이 다른 타이포(`Task/Title`)는 **토큰 하나에 반응형을 심어** 호출부가 분기를 모르게 한다. 호출부마다 `text-[32px] lg:text-[40px]` 를 쓰면 11화면에 흩어지고 나중에 바꿀 수 없다.
 
-Noto Sans KR을 올린다. 한글 가변 폰트는 용량이 크므로 서브셋과 로딩 전략을 여기서 정한다.
+값은 `figma` MCP 로 `00 · 디자인 시스템` 섹션(node `373:10164`)과 학생 줄기 네 섹션(`375:15121`, `375:15122`, `375:15124`, `375:15125`)에서 직접 읽었다. 디자인 시스템 섹션만 읽으면 거기서 안 쓰는 스타일이 빠진다 — `Task/Title`, `Display/Hero`, `Heading/H1`, `Shadow/Modal` 이 그랬다.
+
+결과는 [`src/styles/tokens.css`](../../../src/styles/tokens.css) 한 파일. 색 19 · 타이포 26 · 그림자 3 · 모서리 4 · 글꼴 2.
+
+**이름 규칙.** 피그마 변수 하나 = 토큰 하나로 두되, 이름은 Tailwind 관례로 다듬었다. `v05` 버전 접두사를 떼고, 카테고리가 유틸 접두사와 겹치면 뺀다 — `bg-bg-canvas`, `text-text-primary` 를 11화면에 쓰지 않기 위해서다. 전체 대조표는 토큰 파일 머리 주석에 있다.
+
+**값이 같아도 합치지 않았다.** `v05-text-primary`·`v05-bg-ink`·`v05-action-primary` 는 오늘 셋 다 `#22201c` 지만 토큰은 `--color-ink`·`--color-ink-fill`·`--color-action` 셋이다. 합치면 디자인이 셋 중 하나만 바꿀 때 코드가 따라갈 수 없다. (`v05-text-secondary`/`v05-border-strong` → `#685e52` 도 같은 경우.)
+
+**반응형 타이포는 중간 변수 + `@theme inline`.** 폭마다 값이 다른 건 네 쌍이다.
+
+| 피그마 | 토큰 | mobile | desktop |
+|---|---|---|---|
+| Display/Hero | `text-hero` | 40/54/-1.9 | 64/84/-3.3 |
+| Brand/Statement | `text-statement` | 28/40/-1 | 44/60/-1.8 |
+| Task/Title | `text-task-title` | 32/44/-1 | 40/56/-1.4 |
+| Display/Page | `text-page` | 28/38/-1 | 36/48/-1.4 |
+
+`:root` 에 `--cheers-task-title-size` 같은 중간 변수를 두고 `lg` 미디어 쿼리로 덮은 뒤, `@theme inline` 으로 `--text-task-title: var(--cheers-task-title-size)` 를 건다. `inline` 이어야 Tailwind 가 값을 복사하지 않고 `font-size: var(--cheers-task-title-size)` 를 그대로 내보내서 미디어 쿼리가 먹는다. **호출부는 `text-task-title` 하나만 쓴다.** 경계는 `theme(--breakpoint-lg)` 로 Tailwind 값을 읽으므로, 6.2 가 정한 1024px 를 옮길 때 고칠 곳이 한 군데다.
+
+**`text-micro` 만 `@utility` 다.** `Brand/Micro` 는 글꼴까지 다른데(Geist Mono), Tailwind 의 `--text-*` 는 `--line-height`/`--letter-spacing`/`--font-weight` 세 수식어만 읽고 `--font-family` 는 조용히 무시한다. 토큰으로 두면 쓴 사람이 본문 글꼴로 그려지는 걸 모른 채 지나가므로 유틸로 묶어 글꼴을 같이 실었다.
+
+**모서리는 Tailwind 기본값을 덮었다.** 피그마 md=8/lg=12/xl=16 이 Tailwind 기본(6/8/12)과 달라서다. 덮으면 shadcn 5종이 쓰는 `rounded-md` 가 같이 교정된다. `sm`(4px)은 기본값과 같지만 피그마에 있는 값이라 명시해 뒀다.
+
+#### 1-d. 발견한 것 — 설계 문서가 틀렸던 부분
+
+- **글꼴이 하나가 아니다.** 5.2 는 "폰트는 Noto Sans KR" 이라고만 적었지만 `Brand/Micro` 가 **Geist Mono** 10px 다. 사원증(선배 카드) 띠의 `GIST ALUMNI` 같은 라벨이고, 랜딩(섹션 01)에 들어 있어 학생 줄기 범위 안이다. `@fontsource/geist-mono` 의 라틴 400 서브셋 CSS 하나만 가리켜 받는다 — woff2 9.9KB. `Brand/Poster`(Geist Bold 70)도 있지만 홍보자료 쪽이라 넣지 않았다.
+- **간격 스케일에 56 이 있다.** 문서는 4/8/12/16/20/24/32/40/48/64 로 적었는데 `--cheers-space-14`(56)가 더 있다. 1-b 결론은 그대로다 — 56 도 Tailwind `14` 와 같다.
+- **모서리에 xl(16)이 있다.** 문서는 4/8/12/full 로 적었다.
+- **그림자가 3종이다.** 문서는 `Elevation/Work surface` 하나만 언급했는데 `Shadow/Modal`(5.3 의 PC 모달에 쓸 것)과 `Shadow/Employee badge` 가 더 있다.
+
+#### 1-e. 확인 페이지
+
+`verify.html` 과 같은 방식으로 `tokens.html` + `src/dev/tokens.tsx` 를 두었다. dev 서버에서 `/tokens.html` 로 열면 색 19개, 타이포 26종, 그림자·모서리·간격, shadcn 다리가 한 화면에 뜬다. 창 폭을 1024px 아래위로 움직이면 반응형 네 쌍이 같이 바뀐다.
+
+화면이 아직 하나도 없는 단계라 토큰이 제대로 깔렸는지 볼 방법이 달리 없다. 부수 효과로 **Tailwind 가 소스에서 발견한 클래스만 내보내므로**, 이 페이지가 모든 토큰을 문자열 그대로 한 번씩 쓰고 있는 것 자체가 토큰이 전부 살아 있다는 증거가 된다. `index.html` 만 번들되므로 배포에는 섞이지 않지만, Tailwind 는 소스를 스캔하므로 이 페이지가 쓰는 클래스는 배포 CSS 에 들어간다(gzip 기준 3KB 남짓).
 
 라이트 고정은 단계 0에서 `:root { color-scheme: light }` 로 이미 박아 뒀다. 이 단계에서 추가로 할 일은 없고, 지우지만 않으면 된다.
 
-**단계 0이 넘긴 숙제를 여기서 받는다.** shadcn 5종(`button`, `field`, `input`, `label`, `separator`)이 쓰는 시맨틱 이름 — `primary`, `background`, `foreground`, `muted`, `destructive`, `input`, `ring`, `border` — 의 정의가 지금 비어 있다. Cheers 색을 깔면서 이 이름들에 Cheers 값을 물릴지, 컴포넌트 쪽 클래스를 Cheers 토큰 이름으로 바꿀지가 8절의 "고칠지 새로 만들지" 결정이고, 토큰 이름 규칙과 같이 묶여 있다.
+**단계 0이 넘긴 숙제는 "다리" 로 받았다.** shadcn 5종이 쓰는 시맨틱 이름(`primary`, `background`, `foreground`, `muted`, `destructive`, `input`, `ring`, `border`)을 Cheers 토큰에 `@theme inline` 으로 이어 붙여 되살렸다. 다섯 컴포넌트가 다시 보인다.
 
-끝난 상태: 토큰 이름만으로 피그마 색·간격·타이포를 꺼내 쓸 수 있다. 다크 설정 기기에서도 라이트로 뜬다. shadcn 5종이 다시 보인다.
+이건 임시다. 8절의 "shadcn 5종을 고칠지 새로 만들지" 는 아직 안 닫혔고, 단계 5에서 공통 컴포넌트를 회수할 때 이 블록이 통째로 없어질 수 있다. **새로 쓰는 화면은 다리 쪽이 아니라 Cheers 이름**(`bg-canvas`, `text-ink`, `border-line`)을 쓴다.
+
+끝난 상태 (확인함):
+
+- `bun run build` / `bun run lint` 통과.
+- 반응형 네 쌍이 산출물에 두 벌씩 들어 있고(`--cheers-task-title-size: 2rem | 2.5rem`), `@media (width>=64rem)` 으로 갈린다. `theme(--breakpoint-lg)` 가 64rem 으로 풀렸다.
+- `.text-task-title` 이 값을 복사하지 않고 `font-size: var(--cheers-task-title-size)` 를 내보낸다 — `@theme inline` 이 의도대로 동작.
+- 다리 확인: `.bg-primary` → `var(--color-action)`, `.border-input` → `var(--color-control)`.
+- `.text-micro` 에 `font-family: var(--font-mono)` 포함.
+- 그림자가 피그마 16진 알파로 되돌아온다(`#22201c09`, `#291c121a`, `#291c1212`) — 알파 환산이 맞다는 확인.
+- 다크 흔적 0건, `color-scheme` 은 `light` 하나. `.dark` 규칙 42벌은 `@custom-variant` 에 묶여 있고 미디어 쿼리 안에 없다 — 단계 0의 판단대로, 이 한 줄이 없었으면 저 42벌이 다크 기기에서 켜졌을 것이다.
+- CSS 103,938B → 124,759B (gzip 29,952B → 34,326B). 늘어난 20KB 는 토큰 + 확인 페이지가 쓰는 유틸.
 
 ### 단계 2 — 레이아웃 셸
 
@@ -186,11 +253,12 @@ Noto Sans KR을 올린다. 한글 가변 폰트는 용량이 크므로 서브셋
 
 ## 8. 빌더에게 맡기는 것
 
-- 토큰 이름 규칙. 피그마 변수명을 그대로 쓸지(`--cheers-v05-text-primary`), Tailwind 관례로 다듬을지(`--color-text-primary`).
-- Noto Sans KR 로딩 방식 — `@fontsource`, 서브셋 범위, `font-display`.
-- 반응형 타이포 토큰을 CSS 커스텀 프로퍼티 + 미디어 쿼리로 할지, Tailwind 유틸 조합으로 할지.
+- ~~토큰 이름 규칙~~ → **정해짐**: Tailwind 관례(`--color-text-primary`) + 피그마 매핑 표를 주석으로. 단계 1-c 참고.
+- ~~Noto Sans KR 로딩 방식~~ → **정해짐**: `@fontsource-variable/noto-sans-kr` self-host, unicode-range 124조각 그대로, `font-display: swap`. 단계 1-a 참고.
+- ~~간격 토큰~~ → **정해짐**: 만들지 않는다. 피그마 스케일이 Tailwind 기본과 동일. 단계 1-b 참고.
+- ~~반응형 타이포 토큰 방식~~ → **정해짐**: 중간 CSS 변수 + 미디어 쿼리 + `@theme inline`. 단계 1-c 참고.
 - 반응형 오버레이를 `@base-ui/react` Dialog 하나로 두 모드를 내게 할지, 폭에 따라 다른 컴포넌트를 렌더할지.
-- 기존 shadcn 컴포넌트 5종을 토큰에 맞춰 고칠지, 새로 만들지.
+- 기존 shadcn 컴포넌트 5종을 토큰에 맞춰 고칠지, 새로 만들지. (단계 1이 임시 다리로 되살려 뒀다. 결정은 단계 5까지 미뤄도 된다.)
 - 각 화면의 로딩·에러 처리 수준. 피그마에 `불러오는 중` 시안이 약관 화면에만 있다.
 - 커밋 단위와 브랜치 전략.
 
@@ -199,8 +267,8 @@ Noto Sans KR을 올린다. 한글 가변 폰트는 용량이 크므로 서브셋
 | 단계 | 상태 | 날짜 | 비고 |
 |---|---|---|---|
 | 0 — 바닥 치우기 | ✅ 완료 | 2026-11-02 | `index.css` 264줄 → 15줄, Inter 의존성 제거 |
-| 1 — 토큰 층 | 미착수 | | shadcn 시맨틱 이름 연결 결정이 선행 |
-| 2 — 레이아웃 셸 | 미착수 | | |
+| 1 — 토큰 층 | ✅ 완료 | 2026-11-02 | 색 19 · 타이포 26 · 그림자 3 · 모서리 4. `/tokens.html` 로 확인 |
+| 2 — 레이아웃 셸 | 미착수 | | Header `353:9429`(Viewport×Kind 8변형) / Footer `353:9657` |
 | 3 — 줄기 전반 (가입) | 미착수 | | |
 | 4 — 줄기 후반 (탐색·신청) | 미착수 | | |
 | 5 — 회수 | 미착수 | | |

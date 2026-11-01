@@ -1,0 +1,324 @@
+/*
+ * Cheers 디자인 토큰 — 피그마 `00 · 디자인 시스템`(node 373:10164)에서 옮김.
+ * 출처: figma.com/design/coVd5RXl0QhMXBVwOqlsju · 읽은 날 2026-11-02
+ *
+ * ── 이름 규칙 ────────────────────────────────────────────────────────────
+ * 피그마 변수 하나 = 토큰 하나. 값이 같아도 합치지 않는다(예: text-primary /
+ * bg-ink / action-primary 는 오늘 셋 다 #22201c 지만 토큰은 셋이다). 합치면
+ * 디자인이 셋 중 하나만 바꿀 때 코드가 따라갈 수 없다.
+ *
+ * 이름은 Tailwind 관례로 다듬는다 — `v05` 버전 접두사를 떼고, 카테고리가
+ * 유틸 접두사와 겹치면 뺀다. `bg-bg-canvas`, `text-text-primary` 를 11화면에
+ * 쓰지 않기 위해서다. 아래가 피그마 ↔ 코드 대조표다.
+ *
+ *   피그마 변수                  토큰                   쓰는 꼴
+ *   ───────────────────────────────────────────────────────────────────
+ *   v05-text-primary            --color-ink            text-ink
+ *   v05-text-secondary          --color-ink-soft       text-ink-soft
+ *   v05-text-disabled           --color-ink-faint      text-ink-faint
+ *   v05-text-inverse            --color-ink-inverse    text-ink-inverse
+ *   v05-text-brand              --color-brand          text-brand
+ *   v05-text-error              --color-danger         text-danger
+ *   v05-bg-canvas               --color-canvas         bg-canvas
+ *   v05-bg-surface              --color-surface        bg-surface
+ *   v05-bg-muted                --color-muted          bg-muted
+ *   v05-bg-ink                  --color-ink-fill       bg-ink-fill
+ *   bg-champagne                --color-champagne      bg-champagne
+ *   v05-border-default          --color-line           border-line
+ *   v05-border-strong           --color-line-strong    border-line-strong
+ *   v05-border-focus            --color-focus          ring-focus
+ *   v05-web-border-control      --color-control        border-control
+ *   v05-action-primary          --color-action         bg-action
+ *   v05-action-primary-hover    --color-action-hover   bg-action-hover
+ *   v05-brand-accent            --color-brand-accent   bg-brand-accent
+ *   brand-gold                  --color-brand-gold     bg-brand-gold
+ *
+ * ── 토큰을 만들지 않은 것 ────────────────────────────────────────────────
+ * 간격: 피그마 `--cheers-space-N` 이 Tailwind 기본 스케일의 `N` 과 값까지
+ *   같다(space-1=4px=`p-1`, space-16=64px=`p-16`). 토큰을 또 만들면 같은
+ *   값에 이름이 두 벌 생긴다. `p-4` 가 곧 `--cheers-space-4` 다.
+ * border width: `--cheers-border-width: 1` 은 Tailwind `border` 기본값과 같다.
+ * radius-full: 피그마 999px, Tailwind `rounded-full` 로 충분하다.
+ */
+
+@theme {
+  /* ── 색 ──────────────────────────────────────────────────────────── */
+  --color-ink: #22201c;
+  --color-ink-soft: #685e52;
+  --color-ink-faint: #9c8f7f;
+  --color-ink-inverse: #ffffff;
+  --color-ink-fill: #22201c;
+
+  --color-brand: #965a15;
+  --color-brand-accent: #ff9447;
+  --color-brand-gold: #f4c542;
+  --color-danger: #b42318;
+
+  --color-canvas: #fff9f3;
+  --color-surface: #ffffff;
+  --color-muted: #f8f0e5;
+  --color-champagne: #fff0d2;
+
+  --color-line: #e8ddcf;
+  --color-line-strong: #685e52;
+  --color-control: #8a7d6d;
+  --color-focus: #ad681a;
+
+  --color-action: #22201c;
+  --color-action-hover: #40392f;
+
+  /* ── 글꼴 ────────────────────────────────────────────────────────── */
+  /* `--font-sans` 를 바꾸면 Tailwind preflight 의
+     `html { font-family: var(--default-font-family) }` 가 따라오므로 페이지
+     기본 글꼴이 된다. 호출부에서 `font-sans` 를 붙일 필요가 없다.
+     폴백은 OS 한글 글꼴 순서 — 웹폰트가 뜨기 전/실패했을 때 네모(두부)가
+     아니라 그 기기의 한글 글꼴로 그려지게 한다. */
+  --font-sans: "Noto Sans KR Variable", "Apple SD Gothic Neo", "Malgun Gothic",
+    "맑은 고딕", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* ── 모서리 ──────────────────────────────────────────────────────── */
+  /* Tailwind 기본값(md 6px, lg 8px, xl 12px)을 피그마 값으로 덮는다.
+     shadcn 5종이 쓰는 `rounded-md` 가 같이 교정된다. */
+  --radius-sm: 0.25rem; /* 4px */
+  --radius-md: 0.5rem; /* 8px */
+  --radius-lg: 0.75rem; /* 12px */
+  --radius-xl: 1rem; /* 16px */
+
+  /* ── 그림자 ──────────────────────────────────────────────────────── */
+  /* 피그마는 16진 알파(#RRGGBBAA), CSS 는 0–1 비율이라 환산해 적는다. */
+  --shadow-work: 0 2px 8px 0 rgb(34 32 28 / 0.035); /* Elevation/Work surface #22201C09 */
+  --shadow-modal: 0 16px 40px -8px rgb(31 26 20 / 0.122); /* Shadow/Modal #1F1A141F */
+  --shadow-badge:
+    0 12px 24px -8px rgb(41 28 18 / 0.102),
+    0 2px 3px 0 rgb(41 28 18 / 0.071); /* Shadow/Employee badge */
+
+  /* ── 타이포: 폭에 따라 안 바뀌는 것 ──────────────────────────────── */
+  /* 피그마 letterSpacing 은 px. rem 으로 환산해 글자 크기와 같이 커지게 한다. */
+
+  --text-task-person: 1.75rem; /* Task/Person 28 */
+  --text-task-person--line-height: 2.5rem; /* 40 */
+  --text-task-person--letter-spacing: -0.05rem; /* -0.8 */
+  --text-task-person--font-weight: 700;
+
+  --text-screen: 1.75rem; /* Heading/Screen 28 */
+  --text-screen--line-height: 2.375rem; /* 38 */
+  --text-screen--letter-spacing: -0.125rem; /* -2 */
+  --text-screen--font-weight: 700;
+
+  --text-h1: 2rem; /* Heading/H1 32 */
+  --text-h1--line-height: 2.625rem; /* 42 */
+  --text-h1--letter-spacing: -0.075rem; /* -1.2 */
+  --text-h1--font-weight: 700;
+
+  --text-h2: 1.5rem; /* Heading/H2 24 */
+  --text-h2--line-height: 2.125rem; /* 34 */
+  --text-h2--letter-spacing: -0.05rem; /* -0.8 */
+  --text-h2--font-weight: 700;
+
+  --text-h3: 1.25rem; /* Heading/H3 20 */
+  --text-h3--line-height: 1.75rem; /* 28 */
+  --text-h3--letter-spacing: -0.03125rem; /* -0.5 */
+  --text-h3--font-weight: 700;
+
+  --text-card-title: 1.125rem; /* Heading/Card 18 */
+  --text-card-title--line-height: 1.625rem; /* 26 */
+  --text-card-title--letter-spacing: 0;
+  --text-card-title--font-weight: 700;
+
+  --text-body-lg: 1.125rem; /* Body/Large 18 */
+  --text-body-lg--line-height: 1.75rem; /* 28 */
+  --text-body-lg--font-weight: 400;
+
+  --text-body: 1rem; /* Body/Medium 16 */
+  --text-body--line-height: 1.5rem; /* 24 */
+  --text-body--font-weight: 400;
+
+  --text-body-sm: 0.875rem; /* Body/Small 14 */
+  --text-body-sm--line-height: 1.25rem; /* 20 */
+  --text-body-sm--font-weight: 400;
+
+  --text-label-lg: 1rem; /* Label/Large 16 */
+  --text-label-lg--line-height: 1.5rem; /* 24 */
+  --text-label-lg--font-weight: 500;
+
+  --text-label: 0.875rem; /* Label/Medium 14 */
+  --text-label--line-height: 1.25rem; /* 20 */
+  --text-label--font-weight: 500;
+
+  --text-label-sm: 0.75rem; /* Label/Small 12 */
+  --text-label-sm--line-height: 1rem; /* 16 */
+  --text-label-sm--letter-spacing: 0.0125rem; /* +0.2 */
+  --text-label-sm--font-weight: 500;
+
+  --text-label-xs: 0.6875rem; /* Label/Micro 11 */
+  --text-label-xs--line-height: 1rem; /* 16 */
+  --text-label-xs--font-weight: 500;
+
+  --text-button: 1rem; /* Web/Button 16 */
+  --text-button--line-height: 1.5rem; /* 24 */
+  --text-button--font-weight: 500;
+
+  /* 사원증(선배 카드) 전용. 피그마 이름에 `mobile` 이 붙어 있지만 desktop
+     짝이 없다 — 카드 자체가 두 폭에서 통째로 축소되는 구조여서다. */
+  --text-badge-name: 1.25rem; /* Badge/Name mobile 20 */
+  --text-badge-name--line-height: 1.75rem; /* 28 */
+  --text-badge-name--letter-spacing: -0.04375rem; /* -0.7 */
+  --text-badge-name--font-weight: 700;
+
+  --text-badge-role: 0.875rem; /* Badge/Role mobile 14 */
+  --text-badge-role--line-height: 1.25rem; /* 20 */
+  --text-badge-role--letter-spacing: -0.025rem; /* -0.4 */
+  --text-badge-role--font-weight: 400;
+
+  --text-badge-company: 0.75rem; /* Badge/Company mobile 12 */
+  --text-badge-company--line-height: 1.125rem; /* 18 */
+  --text-badge-company--letter-spacing: -0.01875rem; /* -0.3 */
+  --text-badge-company--font-weight: 500;
+
+  --text-badge-meta: 0.75rem; /* Badge/Meta mobile 12 */
+  --text-badge-meta--line-height: 1.125rem; /* 18 */
+  --text-badge-meta--letter-spacing: -0.025rem; /* -0.4 */
+  --text-badge-meta--font-weight: 400;
+
+}
+
+/*
+ * Brand/Micro 만 `--text-*` 가 아니라 `@utility` 다.
+ *
+ * 이 스타일은 글꼴까지 다르다(Noto Sans KR 이 아니라 Geist Mono). 그런데
+ * Tailwind 의 `--text-*` 는 `--line-height`, `--letter-spacing`,
+ * `--font-weight` 세 수식어만 읽고 `--font-family` 는 **조용히 무시한다.**
+ * 토큰으로 두면 `text-micro` 를 쓴 사람이 본문 글꼴로 그려지는 걸 모른 채
+ * 지나간다. 유틸로 묶어 글꼴을 같이 싣는다.
+ */
+@utility text-micro {
+  /* Brand/Micro — Geist Mono 10/14/+1 · 400 */
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  line-height: 0.875rem;
+  letter-spacing: 0.0625rem;
+  font-weight: 400;
+}
+
+/*
+ * ── 타이포: 폭에 따라 값이 바뀌는 것 ──────────────────────────────────
+ *
+ * 피그마에 desktop/mobile 이 별도 스타일로 그려진 네 쌍이다. 호출부가
+ * 분기를 모르게 하려고 중간 변수에 반응형을 심고, `@theme inline` 으로
+ * 그 변수를 가리키게 한다. `inline` 이어야 Tailwind 가 값을 복사하지 않고
+ * `font-size: var(--cheers-hero-size)` 를 그대로 내보내서 미디어 쿼리가 먹는다.
+ *
+ * 호출부는 `text-hero` 하나만 쓴다. `text-[2.5rem] lg:text-[4rem]` 을 쓰면
+ * 같은 결정이 11화면에 흩어지고, 시안이 바뀔 때 전부 찾아다녀야 한다.
+ *
+ * 경계는 설계 6.2 가 정한 `lg`(1024px) 하나. `theme()` 로 Tailwind 의
+ * `--breakpoint-lg` 를 그대로 읽어서, 경계를 옮길 때 두 군데를 고치는 일이
+ * 생기지 않게 한다.
+ */
+:root {
+  /* Display/Hero mobile 40/54/-1.9 */
+  --cheers-hero-size: 2.5rem;
+  --cheers-hero-lh: 3.375rem;
+  --cheers-hero-ls: -0.11875rem;
+
+  /* Display/Page mobile 28/38/-1 */
+  --cheers-page-size: 1.75rem;
+  --cheers-page-lh: 2.375rem;
+  --cheers-page-ls: -0.0625rem;
+
+  /* Brand/Statement mobile 28/40/-1 */
+  --cheers-statement-size: 1.75rem;
+  --cheers-statement-lh: 2.5rem;
+  --cheers-statement-ls: -0.0625rem;
+
+  /* Task/Title mobile 32/44/-1 */
+  --cheers-task-title-size: 2rem;
+  --cheers-task-title-lh: 2.75rem;
+  --cheers-task-title-ls: -0.0625rem;
+}
+
+@media (width >= theme(--breakpoint-lg)) {
+  :root {
+    /* Display/Hero desktop 64/84/-3.3 */
+    --cheers-hero-size: 4rem;
+    --cheers-hero-lh: 5.25rem;
+    --cheers-hero-ls: -0.20625rem;
+
+    /* Display/Page desktop 36/48/-1.4 */
+    --cheers-page-size: 2.25rem;
+    --cheers-page-lh: 3rem;
+    --cheers-page-ls: -0.0875rem;
+
+    /* Brand/Statement desktop 44/60/-1.8 */
+    --cheers-statement-size: 2.75rem;
+    --cheers-statement-lh: 3.75rem;
+    --cheers-statement-ls: -0.1125rem;
+
+    /* Task/Title desktop 40/56/-1.4 */
+    --cheers-task-title-size: 2.5rem;
+    --cheers-task-title-lh: 3.5rem;
+    --cheers-task-title-ls: -0.0875rem;
+  }
+}
+
+@theme inline {
+  --text-hero: var(--cheers-hero-size);
+  --text-hero--line-height: var(--cheers-hero-lh);
+  --text-hero--letter-spacing: var(--cheers-hero-ls);
+  --text-hero--font-weight: 700;
+
+  --text-page: var(--cheers-page-size);
+  --text-page--line-height: var(--cheers-page-lh);
+  --text-page--letter-spacing: var(--cheers-page-ls);
+  --text-page--font-weight: 700;
+
+  --text-statement: var(--cheers-statement-size);
+  --text-statement--line-height: var(--cheers-statement-lh);
+  --text-statement--letter-spacing: var(--cheers-statement-ls);
+  --text-statement--font-weight: 700;
+
+  --text-task-title: var(--cheers-task-title-size);
+  --text-task-title--line-height: var(--cheers-task-title-lh);
+  --text-task-title--letter-spacing: var(--cheers-task-title-ls);
+  --text-task-title--font-weight: 700;
+}
+
+/*
+ * ── shadcn 다리 ───────────────────────────────────────────────────────
+ *
+ * 단계 0에서 shadcn 기본 무채색 토큰을 걷어내는 바람에 `button`, `field`,
+ * `input`, `label`, `separator` 다섯이 색을 잃었다. 그 컴포넌트들이 쓰는
+ * 시맨틱 이름을 Cheers 토큰에 이어 붙여 되살린다.
+ *
+ * 이건 임시 다리다. 설계 8절의 "shadcn 5종을 고칠지 새로 만들지" 가 아직
+ * 안 닫혀 있고, 단계 5에서 공통 컴포넌트를 회수할 때 이 블록이 통째로
+ * 없어질 수 있다. 새로 쓰는 화면은 이쪽이 아니라 위의 Cheers 이름
+ * (`bg-canvas`, `text-ink`, `border-line`)을 쓴다.
+ */
+@theme inline {
+  --color-background: var(--color-canvas);
+  --color-foreground: var(--color-ink);
+  --color-card: var(--color-surface);
+  --color-card-foreground: var(--color-ink);
+  --color-popover: var(--color-surface);
+  --color-popover-foreground: var(--color-ink);
+  --color-primary: var(--color-action);
+  --color-primary-foreground: var(--color-ink-inverse);
+  --color-secondary: var(--color-muted);
+  --color-secondary-foreground: var(--color-ink);
+  --color-muted-foreground: var(--color-ink-soft);
+  --color-accent: var(--color-champagne);
+  --color-accent-foreground: var(--color-brand);
+  --color-destructive: var(--color-danger);
+  --color-border: var(--color-line);
+  --color-input: var(--color-control);
+  --color-ring: var(--color-focus);
+}
+
+@layer base {
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+  }
+}
