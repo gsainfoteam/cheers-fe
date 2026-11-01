@@ -10,6 +10,11 @@ import type * as dto from "./dto";
  * 역할 나누기
  *  - `dto.ts`  응답 모양. zod 스키마라서 런타임에도 검사된다
  *  - 이 파일   경로 · 쿼리 · 요청 본문. 전부 컴파일 시점에 잡히므로 타입만 있으면 된다
+ *
+ * POST 의 성공 응답은 200 이 아니라 **201** 이다 (NestJS 기본값). 실제 호출로
+ * consent · verify/send-code · verify/code 에서 확인했다. `unwrap` 은 상태 코드가
+ * 아니라 `response.ok` 로 판단하므로 런타임 동작과는 무관하지만, 계약서가
+ * 사실과 달라서는 안 된다.
  */
 
 type Json<T> = { content: { "application/json": T } };
@@ -49,7 +54,7 @@ export interface paths {
         nonce?: string;
       }>;
       responses: {
-        200: Json<dto.TokenPair>;
+        201: Json<dto.TokenPair>;
       };
     };
   };
@@ -59,7 +64,7 @@ export interface paths {
     post: {
       requestBody: Json<{ refresh_token: string }>;
       responses: {
-        200: Json<dto.TokenPair>;
+        201: Json<dto.TokenPair>;
       };
     };
   };
@@ -77,7 +82,7 @@ export interface paths {
     post: {
       requestBody: Json<{ refresh_token: string }>;
       responses: {
-        200: Json<dto.OkResult>;
+        201: Json<dto.OkResult>;
       };
     };
   };
@@ -86,7 +91,7 @@ export interface paths {
     post: {
       requestBody?: never;
       responses: {
-        200: Json<dto.OkResult>;
+        201: Json<dto.OkResult>;
       };
     };
   };
@@ -106,7 +111,7 @@ export interface paths {
         consents: { type: string; version: string; agreed: boolean }[];
       }>;
       responses: {
-        200: Json<dto.OkResult>;
+        201: Json<dto.OkResult>;
       };
     };
   };
@@ -115,7 +120,7 @@ export interface paths {
     post: {
       requestBody: Json<{ email: string }>;
       responses: {
-        200: Json<dto.SendCodeResult>;
+        201: Json<dto.SendCodeResult>;
       };
     };
   };
@@ -124,7 +129,7 @@ export interface paths {
     post: {
       requestBody: Json<{ code: string }>;
       responses: {
-        200: Json<dto.OkResult>;
+        201: Json<dto.OkResult>;
         /** 코드가 틀림. 남은 시도 횟수를 함께 준다 */
         400: Json<{ remaining_attempts: number }>;
       };
@@ -155,7 +160,7 @@ export interface paths {
       }>;
       responses: {
         /** 이번 호출로 가입이 완료됐을 때만 토큰이 함께 온다 */
-        200: Json<dto.SignupResult>;
+        201: Json<dto.SignupResult>;
       };
     };
   };
@@ -169,7 +174,7 @@ export interface paths {
         size: number;
       }>;
       responses: {
-        200: Json<dto.UploadUrl>;
+        201: Json<dto.UploadUrl>;
       };
     };
   };
@@ -178,7 +183,7 @@ export interface paths {
     post: {
       requestBody: Json<{ key: string }>;
       responses: {
-        200: Json<dto.OkResult>;
+        201: Json<dto.OkResult>;
       };
     };
   };
@@ -199,7 +204,7 @@ export interface paths {
         contact: ContactRequest;
       }>;
       responses: {
-        200: Json<dto.SignupResult>;
+        201: Json<dto.SignupResult>;
       };
     };
   };
@@ -227,7 +232,7 @@ export interface paths {
     post: {
       requestBody: Json<{ graduated_id: string; message: string }>;
       responses: {
-        200: Json<dto.CheersRequestResult>;
+        201: Json<dto.CheersRequestResult>;
       };
     };
   };
@@ -289,7 +294,7 @@ export interface paths {
       };
       requestBody?: never;
       responses: {
-        200: Json<dto.ShareContactResult>;
+        201: Json<dto.ShareContactResult>;
       };
     };
   };

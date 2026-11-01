@@ -26,6 +26,19 @@ export const AttachmentSchema = z.object({
   /** `source = file` 이면 유효기간 10분짜리 조회 URL */
   url: z.string(),
   file_name: z.string().nullable(),
+  /**
+   * 명세서에 없는 필드지만 실제 응답에 들어 있다. `source = file` 일 때 이
+   * 파일의 key 로 보이며, 링크 첨부에서는 null 이었다.
+   *
+   * 중요하다: 추가 정보는 전체 교체 방식이라 수정할 때 기존 첨부를 그대로
+   * 돌려보내야 하는데, 파일 첨부는 요청에 `key` 가 필요하다. 이 필드가 없으면
+   * 프로필을 고칠 때마다 올려둔 파일이 사라진다.
+   *
+   * `optional` 인 이유: 내 프로필(`GET /user/info`)에서는 항상 왔지만, 현업자가
+   * 보는 재학생 첨부(`GET /cheers/received/{id}`)는 아직 확인하지 못했다.
+   * 남의 파일 key 를 노출하지 않으려고 뺄 수도 있다. 확인되면 좁힐 것.
+   */
+  key: z.string().nullable().optional(),
 });
 
 /** 커피챗 소식을 받을 방법. 둘 다 false 면 "희망하지 않음" */
@@ -186,6 +199,13 @@ export const RequestGraduatedSchema = z.object({
 export const SentRequestSchema = z.object({
   id: z.string(),
   graduated: RequestGraduatedSchema,
+  /**
+   * 명세서에 없는 필드지만 실제 응답에 들어 있다. 상대 현업자가 탈퇴했는지.
+   *
+   * 탈퇴해도 커피챗 기록은 남는다고 명세에 적혀 있으니, 목록에서 "탈퇴한
+   * 사용자" 를 표시하거나 재요청 버튼을 막는 근거가 이 값이다.
+   */
+  graduated_withdrawn: z.boolean(),
   message: z.string(),
   status: CheersStatusSchema,
   created_at: z.string(),
