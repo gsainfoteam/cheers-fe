@@ -1,12 +1,7 @@
-import {
-  createFileRoute,
-  useNavigate,
-  useRouter,
-} from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { z } from "zod";
-import { userInfoQuery } from "@/api";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
+import { redirectIfSignedIn } from "@/lib/guards";
 import { toInternalPath } from "@/lib/redirect";
 import { lastRole } from "@/lib/role";
 
@@ -33,6 +28,12 @@ export const Route = createFileRoute("/login")({
       switchAccount: value.switchAccount === true,
     };
   },
+  beforeLoad: async ({ context, search }) => {
+    // "다른 계정으로 로그인" 은 세션이 있어도 여기 머물러야 한다.
+    // 아니면 계정을 바꾸려는 사람이 영영 제자리로 튕긴다
+    if (search.switchAccount) return;
+    await redirectIfSignedIn(context.queryClient);
+  },
   component: RouteComponent,
 });
 
@@ -43,9 +44,7 @@ const MESSAGE = {
 
 function RouteComponent() {
   const { reason, redirect, switchAccount } = Route.useSearch();
-  const navigate = useNavigate();
   const router = useRouter();
-  const queryClient = useQueryClient();
 
   /**
    * 유형을 묻지 않지만 API 는 `type` 을 필수로 받는다. 가입을 마친 유저에게는
@@ -54,15 +53,15 @@ function RouteComponent() {
    */
   const role = lastRole() ?? "student";
 
-  const afterLogin = async () => {
+  const afterLogin = () => {
     if (redirect) {
-      // 딥링크 복귀. 타입이 붙은 `to` 로는 임의 경로를 표현할 수 없어 history 를 쓴다
+      // 딥링크 복귀. 타입이 붙은 `to` 로는 임의 경로를 표현할 수 없어 history 를 쓴다.
+      // 값은 validateSearch 에서 같은 출처인지 이미 걸러졌다
       router.history.push(redirect);
       return;
     }
-    const me = await queryClient.fetchQuery(userInfoQuery());
-    if (me.next_step) navigate({ to: "/onboarding" });
-    else navigate({ to: "/home" });
+    // 복귀 지점이 없으면 가드가 next_step 을 보고 정한다
+    void router.invalidate();
   };
 
   return (
@@ -74,7 +73,7 @@ function RouteComponent() {
         // 화면이 뜨게 한다 — 없으면 구글이 기존 세션으로 즉시 돌려보내서
         // 사용자가 "다른 계정으로 로그인" 과 "확인할 수 없어요" 사이를 맴돈다
         switchAccount={switchAccount}
-        onSuccess={() => void afterLogin()}
+        onSuccess={afterLogin}
       />
     </div>
   );

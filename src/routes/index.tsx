@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
-import { userInfoQuery } from "@/api";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
 import { Button } from "@/components/ui/button";
+import { redirectIfSignedIn } from "@/lib/guards";
 import { rememberRole } from "@/lib/role";
 import type { Role } from "@/lib/session";
 
@@ -14,13 +13,17 @@ import type { Role } from "@/lib/session";
  * 처음 로그인하는 사용자는 그 값으로 가입이 시작된다.
  */
 export const Route = createFileRoute("/")({
+  // 이미 로그인한 사람에게 유형 선택을 다시 보여주지 않는다. 가입 중인
+  // 사용자가 다른 유형을 누르면 인증과 추가 정보가 지워지기 때문이다
+  beforeLoad: async ({ context }) => {
+    await redirectIfSignedIn(context.queryClient);
+  },
   component: RouteComponent,
 });
 
 function RouteComponent() {
   const [role, setRole] = useState<Role | null>(null);
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const router = useRouter();
 
   const choose = (next: Role) => {
     setRole(next);
@@ -29,17 +32,10 @@ function RouteComponent() {
   };
 
   /**
-   * 로그인 직후 어디로 갈지는 서버가 정한다. `next_step` 이 남아 있으면
-   * 가입이 끝나지 않은 것이고, null 이면 메인이다.
-   *
-   * TODO: 이 분기는 결국 `_app` / `onboarding` 의 beforeLoad 가드로 옮겨간다.
-   * 지금은 로그인 흐름을 끝까지 돌려보기 위해 여기 둔다.
+   * 로그인 후 어디로 갈지는 가드가 정한다. 라우터를 다시 평가시키면
+   * 이 화면의 beforeLoad 가 새 세션을 보고 알아서 보낸다.
    */
-  const afterLogin = async () => {
-    const me = await queryClient.fetchQuery(userInfoQuery());
-    if (me.next_step) navigate({ to: "/onboarding" });
-    else navigate({ to: "/home" });
-  };
+  const afterLogin = () => void router.invalidate();
 
   return (
     <div>
@@ -63,7 +59,7 @@ function RouteComponent() {
 
       {role ? (
         <section>
-          <GoogleSignInButton role={role} onSuccess={() => void afterLogin()} />
+          <GoogleSignInButton role={role} onSuccess={afterLogin} />
         </section>
       ) : null}
     </div>
