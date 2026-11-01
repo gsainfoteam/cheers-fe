@@ -23,6 +23,9 @@ export default defineConfig([
           allowCompoundComponents: true, // configs.vite 기본값
           extraHOCs: [
             "createRootRoute",
+            // createRootRouteWithContext<T>()({...}) — 커리된 호출이라
+            // 이름을 적어주지 않으면 규칙이 라우트인 줄 모른다
+            "createRootRouteWithContext",
             "createFileRoute",
             "createLazyFileRoute",
             "createRoute",
