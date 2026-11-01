@@ -1,7 +1,7 @@
 /**
  * 토큰 저장소.
  *
- * refresh token 이 응답 본문(opaque 문자열)으로 오기 때문에 httpOnly 쿠키에
+ * refresh token 이 로그인 응답 본문(opaque 문자열)으로 오기 때문에 httpOnly 쿠키에
  * 담을 방법이 없다. 결국 JS 가 읽을 수 있는 곳에 둘 수밖에 없고, 그중
  * localStorage 를 골랐다 — sessionStorage 는 새 탭마다 로그인이 풀려서
  * 알림톡 딥링크(새 탭으로 열림)와 상극이다.
@@ -110,8 +110,9 @@ export function subscribeTokens(
 /**
  * 다른 탭의 로그인 · 로그아웃을 이 탭에도 반영한다.
  *
- * refresh token 이 1회용이라 탭마다 따로 놀면 서로의 토큰을 무효화한다.
- * storage 이벤트로 캐시를 맞춰두면 그 사고의 대부분이 사라진다.
+ * refresh token 자체는 만료까지 계속 쓰는 값이라 탭끼리 무효화하지는 않는다.
+ * 그래도 한쪽 탭에서 로그아웃하거나 계정을 바꿔 로그인했을 때 다른 탭이 죽은
+ * 세션을 들고 있으면 안 되므로, storage 이벤트로 캐시를 맞춘다.
  */
 if (typeof window !== "undefined") {
   window.addEventListener("storage", (event) => {

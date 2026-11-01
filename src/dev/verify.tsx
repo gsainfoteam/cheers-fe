@@ -24,8 +24,9 @@ import type { Role } from "@/lib/session";
 /**
  * 개발용 API 응답 확인 페이지 (`/verify.html`).
  *
- * 백엔드가 OpenAPI 를 내보내지 않아 `dto.ts` 를 손으로 유지하는 상황이라,
- * "명세서대로 적은 스키마가 진짜 응답과 맞는가" 를 확인할 수단이 필요하다.
+ * `dto.ts` 를 `/api-docs-json` 을 보고 손으로 옮겨 유지하는 상황이라,
+ * "명세대로 적은 스키마가 진짜 응답과 맞는가" 를 확인할 수단이 필요하다.
+ * 명세와 배포가 어긋나는 일이 실제로 있었다 (이슈 #17).
  *
  * 대부분의 엔드포인트는 가입을 마쳐야 열리므로 가입 단계를 직접 밟을 수 있게
  * 해뒀다. **실제 메일이 나가고 실제 계정 상태가 바뀐다.** 그래서 단계마다
@@ -143,6 +144,11 @@ async function readOnlySweep(): Promise<Check[]> {
       "GET /api/v1/user/student/departments",
       () => api.GET("/api/v1/user/student/departments"),
       schemas.DepartmentListSchema
+    ),
+    await check(
+      "GET /api/v1/user/student/interests",
+      () => api.GET("/api/v1/user/student/interests"),
+      schemas.InterestListSchema
     ),
     await check(
       "GET /api/v1/cheers",
@@ -380,16 +386,35 @@ export function App() {
       if (!profile) return;
 
       // 전체 교체 방식이라 현재 값을 모두 다시 보낸다
-      const links = profile.attachments.filter((a) => a.source === "link");
-      const files = profile.attachments.filter((a) => a.source === "file");
-      if (files.length) {
+      // 명세상 contact 는 nullable 이다. 요청에서는 필수라 지어낼 수 없다
+      if (!profile.contact) {
         record([
           {
             label: "POST /api/v1/user/student/info (수정 · 링크 첨부 추가)",
             status: "throw",
             schema: "skipped",
             issues: [
-              `파일 첨부 ${files.length}건은 되돌려 보낼 수 없어 전송을 중단했습니다 (전체 교체 방식이라 삭제됨)`,
+              "저장된 연락 설정이 없습니다 (contact = null) — 전체 교체 요청에 넣을 값이 없어 중단했습니다",
+            ],
+            body: null,
+          },
+        ]);
+        return;
+      }
+
+      const links = profile.attachments.filter((a) => a.source === "link");
+      const files = profile.attachments.filter((a) => a.source === "file");
+      // 파일 첨부는 응답의 key 를 그대로 돌려보내야 살아남는다.
+      // key 가 null 인 파일 첨부가 있으면 되돌릴 방법이 없으므로 중단한다
+      const orphaned = files.filter((a) => a.key === null);
+      if (orphaned.length) {
+        record([
+          {
+            label: "POST /api/v1/user/student/info (수정 · 링크 첨부 추가)",
+            status: "throw",
+            schema: "skipped",
+            issues: [
+              `파일 첨부 ${orphaned.length}건에 key 가 없어 전송을 중단했습니다 (전체 교체 방식이라 삭제됨)`,
             ],
             body: null,
           },
@@ -402,6 +427,12 @@ export function App() {
           kind: a.kind,
           source: "link" as const,
           url: a.url,
+        })),
+        ...files.map((a) => ({
+          kind: a.kind,
+          source: "file" as const,
+          key: a.key as string,
+          file_name: a.file_name ?? "",
         })),
         {
           kind: "portfolio" as const,
@@ -434,9 +465,7 @@ export function App() {
               `응답에 토큰: ${data.access_token ? "있음 ⚠️ (수정인데 재발급?)" : "없음 ✅ (명세대로)"}`,
               `저장된 토큰: ${before?.accessToken !== after?.accessToken ? "바뀜 ⚠️" : "그대로 ✅ (adoptIssuedTokens 가 올바르게 아무것도 안 함)"}`,
               ...(files.length
-                ? [
-                    `⚠️ 파일 첨부 ${files.length}건은 되돌려 보낼 수 없어 사라집니다 — 응답은 url 을, 요청은 key 를 받습니다`,
-                  ]
+                ? [`파일 첨부 ${files.length}건을 key 로 되돌려 보냈습니다`]
                 : []),
             ],
             body: redact(data),
@@ -596,7 +625,7 @@ export function App() {
             <h2>읽기 전용 점검</h2>
             <p style={S.note}>몇 번이든 다시 돌려도 안전합니다.</p>
             <button onClick={() => void sweep()} disabled={busy !== null}>
-              {busy === "sweep" ? "확인 중…" : "6개 엔드포인트 점검"}
+              {busy === "sweep" ? "확인 중…" : "7개 엔드포인트 점검"}
             </button>
           </section>
 

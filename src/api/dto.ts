@@ -3,9 +3,12 @@ import { z } from "zod";
 /**
  * 응답 DTO의 단일 출처.
  *
- * 백엔드가 OpenAPI 를 내보내지 않으므로 타입을 생성해 올 곳이 없다. 대신
- * zod 스키마를 적고 타입은 `z.infer` 로 파생시킨다 — 한 군데만 고치면 타입과
- * 런타임 검사가 함께 따라온다.
+ * 백엔드가 OpenAPI 를 내보낸다 (`/api-docs-json`). 그래도 타입만 생성해 오지
+ * 않고 zod 스키마를 적는 이유는 런타임 검사 때문이다 — 생성된 타입은 응답이
+ * 실제로 그 모양인지 확인해주지 않는다. 타입은 `z.infer` 로 파생시키므로
+ * 한 군데만 고치면 타입과 검사가 함께 따라온다.
+ *
+ * **명세가 바뀌면 `/api-docs-json` 을 받아 이 파일과 대조할 것.**
  *
  * 전부 `z.object` 의 기본 동작(모르는 키는 버림)을 쓴다. `.strict()` 를 쓰면
  * 백엔드가 응답에 필드를 하나 더해준 날 멀쩡한 화면이 통째로 깨진다. 우리가
@@ -20,25 +23,30 @@ export const DepartmentSchema = z.object({
   name: z.string(),
 });
 
+/**
+ * 첨부 — **남이 보는 쪽** (명세의 `AttachmentDto`).
+ * 현업자가 받은 요청에서 재학생의 이력서 · 포트폴리오를 볼 때의 모양이다.
+ *
+ * `key` 가 없다. 남의 파일 key 를 쥐여줄 이유가 없어 서버가 빼고 준다.
+ */
 export const AttachmentSchema = z.object({
   kind: z.enum(["cv", "portfolio"]),
   source: z.enum(["link", "file"]),
-  /** `source = file` 이면 유효기간 10분짜리 조회 URL */
+  /** `source = file` 이면 presigned 조회 URL */
   url: z.string(),
   file_name: z.string().nullable(),
-  /**
-   * 명세서에 없는 필드지만 실제 응답에 들어 있다. `source = file` 일 때 이
-   * 파일의 key 로 보이며, 링크 첨부에서는 null 이었다.
-   *
-   * 중요하다: 추가 정보는 전체 교체 방식이라 수정할 때 기존 첨부를 그대로
-   * 돌려보내야 하는데, 파일 첨부는 요청에 `key` 가 필요하다. 이 필드가 없으면
-   * 프로필을 고칠 때마다 올려둔 파일이 사라진다.
-   *
-   * `optional` 인 이유: 내 프로필(`GET /user/info`)에서는 항상 왔지만, 현업자가
-   * 보는 재학생 첨부(`GET /cheers/received/{id}`)는 아직 확인하지 못했다.
-   * 남의 파일 key 를 노출하지 않으려고 뺄 수도 있다. 확인되면 좁힐 것.
-   */
-  key: z.string().nullable().optional(),
+});
+
+/**
+ * 첨부 — **내 것** (명세의 `StudentAttachmentDto`). `GET /user/info` 가 준다.
+ *
+ * `key` 가 더 붙는다. 추가 정보는 전체 교체 방식이라 수정할 때 기존 첨부를
+ * 그대로 돌려보내야 하는데, 파일 첨부 요청이 받는 건 `url` 이 아니라 `key` 다.
+ * 이 값이 없으면 프로필을 고칠 때마다 올려둔 파일이 사라진다.
+ */
+export const StudentAttachmentSchema = AttachmentSchema.extend({
+  /** `source = file` 일 때만 값이 있다. 링크 첨부는 null */
+  key: z.string().nullable(),
 });
 
 /** 커피챗 소식을 받을 방법. 둘 다 false 면 "희망하지 않음" */
@@ -54,8 +62,9 @@ export const StudentProfileSchema = z.object({
   department: DepartmentSchema,
   interests: z.array(z.string()),
   activities: z.array(z.string()),
-  attachments: z.array(AttachmentSchema),
-  contact: ContactSchema,
+  attachments: z.array(StudentAttachmentSchema),
+  /** 아직 연락 설정을 저장하지 않았으면 null */
+  contact: ContactSchema.nullable(),
 });
 
 export const StudentInfoSchema = z.object({
@@ -73,7 +82,8 @@ export const GraduatedProfileSchema = z.object({
   job: z.string(),
   hashtags: z.array(z.string()),
   links: z.array(z.string()),
-  contact: ContactSchema,
+  /** 아직 연락 설정을 저장하지 않았으면 null */
+  contact: ContactSchema.nullable(),
 });
 
 export const GraduatedInfoSchema = z.object({
@@ -90,7 +100,12 @@ export const UserInfoSchema = z.object({
   id: z.string(),
   type: z.enum(["student", "graduated"]),
   status: z.enum(["pending", "active"]),
-  /** 가입 중일 때 다음 단계. 가입을 마쳤으면 null */
+  /**
+   * 다음 단계. 가입을 마쳤으면 null.
+   *
+   * `status = active` 인데도 값이 올 수 있다 — 어드민이 명함 인증을 취소한
+   * 현업자는 `verify` 로 돌아온다. 가드가 `status` 가 아니라 이 값만 보는 이유다.
+   */
   next_step: z.enum(["consent", "verify", "profile"]).nullable(),
   name: z.string().nullable(),
   email: z.string().nullable(),
@@ -100,10 +115,22 @@ export const UserInfoSchema = z.object({
   graduated: GraduatedInfoSchema.nullable(),
 });
 
+/** 로그인 · 가입 완료 때만 온다. refresh 는 access token 만 돌려준다 */
 export const TokenPairSchema = z.object({
   access_token: z.string(),
-  /** JWT 가 아닌 opaque token. 호출할 때마다 새로 발급된다 */
+  /** JWT 가 아닌 opaque token. 발급 후 기본 180일 */
   refresh_token: z.string(),
+});
+
+/**
+ * `POST /user/refresh` 의 응답.
+ *
+ * **refresh token 은 들어 있지 않다.** 재발급도 연장도 없고, 원래 받은 걸
+ * 만료될 때까지 계속 쓴다. 여기서 `TokenPairSchema` 를 쓰면 파싱이 실패해
+ * 멀쩡한 세션이 로그아웃된다.
+ */
+export const AccessTokenSchema = z.object({
+  access_token: z.string(),
 });
 
 export const OkResultSchema = z.object({
@@ -141,6 +168,10 @@ export const DepartmentListSchema = z.object({
   departments: z.array(DepartmentSchema),
 });
 
+export const InterestListSchema = z.object({
+  interests: z.array(z.string()),
+});
+
 export const SendCodeResultSchema = z.object({
   /** 인증코드 만료 시각 (ISO 8601) */
   expires_at: z.string(),
@@ -150,7 +181,8 @@ export const SendCodeResultSchema = z.object({
 
 export const UploadUrlSchema = z.object({
   url: z.string(),
-  method: z.literal("PUT"),
+  /** 명세상 `string` — 지금은 늘 "PUT" 이지만 리터럴로 묶지 않는다 */
+  method: z.string(),
   /** 업로드 후 기능 API 에 보낼 값 */
   key: z.string(),
   /** PUT 요청에 그대로 붙일 헤더 */
@@ -200,10 +232,10 @@ export const SentRequestSchema = z.object({
   id: z.string(),
   graduated: RequestGraduatedSchema,
   /**
-   * 명세서에 없는 필드지만 실제 응답에 들어 있다. 상대 현업자가 탈퇴했는지.
+   * 상대 현업자가 탈퇴했거나 탈퇴 유예기간 중이면 true.
    *
-   * 탈퇴해도 커피챗 기록은 남는다고 명세에 적혀 있으니, 목록에서 "탈퇴한
-   * 사용자" 를 표시하거나 재요청 버튼을 막는 근거가 이 값이다.
+   * 탈퇴해도 커피챗 기록은 남으므로, 목록에서 "탈퇴한 사용자" 를 표시하거나
+   * 재요청 버튼을 막는 근거가 이 값이다.
    */
   graduated_withdrawn: z.boolean(),
   message: z.string(),
@@ -219,7 +251,7 @@ export const SentListSchema = z.object({
 });
 
 export const SharedContactSchema = z.object({
-  /** 현업자 이름 */
+  /** 현업자 이름. 탈퇴했거나 유예기간 중이면 "탈퇴한 계정" 이 온다 */
   name: z.string(),
   email: z.string().nullable(),
   phone: z.string().nullable(),
@@ -232,9 +264,17 @@ export const SentRequestDetailSchema = SentRequestSchema.extend({
 
 export const ReceivedRequestSchema = z.object({
   id: z.string(),
+  /** 재학생이 탈퇴했으면 "탈퇴한 학생의 신청서입니다" 가 온다 */
   student_name: z.string(),
   /** 요청 당시 재학생 학과명 */
   department: z.string(),
+  /**
+   * 재학생이 탈퇴했거나 탈퇴 유예기간 중이면 true. `SentRequestDto` 의
+   * `graduated_withdrawn` 과 대칭이다.
+   *
+   * true 면 상세가 410 으로 막히므로 목록에서 클릭 자체를 막아야 한다.
+   */
+  student_withdrawn: z.boolean(),
   status: CheersStatusSchema,
   created_at: z.string(),
 });
@@ -260,7 +300,7 @@ export const RequestStudentSchema = z.object({
 export const ReceivedRequestDetailSchema = z.object({
   id: z.string(),
   message: z.string(),
-  status: z.enum(["viewed", "contact_shared"]),
+  status: CheersStatusSchema,
   created_at: z.string(),
   contact_shared_at: z.string().nullable(),
   student: RequestStudentSchema,
@@ -276,6 +316,7 @@ export const ShareContactResultSchema = z.object({
 
 export type Department = z.infer<typeof DepartmentSchema>;
 export type Attachment = z.infer<typeof AttachmentSchema>;
+export type StudentAttachment = z.infer<typeof StudentAttachmentSchema>;
 export type Contact = z.infer<typeof ContactSchema>;
 export type StudentProfile = z.infer<typeof StudentProfileSchema>;
 export type StudentInfo = z.infer<typeof StudentInfoSchema>;
@@ -285,11 +326,13 @@ export type UserInfo = z.infer<typeof UserInfoSchema>;
 export type NextStep = NonNullable<UserInfo["next_step"]>;
 export type UserType = UserInfo["type"];
 export type TokenPair = z.infer<typeof TokenPairSchema>;
+export type AccessToken = z.infer<typeof AccessTokenSchema>;
 export type OkResult = z.infer<typeof OkResultSchema>;
 export type SignupResult = z.infer<typeof SignupResultSchema>;
 export type Consent = z.infer<typeof ConsentSchema>;
 export type ConsentList = z.infer<typeof ConsentListSchema>;
 export type DepartmentList = z.infer<typeof DepartmentListSchema>;
+export type InterestList = z.infer<typeof InterestListSchema>;
 export type SendCodeResult = z.infer<typeof SendCodeResultSchema>;
 export type UploadUrl = z.infer<typeof UploadUrlSchema>;
 export type CheersStatus = z.infer<typeof CheersStatusSchema>;

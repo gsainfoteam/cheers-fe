@@ -102,9 +102,38 @@ export function unwrap<T>(
  * 명세상 5번 틀리면 코드가 무효가 되므로 화면에 남은 횟수를 보여줘야 한다.
  */
 export function remainingAttemptsOf(error: unknown): number | undefined {
-  if (!isApiError(error) || error.status !== 400) return undefined;
+  return numberField(error, 400, "remaining_attempts");
+}
+
+/**
+ * 인증코드 재전송 제한(429) 응답에서 다시 보낼 수 있는 시각을 꺼낸다 (ISO 8601).
+ * 재전송 버튼을 언제까지 잠글지 정하는 값이라 429 를 그냥 "실패" 로 보여주면 안 된다.
+ */
+export function retryAvailableAtOf(error: unknown): string | undefined {
+  const value = field(error, 429, "retry_available_at");
+  return typeof value === "string" ? value : undefined;
+}
+
+/**
+ * 인증코드 발송 409 가 "이미 다른 계정이 인증한 이메일" 인지.
+ * 명세상 이 경우 `error_code` 가 `EMAIL_ALREADY_REGISTERED` 로 온다.
+ */
+export function isEmailAlreadyRegistered(error: unknown): boolean {
+  return field(error, 409, "error_code") === "EMAIL_ALREADY_REGISTERED";
+}
+
+function field(error: unknown, status: number, key: string): unknown {
+  if (!isApiError(error) || error.status !== status) return undefined;
   const body = error.body;
   if (typeof body !== "object" || body === null) return undefined;
-  const value = (body as { remaining_attempts?: unknown }).remaining_attempts;
+  return (body as Record<string, unknown>)[key];
+}
+
+function numberField(
+  error: unknown,
+  status: number,
+  key: string
+): number | undefined {
+  const value = field(error, status, key);
   return typeof value === "number" ? value : undefined;
 }

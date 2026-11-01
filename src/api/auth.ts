@@ -1,4 +1,4 @@
-import { TokenPairSchema } from "./dto";
+import { AccessTokenSchema } from "./dto";
 import { API_BASE_URL } from "./env";
 import {
   clearTokens,
@@ -15,8 +15,9 @@ const REFRESH_LOCK = "cheers.auth.refresh";
  * 진행 중인 refresh. 같은 탭에서 401 이 여러 개 동시에 터져도
  * refresh 는 한 번만 나간다.
  *
- * 이게 없으면: 명세상 refresh token 은 1회용이라 두 번째 요청이 이미 무효가 된
- * 토큰을 들고 가서 실패하고, 멀쩡한 세션이 로그아웃된다.
+ * 명세상 refresh token 은 1회용이 아니라 만료까지 계속 쓰는 값이라 중복
+ * 호출이 세션을 깨뜨리지는 않는다. 그래도 합쳐두는 편이 낫다 — 화면 하나에서
+ * 401 이 여러 개 터질 때마다 같은 요청을 서버에 n번 보낼 이유가 없다.
  */
 let inFlight: Promise<string | null> | null = null;
 
@@ -69,9 +70,9 @@ async function runRefresh(): Promise<string | null> {
   const started = getTokens();
   if (!started) return null;
 
-  // 탭 사이 직렬화. 두 탭이 동시에 갱신하면 늦은 쪽이 무효 토큰을 쓰게 된다.
-  // Web Locks 가 없는 환경(구형 브라우저)에서는 그냥 진행한다 — storage 이벤트
-  // 동기화만으로도 대부분의 경우는 막힌다.
+  // 탭 사이 직렬화. 같은 refresh token 으로 동시에 갱신해도 서버는 받아주지만,
+  // 락을 잡아두면 늦게 온 탭이 앞선 탭의 결과를 그대로 쓰고 끝낼 수 있다.
+  // Web Locks 가 없는 환경(구형 브라우저)에서는 그냥 진행한다.
   if (typeof navigator !== "undefined" && navigator.locks) {
     return navigator.locks.request(REFRESH_LOCK, () => rotate(started));
   }
@@ -79,10 +80,11 @@ async function runRefresh(): Promise<string | null> {
 }
 
 async function rotate(started: Tokens): Promise<string | null> {
-  // 락을 기다리는 동안 다른 탭이 이미 갱신했을 수 있다. 그랬다면 그 토큰을 쓴다
+  // 락을 기다리는 동안 다른 탭이 이미 갱신했을 수 있다. 그랬다면 그 토큰을 쓴다.
+  // refresh token 은 그대로이므로 access token 이 바뀌었는지로 판단한다
   const current = getTokensFresh();
   if (!current) return null;
-  if (current.refreshToken !== started.refreshToken) {
+  if (current.accessToken !== started.accessToken) {
     return current.accessToken;
   }
 
@@ -110,15 +112,17 @@ async function rotate(started: Tokens): Promise<string | null> {
     return null;
   }
 
-  let next: { access_token: string; refresh_token: string };
+  // 응답에는 access token 만 들어 있다 — refresh token 은 재발급되지 않는다.
+  // 여기서 refresh token 까지 기대하면 파싱이 실패해 멀쩡한 세션이 끊긴다
+  let next: { access_token: string };
   try {
-    next = TokenPairSchema.parse(await response.json());
+    next = AccessTokenSchema.parse(await response.json());
   } catch {
     return null;
   }
   setTokens({
     accessToken: next.access_token,
-    refreshToken: next.refresh_token,
+    refreshToken: current.refreshToken,
   });
   return next.access_token;
 }

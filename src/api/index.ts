@@ -2,15 +2,20 @@
  * API 레이어의 공개 창구. 화면은 `@/api` 에서만 가져다 쓴다.
  *
  * 구조
- *  - dto.ts       응답 DTO 의 zod 스키마. 타입은 여기서 파생된다 (단일 출처)
- *  - schema.ts    경로 · 쿼리 · 요청 본문 (`paths`)
- *  - client.ts    토큰 주입 + 401 자동 갱신이 붙은 타입 세이프 클라이언트
- *  - auth.ts      refresh 단일화(탭 안 · 탭 사이), 가입 완료 시 토큰 교체
- *  - tokens.ts    토큰 저장소 (localStorage, 탭 간 동기화)
+ *  - openapi.json   백엔드 OpenAPI 문서. 커밋한다 (명세 변경이 diff 에 보이도록)
+ *  - schema.gen.ts  openapi.json 에서 생성. 손대지 않는다
+ *  - schema.ts      생성물 위의 얇은 층 — `/api/v1` 만 남긴다
+ *  - dto.ts         응답 DTO 의 zod 스키마. 응답 타입의 단일 출처
+ *  - client.ts      토큰 주입 + 401 자동 갱신이 붙은 타입 세이프 클라이언트
+ *  - auth.ts        refresh 단일화(탭 안 · 탭 사이), 가입 완료 시 토큰 교체
+ *  - tokens.ts      토큰 저장소 (localStorage, 탭 간 동기화)
  *  - user / student / graduated / cheers / file — 명세의 섹션과 1:1
  *
- * 백엔드가 OpenAPI 를 내보내지 않으므로 `dto.ts` 와 `schema.ts` 는 손으로
- * 유지한다. 명세가 바뀌면 같은 PR 에서 함께 고칠 것.
+ * 요청은 생성, 응답은 손으로. 경계가 갈린 이유는 dto.ts 머리말에 있다.
+ *
+ * 명세가 바뀌면:
+ *   bun run api:sync      받기 → 생성 → dto.ts 대조
+ * 대조가 실패하면 dto.ts 를 고친다. 기계가 짚어준 자리만 고치면 된다.
  */
 
 export { api } from "./client";
@@ -20,7 +25,9 @@ export {
   ContractError,
   isApiError,
   isContractError,
+  isEmailAlreadyRegistered,
   remainingAttemptsOf,
+  retryAvailableAtOf,
   unwrap,
 } from "./errors";
 export { createQueryClient } from "./query-client";
@@ -48,6 +55,7 @@ export {
 } from "./user";
 export {
   studentDepartmentsQuery,
+  studentInterestsQuery,
   useSendStudentVerifyCode,
   useSubmitStudentInfo,
   useVerifyStudentCode,

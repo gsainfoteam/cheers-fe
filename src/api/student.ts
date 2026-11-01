@@ -7,6 +7,7 @@ import { adoptIssuedTokens } from "./auth";
 import { api } from "./client";
 import {
   DepartmentListSchema,
+  InterestListSchema,
   OkResultSchema,
   SendCodeResultSchema,
   SignupResultSchema,
@@ -26,6 +27,26 @@ export function studentDepartmentsQuery() {
       ),
     select: (data) => data.departments,
     // 학과 목록은 거의 바뀌지 않는다. 추가 정보 화면에서 매번 받을 이유가 없다
+    staleTime: 60 * 60_000,
+  });
+}
+
+/**
+ * 고를 수 있는 관심 분야 목록.
+ *
+ * 어드민이 관리하는 값이라 프론트에 상수로 박아둘 수 없다. 추가 정보 저장은
+ * 이름 문자열을 그대로 돌려보내므로 id 매핑이 따로 필요하지 않다.
+ */
+export function studentInterestsQuery() {
+  return queryOptions({
+    queryKey: keys.studentInterests(),
+    queryFn: async ({ signal }) =>
+      unwrap(
+        await api.GET("/api/v1/user/student/interests", { signal }),
+        InterestListSchema
+      ),
+    select: (data) => data.interests,
+    // 학과 목록과 같은 이유로 자주 바뀌지 않는다
     staleTime: 60 * 60_000,
   });
 }
