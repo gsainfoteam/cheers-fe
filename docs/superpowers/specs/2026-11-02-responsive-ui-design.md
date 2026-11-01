@@ -68,15 +68,17 @@ Tailwind v4이므로 토큰은 `@theme` 에 선언하면 유틸리티가 자동 
 - 피그마의 회사 로고, 닉네임, 질문, 연락처, 명함은 **예시 데이터**다. 실제 자산이 아니다.
 - 소셜 로그인은 Google만 활성화한다. 카카오·네이버는 비활성 상태로 표시한다.
 
-### 5.4 현재 코드의 걸림돌
+### 5.4 현재 코드의 걸림돌 — 해소됨 (단계 0, 2026-11-02)
 
-`src/index.css` 는 Vite 스타터 템플릿 잔재를 그대로 안고 있다. 토큰 작업 전에 치워야 한다.
+`src/index.css` 는 Vite 스타터 템플릿 잔재를 그대로 안고 있었다. 토큰 작업 전에 치워야 할 것들이었고, 단계 0에서 전부 걷어냈다.
 
-- `#root { width: 1126px; text-align: center; border-inline: 1px solid var(--border); }` — 모든 화면을 1126px 박스에 가두고 전체를 가운데 정렬한다. 반응형의 첫 번째 장애물.
-- 보라색 accent 변수, `#social .button-icon` 같은 템플릿 잔여물, `h1`/`h2`/`code` 전역 스타일.
-- shadcn 기본 무채색 oklch 토큰 한 벌 — Cheers 색과 충돌한다.
-- `@media (prefers-color-scheme: dark)` 블록과 `.dark` 클래스 토큰.
-- `--font-sans: 'Inter Variable'`.
+- ~~`#root { width: 1126px; text-align: center; border-inline: 1px solid var(--border); }`~~ → `#root` 규칙을 통째로 삭제했다. `min-height`/`flex` 도 함께 지웠다. 셸의 높이·방향은 단계 2에서 정할 일이지 스타터에서 물려받을 일이 아니다.
+- ~~보라색 accent 변수, `#social .button-icon`, `h1`/`h2`/`code`/`p`/`.counter` 전역 스타일~~ → 삭제.
+- ~~shadcn 기본 무채색 oklch 토큰 한 벌~~ → `:root` 의 값과 `@theme inline` 의 `--color-*`/`--radius-*` 매핑을 모두 삭제했다. 이 둘을 지우면 `@layer base` 의 `@apply border-border outline-ring/50` 가 없는 유틸을 참조해 빌드가 깨지므로 그 블록도 같이 지웠다.
+- ~~`@media (prefers-color-scheme: dark)` 블록과 `.dark` 클래스 토큰~~ → 삭제. 단 `@custom-variant dark` 한 줄은 **남겼다**(이유는 아래 단계 0).
+- ~~`--font-sans: 'Inter Variable'`~~ → 삭제. 쓰는 곳이 없어진 `@fontsource-variable/inter` 의존성도 `package.json`·`bun.lock` 에서 제거했다.
+
+**손대지 않은 잔재**: `src/assets/react.svg`, `src/assets/vite.svg`. 어디서도 import 하지 않는 Vite 로고 파일이지만 `index.css` 와 무관해 이 단계 범위 밖으로 두었다. 지워도 되는 것들이다.
 
 ## 6. 결정된 사항
 
@@ -98,11 +100,36 @@ Tailwind v4이므로 토큰은 `@theme` 에 선언하면 유틸리티가 자동 
 
 각 단계는 **그 단계가 끝나면 눈으로 확인할 수 있는 상태**로 끝나야 한다.
 
-### 단계 0 — 바닥 치우기
+### 단계 0 — 바닥 치우기 ✅ 완료 (2026-11-02)
 
-`src/index.css` 에서 5.4에 나열한 스타터 잔재를 제거한다. 다크 블록과 `.dark` 토큰, Inter 폰트, `#root` 고정폭도 여기서 같이 걷어낸다. 화면이 일시적으로 못생겨지는 건 정상이다.
+`src/index.css` 에서 5.4에 나열한 스타터 잔재를 제거했다. 264줄이 15줄이 됐고, 남은 것은 이게 전부다.
 
-끝난 상태: 기존 라우트가 아무 스타일 없이 왼쪽 정렬로 뜬다. 1126px 박스가 사라져 있다.
+```css
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  color-scheme: light;
+}
+```
+
+**`@custom-variant dark` 를 남긴 이유.** 다크 모드를 남긴 게 아니라 그 반대다. shadcn 컴포넌트 4개 파일에 `dark:bg-input/30`, `dark:aria-invalid:border-destructive/50` 같은 클래스가 14군데 박혀 있는데, 이 한 줄을 지우면 Tailwind v4 의 `dark:` 기본 정의인 `@media (prefers-color-scheme: dark)` 로 되돌아가서 **다크 설정 기기에서 그 클래스들이 그대로 켜진다.** `.dark` 조상에 묶어 두고 그 클래스를 아무 데도 붙이지 않는 것이, 5.2의 "라이트 고정" 을 코드로 보장하는 방법이다. 컴포넌트에서 `dark:` 를 직접 걷어내는 쪽이 더 깨끗하지만 그건 8절이 단계 1로 미뤄 둔 "shadcn 5종을 고칠지 새로 만들지" 결정에 딸린 일이다.
+
+**`@import "shadcn/tailwind.css"` 를 남긴 이유.** 스타터 잔재처럼 보이지만 아니다. `data-checked`, `data-disabled`, `no-scrollbar`, `scroll-fade-*` 같은 **커스텀 variant·utility 정의 16KB** 가 들어 있고, `field.tsx` 가 `has-data-checked:` 를 실제로 쓴다. 색 토큰은 들어 있지 않아 Cheers 색과 충돌하지 않는다.
+
+**`color-scheme: light` 를 여기서 박은 이유.** 단계 1의 할 일이었지만, 지우기만 하고 두면 `color-scheme: light dark` 가 `light` 로 바뀌지 않은 채 남거나 아예 사라져서 폼 컨트롤·스크롤바가 OS 다크를 따라간다. 지우는 김에 같이 못박았다.
+
+**부작용 — 단계 1에서 받아야 할 상태.** 시맨틱 색 유틸(`bg-primary`, `border-input`, `text-muted-foreground`, `bg-background` …)의 정의가 사라졌으므로 shadcn 5종은 지금 **테두리도 배경도 없다.** 클래스 문자열은 그대로 남아 있고 Tailwind 가 조용히 무시할 뿐이라 빌드는 깨지지 않는다. 단계 1이 Cheers 색을 깔면서 이 이름들을 이어줄지, 컴포넌트를 새로 쓸지 정해야 한다.
+
+끝난 상태 (확인함):
+
+- `bun run build` 통과. 빌드된 CSS 36,826B → 23,193B.
+- 산출물에 `1126px`, `Inter Variable`, `#social`, `@media (prefers-color-scheme: dark)`, `.dark` 가 **0건**. `color-scheme` 는 `light` 한 종류뿐.
+- webfont 파일(`.woff2`) 산출물 **0개**.
+- `bun run lint` 통과.
 
 ### 단계 1 — 토큰 층
 
@@ -112,9 +139,11 @@ Tailwind v4이므로 토큰은 `@theme` 에 선언하면 유틸리티가 자동 
 
 Noto Sans KR을 올린다. 한글 가변 폰트는 용량이 크므로 서브셋과 로딩 전략을 여기서 정한다.
 
-라이트 고정은 `<html>` 레벨에서 `color-scheme: light` 를 못박는 방식으로 한다.
+라이트 고정은 단계 0에서 `:root { color-scheme: light }` 로 이미 박아 뒀다. 이 단계에서 추가로 할 일은 없고, 지우지만 않으면 된다.
 
-끝난 상태: 토큰 이름만으로 피그마 색·간격·타이포를 꺼내 쓸 수 있다. 다크 설정 기기에서도 라이트로 뜬다.
+**단계 0이 넘긴 숙제를 여기서 받는다.** shadcn 5종(`button`, `field`, `input`, `label`, `separator`)이 쓰는 시맨틱 이름 — `primary`, `background`, `foreground`, `muted`, `destructive`, `input`, `ring`, `border` — 의 정의가 지금 비어 있다. Cheers 색을 깔면서 이 이름들에 Cheers 값을 물릴지, 컴포넌트 쪽 클래스를 Cheers 토큰 이름으로 바꿀지가 8절의 "고칠지 새로 만들지" 결정이고, 토큰 이름 규칙과 같이 묶여 있다.
+
+끝난 상태: 토큰 이름만으로 피그마 색·간격·타이포를 꺼내 쓸 수 있다. 다크 설정 기기에서도 라이트로 뜬다. shadcn 5종이 다시 보인다.
 
 ### 단계 2 — 레이아웃 셸
 
@@ -164,3 +193,14 @@ Noto Sans KR을 올린다. 한글 가변 폰트는 용량이 크므로 서브셋
 - 기존 shadcn 컴포넌트 5종을 토큰에 맞춰 고칠지, 새로 만들지.
 - 각 화면의 로딩·에러 처리 수준. 피그마에 `불러오는 중` 시안이 약관 화면에만 있다.
 - 커밋 단위와 브랜치 전략.
+
+## 9. 진행 기록
+
+| 단계 | 상태 | 날짜 | 비고 |
+|---|---|---|---|
+| 0 — 바닥 치우기 | ✅ 완료 | 2026-11-02 | `index.css` 264줄 → 15줄, Inter 의존성 제거 |
+| 1 — 토큰 층 | 미착수 | | shadcn 시맨틱 이름 연결 결정이 선행 |
+| 2 — 레이아웃 셸 | 미착수 | | |
+| 3 — 줄기 전반 (가입) | 미착수 | | |
+| 4 — 줄기 후반 (탐색·신청) | 미착수 | | |
+| 5 — 회수 | 미착수 | | |
