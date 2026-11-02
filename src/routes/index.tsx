@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
+import { PageShell } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { redirectIfSignedIn } from "@/lib/guards";
 import { rememberRole } from "@/lib/role";
@@ -38,7 +39,7 @@ function RouteComponent() {
   const afterLogin = () => void router.invalidate();
 
   return (
-    <div>
+    <PageShell kind="public">
       <h1>Cheers</h1>
 
       <section>
@@ -62,6 +63,6 @@ function RouteComponent() {
           <GoogleSignInButton role={role} onSuccess={afterLogin} />
         </section>
       ) : null}
-    </div>
+    </PageShell>
   );
 }

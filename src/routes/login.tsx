@@ -1,6 +1,7 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { z } from "zod";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
+import { PageShell } from "@/components/layout/page-shell";
 import { redirectIfSignedIn } from "@/lib/guards";
 import { toInternalPath } from "@/lib/redirect";
 import { lastRole } from "@/lib/role";
@@ -65,7 +66,7 @@ function RouteComponent() {
   };
 
   return (
-    <div>
+    <PageShell kind="public">
       {reason ? <p>{MESSAGE[reason]}</p> : null}
       <GoogleSignInButton
         role={role}
@@ -75,6 +76,6 @@ function RouteComponent() {
         switchAccount={switchAccount}
         onSuccess={afterLogin}
       />
-    </div>
+    </PageShell>
   );
 }

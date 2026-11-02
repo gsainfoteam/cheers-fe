@@ -1,4 +1,5 @@
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
+import { PageShell } from "@/components/layout/page-shell";
 import { requireSession } from "@/lib/guards";
 import { entryPath, isAllowed } from "@/lib/onboarding-steps";
 
@@ -33,9 +34,10 @@ function RouteComponent() {
   const { step } = Route.useRouteContext();
 
   return (
-    <div>
+    <PageShell kind="onboarding">
+      {/* 단계 인디케이터(`Signup progress`)는 단계 3에서 이 자리에 들어간다 */}
       <div>Onboarding — {step}</div>
       <Outlet />
-    </div>
+    </PageShell>
   );
 }

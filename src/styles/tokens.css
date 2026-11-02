@@ -77,6 +77,12 @@
     "맑은 고딕", system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
+  /* ── 페이지 폭 ───────────────────────────────────────────────────── */
+  /* 데스크톱 시안의 프레임 폭. 1440 보다 넓은 화면에서 본문이 끝없이
+     늘어나지 않게 묶는 상한이다 — 1440 에서는 있으나 없으나 같다.
+     좌우 여백과 함께 `components/layout/page-container.tsx` 에서만 쓴다. */
+  --container-page: 90rem; /* 1440px */
+
   /* ── 모서리 ──────────────────────────────────────────────────────── */
   /* Tailwind 기본값(md 6px, lg 8px, xl 12px)을 피그마 값으로 덮는다.
      shadcn 5종이 쓰는 `rounded-md` 가 같이 교정된다. */
