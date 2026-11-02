@@ -9,8 +9,7 @@ import { cva, type VariantProps } from "class-variance-authority";
  *
  * 세 번째 사용처가 생겨서 올렸다 — 랜딩(3), 약관 동의(1), 약관 오버레이(1).
  * 설계 2절의 "두 번째로 같은 것이 필요해지는 순간 승격" 에 해당한다.
- *
- * 시안의 Secondary 는 아직 쓰는 화면이 없어 넣지 않았다.
+ * Secondary 는 인증 화면의 `이전` 버튼이 생기면서 뒤늦게 들어왔다.
  */
 export const action = cva(
   "text-button flex items-center justify-center gap-2 rounded-md px-4 py-3 disabled:pointer-events-none",
@@ -20,6 +19,8 @@ export const action = cva(
         // Primary. 비활성은 시안 `State=Disabled` — 배경이 muted 로 내려앉는다
         primary:
           "bg-action text-ink-inverse disabled:bg-muted disabled:text-ink-soft",
+        // Secondary. 흰 바탕에 옅은 테두리. 글자가 Label/Medium 으로 한 급 작다
+        secondary: "bg-surface border-line text-ink text-label border",
         // Ghost. 배경 없이 글자만
         ghost: "text-ink",
       },

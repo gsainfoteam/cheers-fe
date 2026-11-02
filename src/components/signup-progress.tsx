@@ -25,14 +25,24 @@ export type SignupStepIndex = 0 | 1 | 2 | 3;
 export function SignupProgress({ current }: { current: SignupStepIndex }) {
   return (
     <>
-      {/* 피그마 `Signup progress / Mobile` — 가로 4칸 */}
+      {/*
+       * 피그마 `Signup progress / Mobile` — 가로 4칸.
+       *
+       * 끝난 단계는 막대가 꺼지는 게 아니라 **같은 주황을 35% 로 흐린다.**
+       * 지나온 길이 남아 보이고 지금 칸만 또렷해진다. 체크는 아이콘이 아니라
+       * 라벨 앞의 `✓` 글자다 — 시안이 그렇게 적어 뒀다.
+       */}
       <ol className="flex items-start gap-2 lg:hidden">
         {STEPS.map((label, i) => (
           <li key={label} className="flex min-w-0 flex-1 flex-col gap-2">
             <div
               className={cn(
                 "h-0.5 w-full rounded-full",
-                i <= current ? "bg-brand-accent" : "bg-line"
+                i < current
+                  ? "bg-brand-accent opacity-35"
+                  : i === current
+                    ? "bg-brand-accent"
+                    : "bg-line"
               )}
             />
             <span
@@ -41,7 +51,7 @@ export function SignupProgress({ current }: { current: SignupStepIndex }) {
                 i === current ? "text-brand" : "text-ink-soft"
               )}
             >
-              {label}
+              {i < current ? `✓ ${label}` : label}
             </span>
           </li>
         ))}
