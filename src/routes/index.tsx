@@ -11,6 +11,7 @@ import {
 } from "@/components/employee-badge";
 import { PageContainer } from "@/components/layout/page-container";
 import { PageShell } from "@/components/layout/page-shell";
+import { action } from "@/components/ui/action";
 import { redirectIfSignedIn } from "@/lib/guards";
 import { cn } from "@/lib/utils";
 
@@ -48,15 +49,10 @@ function RouteComponent() {
 /* ─────────────────────────────────────────────────────────────────────────
  * 버튼
  *
- * 피그마 `Cheers / Button`(353:9626)의 Primary / Ghost. 이 화면에서만 세 번
- * 쓰여서 아직 공통으로 올리지 않았다 — 4절이 경계하는 "한 번 쓰고 추상화"
- * 를 피하고, 단계 5에서 실제 사용처를 보고 회수한다.
- *
- * 시안의 Primary 는 DS 에서 52 높이지만 랜딩에서는 56 으로 쓰인다.
+ * 생김새는 `components/ui/action.ts` 가 들고 있다. 여기 둘은 그걸 TanStack
+ * `<Link>` 에 입히는 얇은 껍데기다. 랜딩이 시안에서 52 가 아니라 56 높이를
+ * 쓰므로 Primary 만 `size: "lg"` 다.
  * ───────────────────────────────────────────────────────────────────────── */
-
-const ACTION_BASE =
-  "text-button flex items-center justify-center gap-2 rounded-md px-4 py-3";
 
 function PrimaryAction({
   to,
@@ -73,11 +69,7 @@ function PrimaryAction({
     <Link
       to={to}
       search={search}
-      className={cn(
-        ACTION_BASE,
-        "bg-action text-ink-inverse h-14 w-full",
-        className
-      )}
+      className={cn(action({ size: "lg" }), "w-full", className)}
     >
       {children}
     </Link>
@@ -99,7 +91,7 @@ function GhostAction({
     <Link
       to={to}
       search={search}
-      className={cn(ACTION_BASE, "text-ink h-12 w-full", className)}
+      className={cn(action({ variant: "ghost", size: "lg" }), "h-12 w-full", className)}
     >
       {children}
     </Link>
