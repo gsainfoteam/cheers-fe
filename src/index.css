@@ -21,6 +21,13 @@
  */
 @import "@fontsource/geist-mono/latin-400.css";
 
+/*
+ * Geist — 사원증 띠의 `cheers!` 워드마크 한 군데. 라틴 700 하나만 받는다
+ * (woff2 13.4KB). 홍보자료용 `Brand/Poster`(Geist Bold 70)도 같은 글꼴이지만
+ * 그쪽은 이 범위 밖이다.
+ */
+@import "@fontsource/geist/latin-700.css";
+
 /* 피그마에서 옮겨 온 색·타이포·그림자·모서리. 이름 대조표가 파일 머리에 있다. */
 @import "./styles/tokens.css";
 

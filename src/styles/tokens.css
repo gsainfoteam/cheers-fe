@@ -76,6 +76,8 @@
   --font-sans: "Noto Sans KR Variable", "Apple SD Gothic Neo", "Malgun Gothic",
     "맑은 고딕", system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* 사원증 띠의 `cheers!` 워드마크 전용. 본문 글꼴이 아니다 */
+  --font-brand: "Geist", var(--font-sans);
 
   /* ── 페이지 폭 ───────────────────────────────────────────────────── */
   /* 데스크톱 시안의 프레임 폭. 1440 보다 넓은 화면에서 본문이 끝없이

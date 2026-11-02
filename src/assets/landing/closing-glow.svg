@@ -1,0 +1,39 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="393" height="264" viewBox="0 0 393 264" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Cheers / Landing / Closing champagne glow" filter="url(#filter0_n_0_303)">
+<g clip-path="url(#clip0_0_303)">
+<rect width="393" height="264" fill="url(#paint0_linear_0_303)"/>
+<circle id="Champagne glow" cx="200" cy="60" r="270" fill="url(#paint1_radial_0_303)"/>
+</g>
+</g>
+<defs>
+<filter id="filter0_n_0_303" x="0" y="0" width="393" height="264" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feTurbulence type="fractalNoise" baseFrequency="1.5384615659713745 1.5384615659713745" stitchTiles="stitch" numOctaves="3" result="noise" seed="0" />
+<feColorMatrix in="noise" type="luminanceToAlpha" result="alphaNoise" />
+<feComponentTransfer in="alphaNoise" result="coloredNoise1">
+<feFuncA type="discrete" tableValues="0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "/>
+</feComponentTransfer>
+<feComposite operator="in" in2="shape" in="coloredNoise1" result="noise1Clipped" />
+<feFlood flood-color="rgba(134, 101, 65, 0.018)" result="color1Flood" />
+<feComposite operator="in" in2="noise1Clipped" in="color1Flood" result="color1" />
+<feMerge result="effect1_noise_0_303">
+<feMergeNode in="shape" />
+<feMergeNode in="color1" />
+</feMerge>
+</filter>
+<linearGradient id="paint0_linear_0_303" x1="0" y1="132" x2="393" y2="132" gradientUnits="userSpaceOnUse">
+<stop stop-color="#FFF9F3"/>
+<stop offset="0.5" stop-color="#FFF0D2"/>
+<stop offset="1" stop-color="#FFE3B5"/>
+</linearGradient>
+<radialGradient id="paint1_radial_0_303" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(200 60) scale(270)">
+<stop stop-color="white" stop-opacity="0.85"/>
+<stop offset="0.5" stop-color="#FFF4DF" stop-opacity="0.4"/>
+<stop offset="1" stop-color="white" stop-opacity="0"/>
+</radialGradient>
+<clipPath id="clip0_0_303">
+<rect width="393" height="264" fill="white"/>
+</clipPath>
+</defs>
+</svg>
