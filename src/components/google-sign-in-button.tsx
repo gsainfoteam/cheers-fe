@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLogin } from "@/api";
 import { isApiError } from "@/api";
+import googleLogo from "@/assets/brand/google-logo.svg";
 import { GOOGLE_CLIENT_ID, loadGoogleIdentity } from "@/lib/google-identity";
 import { createNonce } from "@/lib/nonce";
 import { toApiType } from "@/lib/role";
@@ -15,16 +16,38 @@ type Props = {
 };
 
 /**
- * 구글 로그인 버튼.
+ * 구글 로그인 버튼. 피그마 `Cheers / Social`(332:6152)의 Provider=Google.
  *
- * 구글이 직접 그리는 버튼이다. `accounts.id` 에는 계정 선택창을 코드로 여는
- * API 가 없어서, 커스텀 버튼으로 대체하려면 이 버튼을 투명하게 덮는 방식밖에
- * 없다. 디자인이 확정되면 그때 씌우면 된다.
+ * **시안 버튼 위에 구글 버튼을 투명하게 덮는다.** `accounts.id` 에는 계정
+ * 선택창을 코드로 여는 API 가 없어서(One Tap 의 `prompt()` 는 다른 물건이다),
+ * 커스텀 버튼을 쓰려면 구글이 그린 버튼을 그대로 두고 그 위에 그림만 얹는
+ * 방법밖에 없다. 구글 버튼은 iframe 이라 바깥에서 클릭을 흉내 낼 수도 없다.
+ *
+ * 그래서 보이는 건 시안 버튼이고, 실제로 눌리는 건 그 위에 깔린 투명한
+ * 구글 버튼이다. 포커스도 구글 버튼이 받으므로 보조기술에는 구글의 라벨이
+ * 읽힌다 — 시안 쪽은 `aria-hidden` 으로 빼서 같은 말이 두 번 들리지 않게 했다.
+ *
+ * 투명해서 포커스 링이 안 보이는 건 바깥 상자의 `focus-within` 으로 되살린다.
  */
+
+/**
+ * 구글 버튼을 **고정 폭**으로 그려두고 CSS 로 늘린다.
+ *
+ * `renderButton` 의 `width` 는 400px 이 상한이라 데스크톱 시안(440)을 그대로
+ * 줄 수 없다. 폭에 맞춰 다시 그리는 방법도 있지만 창을 줄일 때마다 구글
+ * 버튼이 새로 그려진다. 한 번만 그리고 `transform` 으로 덮개를 늘리면
+ * 클릭 영역도 같이 늘어난다.
+ */
+const GIS_WIDTH = 400;
+/** `size: "large"` 구글 버튼의 높이. 시안 버튼은 56 이라 세로로도 늘린다 */
+const GIS_HEIGHT = 40;
+
 export function GoogleSignInButton({ role, switchAccount, onSuccess }: Props) {
+  const box = useRef<HTMLDivElement>(null);
   const container = useRef<HTMLDivElement>(null);
   const login = useLogin();
   const [loadError, setLoadError] = useState<Error | null>(null);
+  const [boxWidth, setBoxWidth] = useState(0);
 
   // 설정 누락은 렌더 중에 알 수 있다. effect 로 state 를 세울 이유가 없다
   const configError = GOOGLE_CLIENT_ID
@@ -39,6 +62,19 @@ export function GoogleSignInButton({ role, switchAccount, onSuccess }: Props) {
   useEffect(() => {
     onSuccessRef.current = onSuccess;
   }, [onSuccess]);
+
+  // 덮개를 얼마나 늘릴지 정하려면 실제 폭을 알아야 한다. 폭은 lg 경계에서도
+  // 바뀌고 모바일 가로/세로 전환에서도 바뀌므로 관찰해 둔다
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    setBoxWidth(el.getBoundingClientRect().width);
+    const observer = new ResizeObserver(([entry]) => {
+      setBoxWidth(entry.contentRect.width);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const { mutate } = login;
 
@@ -84,6 +120,7 @@ export function GoogleSignInButton({ role, switchAccount, onSuccess }: Props) {
           text: "signin_with",
           shape: "pill",
           locale: "ko",
+          width: GIS_WIDTH,
         });
       } catch (error) {
         if (!cancelled) setLoadError(error as Error);
@@ -95,14 +132,58 @@ export function GoogleSignInButton({ role, switchAccount, onSuccess }: Props) {
     };
   }, [mutate, switchAccount]);
 
+  const message = configError ?? loadError?.message;
+
   return (
-    <div>
-      <div ref={container} />
-      {(configError ?? loadError) ? (
-        <p role="alert">{configError ?? loadError?.message}</p>
+    <div className="flex flex-col gap-3">
+      <div
+        ref={box}
+        className="ring-focus/50 relative h-14 w-full rounded-lg focus-within:ring-3"
+      >
+        {/* 피그마 `Cheers / Social` — 보이기만 하는 껍데기 */}
+        <div
+          aria-hidden
+          className="border-line bg-surface text-ink text-label-lg pointer-events-none flex size-full items-center gap-3 rounded-lg border p-4"
+        >
+          <img
+            src={googleLogo}
+            alt=""
+            width={24}
+            height={24}
+            className="size-6 shrink-0"
+          />
+          <span>Google로 계속하기</span>
+        </div>
+
+        {/* 진짜 눌리는 구글 버튼. 상자 전체를 덮도록 늘린다 */}
+        <div className="absolute inset-0 overflow-hidden rounded-lg opacity-0">
+          <div
+            ref={container}
+            className="origin-top-left"
+            style={
+              boxWidth
+                ? {
+                    transform: `scale(${boxWidth / GIS_WIDTH}, ${56 / GIS_HEIGHT})`,
+                  }
+                : undefined
+            }
+          />
+        </div>
+      </div>
+
+      {message ? (
+        <p role="alert" className="text-body-sm text-danger">
+          {message}
+        </p>
       ) : null}
-      {login.isPending ? <p>로그인 중…</p> : null}
-      {login.error ? <p role="alert">{describe(login.error)}</p> : null}
+      {login.isPending ? (
+        <p className="text-body-sm text-ink-soft">로그인 중…</p>
+      ) : null}
+      {login.error ? (
+        <p role="alert" className="text-body-sm text-danger">
+          {describe(login.error)}
+        </p>
+      ) : null}
     </div>
   );
 }
