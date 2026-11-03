@@ -7,6 +7,7 @@ import {
   type EmployeeBadgeData,
 } from "@/components/employee-badge";
 import { PageContainer } from "@/components/layout/page-container";
+import { MENTOR_LIST_PARAMS } from "@/lib/mentor-list";
 import { cn } from "@/lib/utils";
 
 /**
@@ -22,19 +23,9 @@ import { cn } from "@/lib/utils";
  */
 export const Route = createFileRoute("/_app/mentors")({
   loader: ({ context }) =>
-    context.queryClient.ensureQueryData(cheersListQuery(LIST_PARAMS)),
+    context.queryClient.ensureQueryData(cheersListQuery(MENTOR_LIST_PARAMS)),
   component: RouteComponent,
 });
-
-/**
- * 시안에 페이지 넘김이 없다.
- *
- * 명세는 `page`/`size`(최대 50)로 끊어 주는데 그걸 그릴 자리가 시안에
- * 없어서, 일단 한 번에 받을 수 있는 최대치를 받는다. 선배가 50명을 넘기면
- * 넘김 UI 를 디자이너와 정해야 한다 — 조용히 잘라 보여주지 않으려고
- * 결과 수(`total`)를 제목 옆에 그대로 내건다.
- */
-const LIST_PARAMS = { size: 50 } as const;
 
 function RouteComponent() {
   return (
@@ -47,7 +38,7 @@ function RouteComponent() {
 }
 
 function MentorList() {
-  const { data } = useSuspenseQuery(cheersListQuery(LIST_PARAMS));
+  const { data } = useSuspenseQuery(cheersListQuery(MENTOR_LIST_PARAMS));
 
   return (
     <>

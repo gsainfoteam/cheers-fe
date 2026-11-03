@@ -33,11 +33,20 @@ export function ResponsiveDialog({
   open,
   onOpenChange,
   title,
+  className,
+  actions,
   children,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
+  /** 데스크톱 상자 크기를 바꿀 때. 모바일은 늘 전체 화면이다 */
+  className?: string;
+  /**
+   * 아래 버튼 줄. 안 주면 `닫기` 하나다 — 읽기만 하는 오버레이(약관)가
+   * 그 모양이고, 무언가를 보내는 오버레이(커피챗 신청)는 자기 버튼을 준다.
+   */
+  actions?: React.ReactNode;
   children?: React.ReactNode;
 }) {
   return (
@@ -53,7 +62,8 @@ export function ResponsiveDialog({
             "inset-0",
             // 데스크톱: 가운데 720 상자. 시안 높이 610 을 쓰되 창이 더 낮으면
             // 줄어든다 — 안 그러면 짧은 노트북에서 버튼 줄이 잘린다
-            "lg:inset-auto lg:top-1/2 lg:left-1/2 lg:h-152.5 lg:max-h-[calc(100svh-6rem)] lg:w-180 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-xl lg:shadow-modal"
+            "lg:inset-auto lg:top-1/2 lg:left-1/2 lg:h-152.5 lg:max-h-[calc(100svh-6rem)] lg:w-180 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-xl lg:shadow-modal",
+            className
           )}
         >
           {/* 피그마 `Dialog header` */}
@@ -81,10 +91,12 @@ export function ResponsiveDialog({
           <div className="bg-line h-px shrink-0" />
 
           {/* 피그마 `Dialog actions` */}
-          <div className="flex shrink-0 justify-end px-5 pt-4 pb-5 lg:px-8">
-            <Dialog.Close className={cn(action(), "w-full lg:w-60")}>
-              닫기
-            </Dialog.Close>
+          <div className="flex shrink-0 justify-end gap-3 px-5 pt-4 pb-5 lg:px-8">
+            {actions ?? (
+              <Dialog.Close className={cn(action(), "w-full lg:w-60")}>
+                닫기
+              </Dialog.Close>
+            )}
           </div>
         </Dialog.Popup>
       </Dialog.Portal>

@@ -31,6 +31,7 @@ import { Route as OnboardingStudentProfileRouteImport } from './routes/onboardin
 import { Route as OnboardingStudentVerifyRouteImport } from './routes/onboarding/student/verify'
 import { Route as AppApplicationsApplicationIdShareRouteImport } from './routes/_app/applications/$applicationId/share'
 import { Route as AppMentorsMentorIdApplyRouteImport } from './routes/_app/mentors/$mentorId/apply'
+import { Route as AppMentorsMentorIdSentRouteImport } from './routes/_app/mentors_/$mentorId/sent'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -144,6 +145,11 @@ const AppMentorsMentorIdApplyRoute = AppMentorsMentorIdApplyRouteImport.update({
   path: '/$mentorId/apply',
   getParentRoute: () => AppMentorsRoute,
 } as any)
+const AppMentorsMentorIdSentRoute = AppMentorsMentorIdSentRouteImport.update({
+  id: '/mentors_/$mentorId/sent',
+  path: '/mentors/$mentorId/sent',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -167,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/me/': typeof AppMeIndexRoute
   '/applications/$applicationId/share': typeof AppApplicationsApplicationIdShareRoute
   '/mentors/$mentorId/apply': typeof AppMentorsMentorIdApplyRoute
+  '/mentors/$mentorId/sent': typeof AppMentorsMentorIdSentRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -189,6 +196,7 @@ export interface FileRoutesByTo {
   '/me': typeof AppMeIndexRoute
   '/applications/$applicationId/share': typeof AppApplicationsApplicationIdShareRoute
   '/mentors/$mentorId/apply': typeof AppMentorsMentorIdApplyRoute
+  '/mentors/$mentorId/sent': typeof AppMentorsMentorIdSentRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -214,6 +222,7 @@ export interface FileRoutesById {
   '/_app/me/': typeof AppMeIndexRoute
   '/_app/applications/$applicationId/share': typeof AppApplicationsApplicationIdShareRoute
   '/_app/mentors/$mentorId/apply': typeof AppMentorsMentorIdApplyRoute
+  '/_app/mentors_/$mentorId/sent': typeof AppMentorsMentorIdSentRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -239,6 +248,7 @@ export interface FileRouteTypes {
     | '/me/'
     | '/applications/$applicationId/share'
     | '/mentors/$mentorId/apply'
+    | '/mentors/$mentorId/sent'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
     | '/me'
     | '/applications/$applicationId/share'
     | '/mentors/$mentorId/apply'
+    | '/mentors/$mentorId/sent'
   id:
     | '__root__'
     | '/'
@@ -285,6 +296,7 @@ export interface FileRouteTypes {
     | '/_app/me/'
     | '/_app/applications/$applicationId/share'
     | '/_app/mentors/$mentorId/apply'
+    | '/_app/mentors_/$mentorId/sent'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -451,6 +463,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMentorsMentorIdApplyRouteImport
       parentRoute: typeof AppMentorsRoute
     }
+    '/_app/mentors_/$mentorId/sent': {
+      id: '/_app/mentors_/$mentorId/sent'
+      path: '/mentors/$mentorId/sent'
+      fullPath: '/mentors/$mentorId/sent'
+      preLoaderRoute: typeof AppMentorsMentorIdSentRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -489,6 +508,7 @@ interface AppRouteChildren {
   AppMePreviewRoute: typeof AppMePreviewRoute
   AppApplicationsIndexRoute: typeof AppApplicationsIndexRoute
   AppMeIndexRoute: typeof AppMeIndexRoute
+  AppMentorsMentorIdSentRoute: typeof AppMentorsMentorIdSentRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -500,6 +520,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMePreviewRoute: AppMePreviewRoute,
   AppApplicationsIndexRoute: AppApplicationsIndexRoute,
   AppMeIndexRoute: AppMeIndexRoute,
+  AppMentorsMentorIdSentRoute: AppMentorsMentorIdSentRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
