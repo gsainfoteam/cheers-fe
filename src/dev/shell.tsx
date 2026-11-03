@@ -28,7 +28,6 @@ import "@/index.css";
 
 const LINK_PATHS = [
   "/",
-  "/home",
   "/login",
   "/mentors",
   "/applications",

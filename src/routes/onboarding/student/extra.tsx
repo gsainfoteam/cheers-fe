@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
  * 토큰이 실려 온다(`useSubmitStudentInfo` 가 받아 넣는다).
  *
  * 저장이 끝나면 `next_step` 이 null 이 되므로 라우터를 다시 평가시키기만
- * 하면 `/onboarding` 가드가 `/home` 으로 보낸다.
+ * 하면 `/onboarding` 가드가 선배 둘러보기(`/mentors`)로 보낸다.
  */
 export const Route = createFileRoute("/onboarding/student/extra")({
   /**

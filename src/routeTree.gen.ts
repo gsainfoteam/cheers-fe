@@ -14,7 +14,6 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as AppApplicationsRouteImport } from './routes/_app/applications'
-import { Route as AppHomeRouteImport } from './routes/_app/home'
 import { Route as AppMentorsRouteImport } from './routes/_app/mentors'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as OnboardingIndexRouteImport } from './routes/onboarding/index'
@@ -55,11 +54,6 @@ const OnboardingRoute = OnboardingRouteImport.update({
 const AppApplicationsRoute = AppApplicationsRouteImport.update({
   id: '/applications',
   path: '/applications',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppHomeRoute = AppHomeRouteImport.update({
-  id: '/home',
-  path: '/home',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMentorsRoute = AppMentorsRouteImport.update({
@@ -156,7 +150,6 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRouteWithChildren
   '/applications': typeof AppApplicationsRouteWithChildren
-  '/home': typeof AppHomeRoute
   '/mentors': typeof AppMentorsRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/onboarding/terms': typeof OnboardingTermsRoute
@@ -179,7 +172,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/applications': typeof AppApplicationsRouteWithChildren
-  '/home': typeof AppHomeRoute
   '/mentors': typeof AppMentorsRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/onboarding/terms': typeof OnboardingTermsRoute
@@ -205,7 +197,6 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRouteWithChildren
   '/_app/applications': typeof AppApplicationsRouteWithChildren
-  '/_app/home': typeof AppHomeRoute
   '/_app/mentors': typeof AppMentorsRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/onboarding/terms': typeof OnboardingTermsRoute
@@ -231,7 +222,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/applications'
-    | '/home'
     | '/mentors'
     | '/auth/callback'
     | '/onboarding/terms'
@@ -254,7 +244,6 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/applications'
-    | '/home'
     | '/mentors'
     | '/auth/callback'
     | '/onboarding/terms'
@@ -279,7 +268,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/_app/applications'
-    | '/_app/home'
     | '/_app/mentors'
     | '/auth/callback'
     | '/onboarding/terms'
@@ -342,13 +330,6 @@ declare module '@tanstack/react-router' {
       path: '/applications'
       fullPath: '/applications'
       preLoaderRoute: typeof AppApplicationsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/home': {
-      id: '/_app/home'
-      path: '/home'
-      fullPath: '/home'
-      preLoaderRoute: typeof AppHomeRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/mentors': {
@@ -515,7 +496,6 @@ const AppMentorsRouteWithChildren = AppMentorsRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppApplicationsRoute: typeof AppApplicationsRouteWithChildren
-  AppHomeRoute: typeof AppHomeRoute
   AppMentorsRoute: typeof AppMentorsRouteWithChildren
   AppMeEditRoute: typeof AppMeEditRoute
   AppMePreviewRoute: typeof AppMePreviewRoute
@@ -525,7 +505,6 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppApplicationsRoute: AppApplicationsRouteWithChildren,
-  AppHomeRoute: AppHomeRoute,
   AppMentorsRoute: AppMentorsRouteWithChildren,
   AppMeEditRoute: AppMeEditRoute,
   AppMePreviewRoute: AppMePreviewRoute,

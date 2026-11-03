@@ -19,9 +19,9 @@ type NavItem = { label: string; to: string };
  * 시안에 적힌 그대로다. 라벨을 임의로 바꾸지 않는다.
  *
  * 시안에 **홈 메뉴가 없다.** 로고가 그 자리를 대신한다(피그마에서도 로고
- * 묶음 이름이 `Action / landing` 이다). 로그인한 사용자는 `/home`,
- * 아니면 랜딩으로 보낸다 — `/` 의 가드가 로그인 상태를 보고 어차피
- * `/home` 으로 되돌리므로, 한 번 덜 튕기게 미리 갈라 둔다.
+ * 묶음 이름이 `Action / landing` 이다). 로그인한 사용자는 첫 화면인
+ * `/mentors`, 아니면 랜딩으로 보낸다 — `/` 의 가드가 로그인 상태를 보고
+ * 어차피 `/mentors` 로 되돌리므로, 한 번 덜 튕기게 미리 갈라 둔다.
  */
 const NAV: Record<HeaderKind, NavItem[]> = {
   public: [{ label: "로그인", to: "/login" }],
@@ -96,7 +96,7 @@ export function SiteHeader({ kind }: { kind: HeaderKind }) {
 function BrandLink({ signedIn }: { signedIn: boolean }) {
   return (
     <Link
-      to={signedIn ? "/home" : "/"}
+      to={signedIn ? "/mentors" : "/"}
       className="flex w-30 shrink-0 items-center gap-2"
     >
       <img

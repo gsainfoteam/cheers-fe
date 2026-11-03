@@ -17,8 +17,10 @@ export const Route = createFileRoute("/onboarding")({
   beforeLoad: async ({ context, location }) => {
     const me = await requireSession(context.queryClient, location);
 
-    // 가입을 마친 사람이 뒤로가기로 돌아온 경우. 다시 동의시키면 안 된다
-    if (!me.next_step) throw redirect({ to: "/home" });
+    // 가입을 마친 사람이 뒤로가기로 돌아온 경우. 다시 동의시키면 안 된다.
+    // 가입 직후도 이 길로 나간다 — 시안의 흐름은 가입 완료에서 곧장
+    // 선배 둘러보기로 이어진다(학생·선배 공통)
+    if (!me.next_step) throw redirect({ to: "/mentors" });
 
     // 단계를 앞서갔거나, 유형이 다른 쪽 화면을 열었을 때
     if (!isAllowed(me.type, me.next_step, location.pathname)) {

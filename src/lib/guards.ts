@@ -90,5 +90,6 @@ export async function redirectIfSignedIn(queryClient: QueryClient) {
   }
 
   if (me.next_step) throw redirect({ to: "/onboarding" });
-  throw redirect({ to: "/home" });
+  // 시안에 홈 화면이 없다. 로그인한 사람의 첫 화면은 선배 둘러보기다
+  throw redirect({ to: "/mentors" });
 }

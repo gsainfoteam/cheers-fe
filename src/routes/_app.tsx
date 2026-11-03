@@ -6,7 +6,7 @@ import { useSession } from "@/lib/session";
 /**
  * 온보딩을 마친 사용자만 들어오는 서비스 본편 레이아웃.
  *
- * 이 가드가 하위 라우트 전부를 덮는다. `/home`, `/mentors`, `/applications`,
+ * 이 가드가 하위 라우트 전부를 덮는다. `/mentors`, `/applications`,
  * `/me` 에 각각 가드를 다는 대신 여기 한 곳에만 둔다.
  */
 export const Route = createFileRoute("/_app")({

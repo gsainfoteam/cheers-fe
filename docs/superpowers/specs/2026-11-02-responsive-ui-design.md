@@ -256,7 +256,7 @@ gzip 24KB 가 렌더 블로킹 CSS 에 얹히는 게 나중에 문제가 되면,
 
 `_app.tsx` 의 임시 `AppHeader` 를 걷어내면서 메뉴가 달라졌다. **시안이 권위라 시안을 따랐다.**
 
-- **홈 메뉴가 없어졌다.** 시안의 Student/Alumni 메뉴는 세 개뿐이다. 로고가 그 자리를 대신한다 — 피그마에서도 로고 묶음 이름이 `Action / landing` 이다. `/home` 라우트는 그대로 살아 있고 로그인 후 `redirectIfSignedIn` 이 보내는 곳도 그대로다. 로고는 로그인 상태면 `/home`, 아니면 `/` 로 간다(`/` 가드가 어차피 `/home` 으로 되돌리므로 한 번 덜 튕기게 미리 갈랐다).
+- **홈 메뉴가 없어졌다.** 시안의 Student/Alumni 메뉴는 세 개뿐이다. 로고가 그 자리를 대신한다 — 피그마에서도 로고 묶음 이름이 `Action / landing` 이다. ~~`/home` 라우트는 그대로 살아 있고~~ → **`/home` 라우트는 지웠다.** 시안의 흐름이 가입 완료(학생·선배 공통)에서 곧장 선배 둘러보기로 이어지므로, 가입 직후(`/onboarding` 가드)·로그인 후(`redirectIfSignedIn`)·로고가 모두 `/mentors` 로 간다. 로고는 로그인 상태면 `/mentors`, 아니면 `/` 로 간다(`/` 가드가 어차피 `/mentors` 로 되돌리므로 한 번 덜 튕기게 미리 갈랐다).
 - **학생의 `선배 찾기` 가 `선배 둘러보기` 로 바뀌었다.** 시안은 학생·선배 모두 같은 라벨을 쓴다.
 
 #### 2-d. 범위 밖이라 손대지 않은 것
@@ -570,7 +570,7 @@ CSS 로 가르면 둘 다 공짜다. 모바일은 `inset-0` 로 화면을 덮고
 
 #### 3-6. 학생 추가 정보 ✅ 완료 (2026-11-03)
 
-[`routes/onboarding/student/extra.tsx`](../../../src/routes/onboarding/student/extra.tsx). 가입의 마지막 화면이고, 저장에 성공하면 새 토큰이 함께 와서(`useSubmitStudentInfo` 가 받아 넣는다) `next_step` 이 null 이 된다. 다음 자리는 여기서도 가드가 정한다 — `router.invalidate()` 한 줄이면 `/onboarding` 가드가 `/home` 으로 보낸다.
+[`routes/onboarding/student/extra.tsx`](../../../src/routes/onboarding/student/extra.tsx). 가입의 마지막 화면이고, 저장에 성공하면 새 토큰이 함께 와서(`useSubmitStudentInfo` 가 받아 넣는다) `next_step` 이 null 이 된다. 다음 자리는 여기서도 가드가 정한다 — `router.invalidate()` 한 줄이면 `/onboarding` 가드가 선배 둘러보기(`/mentors`)로 보낸다.
 
 #### 3-6a. 두 화면, 한 번의 저장 — 임시 보관함
 
