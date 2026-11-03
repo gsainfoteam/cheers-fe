@@ -62,9 +62,19 @@ export function SignupProgress({ current }: { current: SignupStepIndex }) {
         {STEPS.map((label, i) => (
           <li key={label}>
             {/* 피그마 `Step connection` — 동그라미 사이를 잇는 세로선 */}
+            {/*
+             * 피그마 `Step connection`. 지나온 구간은 선도 주황이다 —
+             * 기본 정보(3단계) 시안에서 1·2번 사이 연결선이 brand-accent 로
+             * 칠해져 있고, 아직 안 간 구간만 중립색이다.
+             */}
             {i > 0 ? (
               <div className="flex h-6 w-10 items-center justify-center">
-                <div className="bg-line h-6 w-px" />
+                <div
+                  className={cn(
+                    "h-6 w-px",
+                    i <= current ? "bg-brand-accent" : "bg-line"
+                  )}
+                />
               </div>
             ) : null}
             <DesktopStep
