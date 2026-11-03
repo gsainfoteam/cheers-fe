@@ -34,6 +34,14 @@ export const Route = createFileRoute("/_app/mentors/$mentorId/apply")({
 /** 200자 제한은 명세(`CreateRequestDto.message.maxLength`)와 시안이 같다 */
 const MAX_MESSAGE = 200;
 
+/**
+ * 시안 `자주하는 질문 확인하기` 가 여는 주소.
+ *
+ * FAQ 페이지는 아직 없다(#24). 생기면 이 한 줄만 바꾼다 — 라우트가
+ * 생기면 `<Link>` 로, 외부 문서라면 그 URL 로.
+ */
+const FAQ_URL = "/faq";
+
 function RouteComponent() {
   const { mentorId } = Route.useParams();
   const navigate = useNavigate();
@@ -178,6 +186,25 @@ function RouteComponent() {
             <br />
             신청만으로 커피챗이 확정되지는 않아요.
           </p>
+
+          {/*
+           * 피그마 `Notice`(890:31036 / 890:31038) — 안내 바로 아래 밑줄 글자.
+           *
+           * **새 탭으로 연다.** 같은 탭에서 이동하면 라우트를 떠나는 게 곧
+           * 오버레이를 닫는 동작이라 적던 질문이 사라진다.
+           *
+           * 시안의 글자 높이는 20 이다. 누를 자리는 44 로 키우고 `-my-3` 으로
+           * 되돌려, 보이는 간격은 시안 그대로 두고 손가락 영역만 넓혔다.
+           */}
+          <a
+            href={FAQ_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-body-sm text-ink-soft -my-3 flex min-h-11 items-center self-start underline"
+          >
+            자주하는 질문 확인하기
+            <span className="sr-only">(새 탭에서 열림)</span>
+          </a>
 
           {request.error ? (
             <p role="alert" className="text-body-sm text-danger">
