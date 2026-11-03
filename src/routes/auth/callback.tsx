@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { PageShell } from "@/components/layout/page-shell";
 
 /**
  * OAuth 리다이렉트 수신 지점.
@@ -16,5 +17,5 @@ export const Route = createFileRoute("/auth/callback")({
 });
 
 function RouteComponent() {
-  return <div>Signing in...</div>;
+  return <PageShell kind="public">Signing in...</PageShell>;
 }

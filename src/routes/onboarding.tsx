@@ -1,4 +1,5 @@
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
+import { PageShell } from "@/components/layout/page-shell";
 import { requireSession } from "@/lib/guards";
 import { entryPath, isAllowed } from "@/lib/onboarding-steps";
 
@@ -16,8 +17,10 @@ export const Route = createFileRoute("/onboarding")({
   beforeLoad: async ({ context, location }) => {
     const me = await requireSession(context.queryClient, location);
 
-    // 가입을 마친 사람이 뒤로가기로 돌아온 경우. 다시 동의시키면 안 된다
-    if (!me.next_step) throw redirect({ to: "/home" });
+    // 가입을 마친 사람이 뒤로가기로 돌아온 경우. 다시 동의시키면 안 된다.
+    // 가입 직후도 이 길로 나간다 — 시안의 흐름은 가입 완료에서 곧장
+    // 선배 둘러보기로 이어진다(학생·선배 공통)
+    if (!me.next_step) throw redirect({ to: "/mentors" });
 
     // 단계를 앞서갔거나, 유형이 다른 쪽 화면을 열었을 때
     if (!isAllowed(me.type, me.next_step, location.pathname)) {
@@ -29,13 +32,18 @@ export const Route = createFileRoute("/onboarding")({
   component: RouteComponent,
 });
 
+/**
+ * 셸만 씌우고 비켜선다.
+ *
+ * 단계 인디케이터는 여기가 아니라 각 화면 안에 있다 — 시안에서 데스크톱은
+ * 인디케이터가 제목과 한 묶음(`Task introduction`)이고 그 제목은 화면마다
+ * 다르다. 여기로 끌어올리면 제목까지 같이 올려야 하고, 그러면 화면이 자기
+ * 제목을 못 정한다. 네 화면이 다 생긴 뒤에 공통으로 묶을지 보면 된다.
+ */
 function RouteComponent() {
-  const { step } = Route.useRouteContext();
-
   return (
-    <div>
-      <div>Onboarding — {step}</div>
+    <PageShell kind="onboarding">
       <Outlet />
-    </div>
+    </PageShell>
   );
 }

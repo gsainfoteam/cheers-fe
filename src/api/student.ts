@@ -86,7 +86,15 @@ export function useVerifyStudentCode() {
         await api.POST("/api/v1/user/student/verify/code", { body }),
         OkResultSchema
       ),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.user }),
+    // 약관 동의와 같은 이유로 `refetchType: "all"` 이 필요하다. 본인확인 화면은
+    // 내 정보를 구독하지 않아서(가드가 `ensureQueryData` 로만 읽는다) 기본값인
+    // "active" 로는 재요청이 나가지 않고, 캐시에 옛 `next_step` 이 남는다.
+    // 그러면 `router.invalidate()` 뒤에도 가드가 이 화면을 통과시켜 제자리에 멈춘다
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: keys.user,
+        refetchType: "all",
+      }),
   });
 }
 

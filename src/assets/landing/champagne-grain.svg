@@ -1,0 +1,77 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="393" height="838" viewBox="0 0 393 838" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Cheers / Landing / Champagne light &#38; grain" filter="url(#filter0_n_0_296)">
+<g clip-path="url(#clip0_0_296)">
+<rect width="393" height="838" fill="url(#paint0_linear_0_296)"/>
+<ellipse id="Apricot light &#226;&#128;&#148; decorative" cx="215" cy="640" rx="325" ry="280" fill="url(#paint1_radial_0_296)"/>
+<ellipse id="Soft white studio light" cx="190" cy="210" rx="350" ry="300" fill="url(#paint2_radial_0_296)"/>
+<mask id="stroke0_0_296" fill="white">
+<path d="M525.41 731.566C493.248 851.596 363.385 921.089 235.354 886.783C107.322 852.477 29.6038 727.363 61.7657 607.333C93.9276 487.303 223.79 417.811 351.822 452.117C479.854 486.423 557.572 611.537 525.41 731.566Z"/>
+</mask>
+<path id="Champagne contour 1" d="M525.41 731.566C493.248 851.596 363.385 921.089 235.354 886.783C107.322 852.477 29.6038 727.363 61.7657 607.333C93.9276 487.303 223.79 417.811 351.822 452.117C479.854 486.423 557.572 611.537 525.41 731.566Z" stroke-width="2" stroke="url(#paint3_linear_0_296)" mask="url(#stroke0_0_296)"/>
+<mask id="stroke1_0_296" fill="white">
+<path d="M553.41 761.566C521.248 881.596 391.385 951.089 263.354 916.783C135.322 882.477 57.6038 757.363 89.7657 637.333C121.928 517.303 251.79 447.811 379.822 482.117C507.854 516.423 585.572 641.537 553.41 761.566Z"/>
+</mask>
+<path id="Champagne contour 2" d="M553.41 761.566C521.248 881.596 391.385 951.089 263.354 916.783C135.322 882.477 57.6038 757.363 89.7657 637.333C121.928 517.303 251.79 447.811 379.822 482.117C507.854 516.423 585.572 641.537 553.41 761.566Z" stroke-width="2" stroke="url(#paint4_linear_0_296)" mask="url(#stroke1_0_296)"/>
+<mask id="stroke2_0_296" fill="white">
+<path d="M581.41 791.566C549.248 911.596 419.385 981.089 291.354 946.783C163.322 912.477 85.6038 787.363 117.766 667.333C149.928 547.303 279.79 477.811 407.822 512.117C535.854 546.423 613.572 671.537 581.41 791.566Z"/>
+</mask>
+<path id="Champagne contour 3" d="M581.41 791.566C549.248 911.596 419.385 981.089 291.354 946.783C163.322 912.477 85.6038 787.363 117.766 667.333C149.928 547.303 279.79 477.811 407.822 512.117C535.854 546.423 613.572 671.537 581.41 791.566Z" stroke-width="2" stroke="url(#paint5_linear_0_296)" mask="url(#stroke2_0_296)"/>
+<rect id="Fade into content" y="698" width="393" height="140" fill="url(#paint6_linear_0_296)"/>
+</g>
+</g>
+<defs>
+<filter id="filter0_n_0_296" x="0" y="0" width="393" height="838" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feTurbulence type="fractalNoise" baseFrequency="1.5384615659713745 1.5384615659713745" stitchTiles="stitch" numOctaves="3" result="noise" seed="0" />
+<feColorMatrix in="noise" type="luminanceToAlpha" result="alphaNoise" />
+<feComponentTransfer in="alphaNoise" result="coloredNoise1">
+<feFuncA type="discrete" tableValues="0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "/>
+</feComponentTransfer>
+<feComposite operator="in" in2="shape" in="coloredNoise1" result="noise1Clipped" />
+<feFlood flood-color="rgba(134, 101, 65, 0.026)" result="color1Flood" />
+<feComposite operator="in" in2="noise1Clipped" in="color1Flood" result="color1" />
+<feMerge result="effect1_noise_0_296">
+<feMergeNode in="shape" />
+<feMergeNode in="color1" />
+</feMerge>
+</filter>
+<linearGradient id="paint0_linear_0_296" x1="196.5" y1="0" x2="196.5" y2="838" gradientUnits="userSpaceOnUse">
+<stop stop-color="#FFFCF7"/>
+<stop offset="0.46" stop-color="#FFF8EA"/>
+<stop offset="1" stop-color="#FFE7BF"/>
+</linearGradient>
+<radialGradient id="paint1_radial_0_296" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(215 640) scale(325 280)">
+<stop stop-color="#FFB86C" stop-opacity="0.48"/>
+<stop offset="0.58" stop-color="#FFD9A3" stop-opacity="0.28"/>
+<stop offset="1" stop-color="#FFF9F3" stop-opacity="0"/>
+</radialGradient>
+<radialGradient id="paint2_radial_0_296" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(190 210) scale(350 300)">
+<stop stop-color="white" stop-opacity="0.95"/>
+<stop offset="0.5" stop-color="white" stop-opacity="0.4"/>
+<stop offset="1" stop-color="white" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="paint3_linear_0_296" x1="61.7657" y1="607.333" x2="525.41" y2="731.566" gradientUnits="userSpaceOnUse">
+<stop stop-color="white" stop-opacity="0.5"/>
+<stop offset="0.45" stop-color="white" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#F4C542" stop-opacity="0.07"/>
+</linearGradient>
+<linearGradient id="paint4_linear_0_296" x1="89.7657" y1="637.333" x2="553.41" y2="761.566" gradientUnits="userSpaceOnUse">
+<stop stop-color="white" stop-opacity="0.5"/>
+<stop offset="0.45" stop-color="white" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#F4C542" stop-opacity="0.07"/>
+</linearGradient>
+<linearGradient id="paint5_linear_0_296" x1="117.766" y1="667.333" x2="581.41" y2="791.566" gradientUnits="userSpaceOnUse">
+<stop stop-color="white" stop-opacity="0.5"/>
+<stop offset="0.45" stop-color="white" stop-opacity="0.3"/>
+<stop offset="1" stop-color="#F4C542" stop-opacity="0.07"/>
+</linearGradient>
+<linearGradient id="paint6_linear_0_296" x1="196.5" y1="698" x2="196.5" y2="838" gradientUnits="userSpaceOnUse">
+<stop stop-color="white" stop-opacity="0"/>
+<stop offset="1" stop-color="white"/>
+</linearGradient>
+<clipPath id="clip0_0_296">
+<rect width="393" height="838" fill="white"/>
+</clipPath>
+</defs>
+</svg>

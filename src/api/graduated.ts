@@ -21,7 +21,13 @@ export function useVerifyBusinessCard() {
         await api.POST("/api/v1/user/graduated/verify/business-card", { body }),
         OkResultSchema
       ),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.user }),
+    // 재학생 인증코드 확인과 같다 — 선배 본인확인 화면도 내 정보를 구독하지
+    // 않으므로 "all" 이어야 새 `next_step` 이 캐시에 들어온다
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: keys.user,
+        refetchType: "all",
+      }),
   });
 }
 

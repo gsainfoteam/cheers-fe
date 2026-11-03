@@ -1,236 +1,189 @@
-import { useMemo } from "react"
-import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "cn"
+import { useId } from "react";
+import chevronDown from "@/assets/icons/chevron-down.svg";
+import { cn } from "@/lib/utils";
 
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
+/**
+ * 입력 필드. 피그마 `Cheers / Field`(332:5729).
+ *
+ * 시안이 다섯 상태를 그려 뒀는데, 코드에서는 **셋만 props 다.**
+ *
+ * | 시안 상태 | 코드 |
+ * |---|---|
+ * | Empty / Filled | 값이 있냐 없냐 — 네이티브가 알아서 한다 |
+ * | Focus | `focus-within:` |
+ * | Error | `error` prop |
+ * | ReadOnly | `readOnly` prop (네이티브 속성) |
+ *
+ * 시안 설명이 *"Fields are real web form layouts, not native OS controls"*
+ * 라고 적어 뒀다 — 생김새는 우리가 그리되 동작은 네이티브 `<input>` 이다.
+ *
+ * **포커스는 테두리를 굵히지 않고 안쪽 링으로 낸다.** 시안은 포커스에서
+ * 테두리가 1px → 2px 이 되는데, 그대로 하면 글자가 1px 밀린다. 같은 두께로
+ * 보이되 자리는 안 움직이게 `ring-inset` 을 겹쳤다.
+ */
 
-function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {
-  return (
-    <fieldset
-      data-slot="field-set"
-      className={cn(
-        "flex flex-col gap-6 has-[>[data-slot=checkbox-group]]:gap-3 has-[>[data-slot=radio-group]]:gap-3",
-        className
-      )}
-      {...props}
-    />
-  )
+/**
+ * 입력 상자의 모양. `<input>` 과 `<select>` 가 나눠 쓴다.
+ *
+ * 시안에서 학과 선택은 `Cheers / Field` 에 쐐기 아이콘만 붙은 모양이다.
+ * 같은 컴포넌트이므로 클래스도 한 벌이어야 한다 — 두 벌이 되면 둘이
+ * 어긋나도 아무도 모른다.
+ */
+function controlClass(error: boolean, readOnly: boolean) {
+  return cn(
+    "text-body text-ink h-13 w-full rounded-md border px-4 py-3.5",
+    // placeholder 는 시안 Empty 상태의 글자색
+    "placeholder:text-ink-soft",
+    // 시안 Focus — 테두리 2px 대신 같은 색 안쪽 링을 겹쳐 자리 밀림을 막는다
+    "focus-within:border-focus focus-within:ring-focus focus-within:ring-1 focus-within:ring-inset focus-within:outline-none",
+    error ? "border-danger" : "border-control",
+    // 시안 ReadOnly — 바탕이 캔버스색으로 내려앉아 "못 고치는 칸" 으로 읽힌다
+    "read-only:bg-canvas read-only:focus-within:ring-0",
+    readOnly ? "bg-canvas" : "bg-surface"
+  );
 }
 
-function FieldLegend({
+type Shell = {
+  label: string;
+  /**
+   * 라벨을 눈에서만 감춘다. 같은 라벨의 칸이 줄줄이 반복될 때
+   * (참여 활동 여러 줄) 쓴다 — 보조기술에는 그대로 읽힌다.
+   */
+  labelHidden?: boolean;
+  /** 입력 아래 도움말. `error` 가 있으면 가려진다 */
+  hint?: string;
+  /** 있으면 오류 상태. 이 문구가 도움말 자리를 대신한다 */
+  error?: string;
+};
+
+/** 라벨 / 입력 / 도움말의 세로 배치. 입력만 갈아 끼운다 */
+function FieldShell({
+  label,
+  labelHidden,
+  hint,
+  error,
   className,
-  variant = "legend",
-  ...props
-}: React.ComponentProps<"legend"> & { variant?: "legend" | "label" }) {
-  return (
-    <legend
-      data-slot="field-legend"
-      data-variant={variant}
-      className={cn(
-        "mb-3 font-medium data-[variant=label]:text-sm data-[variant=legend]:text-base",
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-function FieldGroup({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="field-group"
-      className={cn(
-        "group/field-group @container/field-group flex w-full flex-col gap-7 data-[slot=checkbox-group]:gap-3 *:data-[slot=field-group]:gap-4",
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-const fieldVariants = cva(
-  "group/field flex w-full gap-3 data-[invalid=true]:text-destructive",
-  {
-    variants: {
-      orientation: {
-        vertical: "flex-col *:w-full [&>.sr-only]:w-auto",
-        horizontal:
-          "flex-row items-center has-[>[data-slot=field-content]]:items-start *:data-[slot=field-label]:flex-auto has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px",
-        responsive:
-          "flex-col *:w-full @md/field-group:flex-row @md/field-group:items-center @md/field-group:*:w-auto @md/field-group:has-[>[data-slot=field-content]]:items-start @md/field-group:*:data-[slot=field-label]:flex-auto [&>.sr-only]:w-auto @md/field-group:has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px",
-      },
-    },
-    defaultVariants: {
-      orientation: "vertical",
-    },
-  }
-)
-
-function Field({
-  className,
-  orientation = "vertical",
-  ...props
-}: React.ComponentProps<"div"> & VariantProps<typeof fieldVariants>) {
-  return (
-    <div
-      role="group"
-      data-slot="field"
-      data-orientation={orientation}
-      className={cn(fieldVariants({ orientation }), className)}
-      {...props}
-    />
-  )
-}
-
-function FieldContent({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="field-content"
-      className={cn(
-        "group/field-content flex flex-1 flex-col gap-1 leading-snug",
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-function FieldLabel({
-  className,
-  ...props
-}: React.ComponentProps<typeof Label>) {
-  return (
-    <Label
-      data-slot="field-label"
-      className={cn(
-        "group/field-label peer/field-label flex w-fit gap-2 leading-snug group-data-[disabled=true]/field:opacity-50 has-data-checked:border-primary/30 has-data-checked:bg-primary/5 has-[>[data-slot=field]]:rounded-md has-[>[data-slot=field]]:border has-[>[data-slot=field]]:not-has-[:disabled,[data-disabled]]:hover:bg-muted/50 has-[>[data-slot=field]]:has-[:focus-visible]:border-ring has-[>[data-slot=field]]:has-[:focus-visible]:ring-3 has-[>[data-slot=field]]:has-[:focus-visible]:ring-ring/50 *:data-[slot=field]:p-3 dark:has-data-checked:border-primary/20 dark:has-data-checked:bg-primary/10",
-        "has-[>[data-slot=field]]:w-full has-[>[data-slot=field]]:flex-col",
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-function FieldTitle({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="field-label"
-      className={cn(
-        "flex w-fit items-center gap-2 text-sm font-medium group-data-[disabled=true]/field:opacity-50",
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
-  return (
-    <p
-      data-slot="field-description"
-      className={cn(
-        "text-left text-sm leading-normal font-normal text-muted-foreground group-has-data-horizontal/field:text-balance [[data-variant=legend]+&]:-mt-1.5",
-        "last:mt-0 nth-last-2:-mt-1",
-        "[&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-primary",
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-function FieldSeparator({
+  fieldId,
   children,
-  className,
-  ...props
-}: React.ComponentProps<"div"> & {
-  children?: React.ReactNode
+}: Shell & {
+  className?: string;
+  fieldId: string;
+  children: React.ReactNode;
 }) {
+  const message = error ?? hint;
+
   return (
-    <div
-      data-slot="field-separator"
-      data-content={!!children}
-      className={cn(
-        "relative -my-2 h-5 text-sm group-data-[variant=outline]/field-group:-mb-2",
-        className
-      )}
-      {...props}
+    <div className={cn("flex w-full flex-col gap-2", className)}>
+      <label
+        htmlFor={fieldId}
+        className={cn("text-label text-ink", labelHidden && "sr-only")}
+      >
+        {label}
+      </label>
+
+      {children}
+
+      {message ? (
+        <p
+          id={`${fieldId}-message`}
+          role={error ? "alert" : undefined}
+          className={cn("text-body-sm", error ? "text-danger" : "text-ink-soft")}
+        >
+          {message}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+export function Field({
+  label,
+  labelHidden,
+  hint,
+  error,
+  className,
+  id,
+  ...input
+}: Shell & React.ComponentProps<"input">) {
+  const autoId = useId();
+  const fieldId = id ?? autoId;
+  const message = error ?? hint;
+
+  return (
+    <FieldShell
+      label={label}
+      labelHidden={labelHidden}
+      hint={hint}
+      error={error}
+      className={className}
+      fieldId={fieldId}
     >
-      <Separator className="absolute inset-0 top-1/2" />
-      {children && (
-        <span
-          className="relative mx-auto block w-fit bg-background px-2 text-muted-foreground"
-          data-slot="field-separator-content"
+      <input
+        id={fieldId}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={message ? `${fieldId}-message` : undefined}
+        className={controlClass(Boolean(error), Boolean(input.readOnly))}
+        {...input}
+      />
+    </FieldShell>
+  );
+}
+
+/**
+ * 고르는 필드. 시안에서는 `Cheers / Field` 에 `Select chevron`(20px)이
+ * 붙은 모양이다.
+ *
+ * **네이티브 `<select>` 를 쓴다.** 시안 설명의 *"real web form layouts,
+ * not native OS controls"* 는 OS 피커의 생김새를 쓰지 말라는 뜻이지 동작까지
+ * 직접 만들라는 뜻이 아니다. 목록을 직접 그리면 키보드·포커스·모바일
+ * 스크롤을 전부 다시 만들어야 하고, 이 화면에 그만한 요구가 없다.
+ *
+ * 쐐기는 네이티브 화살표를 끄고(`appearance-none`) 그 자리에 시안 아이콘을
+ * 올린 것이다. 클릭은 아이콘을 통과해 select 로 간다.
+ */
+export function Select({
+  label,
+  labelHidden,
+  hint,
+  error,
+  className,
+  id,
+  children,
+  ...select
+}: Shell & React.ComponentProps<"select">) {
+  const autoId = useId();
+  const fieldId = id ?? autoId;
+  const message = error ?? hint;
+
+  return (
+    <FieldShell
+      label={label}
+      labelHidden={labelHidden}
+      hint={hint}
+      error={error}
+      className={className}
+      fieldId={fieldId}
+    >
+      <div className="relative w-full">
+        <select
+          id={fieldId}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={message ? `${fieldId}-message` : undefined}
+          className={cn(
+            controlClass(Boolean(error), false),
+            // 쐐기(20) + 오른쪽 여백(16) 만큼 글자 자리를 비운다
+            "appearance-none pr-11"
+          )}
+          {...select}
         >
           {children}
-        </span>
-      )}
-    </div>
-  )
-}
-
-function FieldError({
-  className,
-  children,
-  errors,
-  ...props
-}: React.ComponentProps<"div"> & {
-  errors?: Array<{ message?: string } | undefined>
-}) {
-  const content = useMemo(() => {
-    if (children) {
-      return children
-    }
-
-    if (!errors?.length) {
-      return null
-    }
-
-    const uniqueErrors = [
-      ...new Map(errors.map((error) => [error?.message, error])).values(),
-    ]
-
-    if (uniqueErrors?.length == 1) {
-      return uniqueErrors[0]?.message
-    }
-
-    return (
-      <ul className="ml-4 flex list-disc flex-col gap-1">
-        {uniqueErrors.map(
-          (error, index) =>
-            error?.message && <li key={index}>{error.message}</li>
-        )}
-      </ul>
-    )
-  }, [children, errors])
-
-  if (!content) {
-    return null
-  }
-
-  return (
-    <div
-      role="alert"
-      data-slot="field-error"
-      className={cn("text-sm font-normal text-destructive", className)}
-      {...props}
-    >
-      {content}
-    </div>
-  )
-}
-
-export {
-  Field,
-  FieldLabel,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLegend,
-  FieldSeparator,
-  FieldSet,
-  FieldContent,
-  FieldTitle,
+        </select>
+        <img
+          src={chevronDown}
+          alt=""
+          className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2"
+        />
+      </div>
+    </FieldShell>
+  );
 }
