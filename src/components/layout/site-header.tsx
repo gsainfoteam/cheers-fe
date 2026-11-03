@@ -129,13 +129,26 @@ function Nav({
           key={item.to}
           to={item.to}
           className={cn(
-            "text-label flex shrink-0 items-center justify-center whitespace-nowrap",
+            "text-label relative flex shrink-0 items-center justify-center whitespace-nowrap",
             // Public 의 `로그인` 만 진한 색이다. 나머지 메뉴는 보조색
             kind === "public" ? "text-ink" : "text-ink-soft",
             itemClassName
           )}
+          // 시안 `Navigation / main` 의 현재 위치 — 글자가 진해지고 굵어진다
+          activeProps={{ className: "text-ink font-bold" }}
         >
-          {item.label}
+          {({ isActive }) => (
+            <>
+              {item.label}
+              {/*
+               * 피그마 `Active indicator` — 메뉴 아래 2px 주황 띠.
+               * 자식으로 두면 글자 폭에 저절로 맞는다.
+               */}
+              {isActive ? (
+                <span className="bg-brand-accent absolute inset-x-0 bottom-0 h-0.5" />
+              ) : null}
+            </>
+          )}
         </Link>
       ))}
     </nav>

@@ -21,9 +21,18 @@ import { cn } from "@/lib/utils";
  * 마흔 개가 되고 둘이 어긋나도 아무도 모른다. 비율이 하나라는 사실을
  * 코드에 그대로 남기는 쪽을 골랐다.
  *
- * 글자 크기도 `--u` 를 탄다. 모바일에서는 `Badge/Name mobile`(20) 같은
- * 토큰 값과 정확히 일치하고, 데스크톱에서는 그 값이 비율대로 커진다 —
- * 시안에 `Badge/* desktop` 짝이 없는 이유가 이것이다.
+ * ## 글자만 두 벌이다
+ *
+ * **상자는 비율로 커지지만 글자는 아니다.** 시안의 288 카드를 재보면
+ * 이름 30(비율대로면 33.8), 직무 17(23.6), 회사·꼬리표 13(20.3)이다.
+ * 로고·띠·여백은 전부 비율 그대로인데 글자만 따로 짜 넣었다 — 카드가
+ * 1.689배가 된다고 글자까지 그만큼 키우면 읽기 힘들어서다.
+ *
+ * 그래서 글자 네 개만 `@min-[220px]:` 로 두 벌을 쓴다. 기준은 **뷰포트가
+ * 아니라 카드 폭**이다(바깥 `@container`). 170.5 짜리 카드는 작은 쪽,
+ * 288 짜리는 큰 쪽을 쓰고, 그 사이 어디에 놓여도 카드가 스스로 정한다.
+ * 작은 쪽 값이 `Badge/* mobile` 토큰과 정확히 일치한다 — 큰 쪽에는
+ * 짝이 되는 토큰이 없어서 수치를 그대로 적었다.
  *
  * ## 범위
  *
@@ -82,24 +91,24 @@ export function EmployeeBadge({
               className="h-[calc(24.865*var(--u))] w-[calc(69.858*var(--u))] object-contain"
             />
           ) : null}
-          {/* Badge/Company mobile 12/18/-0.3 */}
-          <p className="text-ink-soft text-[calc(12*var(--u))] leading-[calc(18*var(--u))] tracking-[calc(-0.3*var(--u))]">
+          {/* Badge/Company mobile 12/18/-0.3 → 큰 카드 13/20 */}
+          <p className="text-ink-soft text-[12px] leading-[18px] tracking-[-0.3px] @min-[220px]:text-[13px] @min-[220px]:leading-[20px] @min-[220px]:tracking-normal">
             {data.company}
           </p>
         </div>
 
         {/* 피그마 `Identity` */}
         <div className="flex w-full flex-col items-start px-[calc(16*var(--u))] pt-[calc(6*var(--u))] pb-[calc(12*var(--u))] gap-[calc(6*var(--u))]">
-          {/* Badge/Name mobile 20/28/-0.7 */}
-          <p className="text-ink font-bold text-[calc(20*var(--u))] leading-[calc(28*var(--u))] tracking-[calc(-0.7*var(--u))]">
+          {/* Badge/Name mobile 20/28/-0.7 → 큰 카드 30/40/-1.2 */}
+          <p className="text-ink font-bold text-[20px] leading-[28px] tracking-[-0.7px] @min-[220px]:text-[30px] @min-[220px]:leading-[40px] @min-[220px]:tracking-[-1.2px]">
             {data.nickname}
           </p>
-          {/* Badge/Role mobile 14/20/-0.4 — 시안이 두 줄 자리를 비워 둔다 */}
-          <p className="text-ink min-h-[calc(44*var(--u))] text-[calc(14*var(--u))] leading-[calc(20*var(--u))] tracking-[calc(-0.4*var(--u))] whitespace-pre-line">
+          {/* Badge/Role mobile 14/20/-0.4 → 큰 카드 17/25 Medium. 두 줄 자리를 비워 둔다 */}
+          <p className="text-ink min-h-11 text-[14px] leading-[20px] tracking-[-0.4px] whitespace-pre-line @min-[220px]:min-h-12 @min-[220px]:text-[17px] @min-[220px]:leading-[25px] @min-[220px]:font-medium @min-[220px]:tracking-normal">
             {data.role}
           </p>
-          {/* Badge/Meta mobile 12/18/-0.4 */}
-          <p className="text-ink-soft min-h-[calc(20*var(--u))] text-[calc(12*var(--u))] leading-[calc(18*var(--u))] tracking-[calc(-0.4*var(--u))] whitespace-pre-wrap">
+          {/* Badge/Meta mobile 12/18/-0.4 → 큰 카드 13/20 */}
+          <p className="text-ink-soft min-h-5 text-[12px] leading-[18px] tracking-[-0.4px] whitespace-pre-wrap @min-[220px]:text-[13px] @min-[220px]:leading-[20px] @min-[220px]:tracking-normal">
             {data.meta}
           </p>
         </div>
