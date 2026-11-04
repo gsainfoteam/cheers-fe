@@ -1,7 +1,7 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { cheersListQuery } from "@/api";
-import checkIcon from "@/assets/icons/check-circle.svg";
+import { CompletionCard } from "@/components/completion-card";
 import { PageContainer } from "@/components/layout/page-container";
 import { action } from "@/components/ui/action";
 import { cn } from "@/lib/utils";
@@ -34,46 +34,25 @@ function RouteComponent() {
 
   return (
     <PageContainer className="flex flex-col items-center pt-8 pb-12 lg:pt-16 lg:pb-18">
-      {/* 피그마 `Content` — 카드 껍데기는 데스크톱에만 있다 */}
-      <div className="lg:border-line lg:bg-surface lg:shadow-work flex w-full flex-col items-center gap-6 lg:w-140 lg:rounded-lg lg:border lg:p-10">
-        {/* 피그마 `Completion check` */}
-        <div className="bg-champagne flex size-18 items-center justify-center rounded-full">
-          <img src={checkIcon} alt="" />
-        </div>
-
-        <div className="flex flex-col gap-3 text-center lg:w-120">
-          {/*
-           * 시안이 이 제목만 다른 짝을 쓴다 — 모바일 `Task/Title`(32/44),
-           * 데스크톱 `Display/Page`(36/48). 토큰 하나로는 안 나와서 둘을
-           * 갈아 끼웠다.
-           */}
-          <h1 className="text-task-title lg:text-page text-ink">
-            커피챗 요청을 보냈어요.
-          </h1>
-          <p className="text-body text-ink-soft">
-            {mentor ? `${mentor.nickname} 선배에게 ` : ""}질문과 프로필을
-            전달했어요.
-          </p>
-        </div>
-
-        {/* 피그마 `Form actions` — 두 버튼 모두 폭을 가득 채운다 */}
-        <div className="flex w-full flex-col gap-3 pt-2 lg:w-120">
-          <Link to="/applications" className={action()}>
-            보낸 신청 보기
-          </Link>
-          {/*
-           * 시안의 Ghost 는 이 자리에서 **흰 바탕**이다(카드 위라 테두리 없이도
-           * 버튼으로 읽힌다). 랜딩의 Ghost 는 배경 없이 글자만이라 토큰 쪽을
-           * 건드리지 않고 여기서만 바탕을 얹었다.
-           */}
-          <Link
-            to="/mentors"
-            className={cn(action({ variant: "ghost" }), "bg-surface")}
-          >
-            선배 둘러보기
-          </Link>
-        </div>
-      </div>
+      <CompletionCard
+        title="커피챗 요청을 보냈어요."
+        description={`${mentor ? `${mentor.nickname} 선배에게 ` : ""}질문과 프로필을 전달했어요.`}
+      >
+        <Link to="/applications" className={action()}>
+          보낸 신청 보기
+        </Link>
+        {/*
+         * 시안의 Ghost 는 이 자리에서 **흰 바탕**이다(카드 위라 테두리 없이도
+         * 버튼으로 읽힌다). 랜딩의 Ghost 는 배경 없이 글자만이라 토큰 쪽을
+         * 건드리지 않고 여기서만 바탕을 얹었다.
+         */}
+        <Link
+          to="/mentors"
+          className={cn(action({ variant: "ghost" }), "bg-surface")}
+        >
+          선배 둘러보기
+        </Link>
+      </CompletionCard>
     </PageContainer>
   );
 }

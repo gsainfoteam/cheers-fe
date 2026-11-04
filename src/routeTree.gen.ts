@@ -22,6 +22,8 @@ import { Route as AppApplicationsApplicationIdRouteImport } from './routes/_app/
 import { Route as AppMeIndexRouteImport } from './routes/_app/me/index'
 import { Route as AppMeEditRouteImport } from './routes/_app/me/edit'
 import { Route as AppMePreviewRouteImport } from './routes/_app/me/preview'
+import { Route as CheersReceivedRequestIdRouteImport } from './routes/cheers/received/$requestId'
+import { Route as CheersSentRequestIdRouteImport } from './routes/cheers/sent/$requestId'
 import { Route as OnboardingMentorExtraRouteImport } from './routes/onboarding/mentor/extra'
 import { Route as OnboardingMentorProfileRouteImport } from './routes/onboarding/mentor/profile'
 import { Route as OnboardingMentorVerifyRouteImport } from './routes/onboarding/mentor/verify'
@@ -29,6 +31,7 @@ import { Route as OnboardingStudentExtraRouteImport } from './routes/onboarding/
 import { Route as OnboardingStudentProfileRouteImport } from './routes/onboarding/student/profile'
 import { Route as OnboardingStudentVerifyRouteImport } from './routes/onboarding/student/verify'
 import { Route as AppApplicationsApplicationIdShareRouteImport } from './routes/_app/applications/$applicationId/share'
+import { Route as AppApplicationsApplicationIdSharedRouteImport } from './routes/_app/applications_/$applicationId/shared'
 import { Route as AppMentorsMentorIdApplyRouteImport } from './routes/_app/mentors/$mentorId/apply'
 import { Route as AppMentorsMentorIdSentRouteImport } from './routes/_app/mentors_/$mentorId/sent'
 
@@ -97,6 +100,16 @@ const AppMePreviewRoute = AppMePreviewRouteImport.update({
   path: '/me/preview',
   getParentRoute: () => AppRoute,
 } as any)
+const CheersReceivedRequestIdRoute = CheersReceivedRequestIdRouteImport.update({
+  id: '/cheers/received/$requestId',
+  path: '/cheers/received/$requestId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheersSentRequestIdRoute = CheersSentRequestIdRouteImport.update({
+  id: '/cheers/sent/$requestId',
+  path: '/cheers/sent/$requestId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingMentorExtraRoute = OnboardingMentorExtraRouteImport.update({
   id: '/mentor/extra',
   path: '/mentor/extra',
@@ -134,6 +147,12 @@ const AppApplicationsApplicationIdShareRoute =
     path: '/share',
     getParentRoute: () => AppApplicationsApplicationIdRoute,
   } as any)
+const AppApplicationsApplicationIdSharedRoute =
+  AppApplicationsApplicationIdSharedRouteImport.update({
+    id: '/applications_/$applicationId/shared',
+    path: '/applications/$applicationId/shared',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppMentorsMentorIdApplyRoute = AppMentorsMentorIdApplyRouteImport.update({
   id: '/$mentorId/apply',
   path: '/$mentorId/apply',
@@ -157,6 +176,8 @@ export interface FileRoutesByFullPath {
   '/applications/$applicationId': typeof AppApplicationsApplicationIdRouteWithChildren
   '/me/edit': typeof AppMeEditRoute
   '/me/preview': typeof AppMePreviewRoute
+  '/cheers/received/$requestId': typeof CheersReceivedRequestIdRoute
+  '/cheers/sent/$requestId': typeof CheersSentRequestIdRoute
   '/onboarding/mentor/extra': typeof OnboardingMentorExtraRoute
   '/onboarding/mentor/profile': typeof OnboardingMentorProfileRoute
   '/onboarding/mentor/verify': typeof OnboardingMentorVerifyRoute
@@ -165,6 +186,7 @@ export interface FileRoutesByFullPath {
   '/onboarding/student/verify': typeof OnboardingStudentVerifyRoute
   '/me/': typeof AppMeIndexRoute
   '/applications/$applicationId/share': typeof AppApplicationsApplicationIdShareRoute
+  '/applications/$applicationId/shared': typeof AppApplicationsApplicationIdSharedRoute
   '/mentors/$mentorId/apply': typeof AppMentorsMentorIdApplyRoute
   '/mentors/$mentorId/sent': typeof AppMentorsMentorIdSentRoute
 }
@@ -179,6 +201,8 @@ export interface FileRoutesByTo {
   '/applications/$applicationId': typeof AppApplicationsApplicationIdRouteWithChildren
   '/me/edit': typeof AppMeEditRoute
   '/me/preview': typeof AppMePreviewRoute
+  '/cheers/received/$requestId': typeof CheersReceivedRequestIdRoute
+  '/cheers/sent/$requestId': typeof CheersSentRequestIdRoute
   '/onboarding/mentor/extra': typeof OnboardingMentorExtraRoute
   '/onboarding/mentor/profile': typeof OnboardingMentorProfileRoute
   '/onboarding/mentor/verify': typeof OnboardingMentorVerifyRoute
@@ -187,6 +211,7 @@ export interface FileRoutesByTo {
   '/onboarding/student/verify': typeof OnboardingStudentVerifyRoute
   '/me': typeof AppMeIndexRoute
   '/applications/$applicationId/share': typeof AppApplicationsApplicationIdShareRoute
+  '/applications/$applicationId/shared': typeof AppApplicationsApplicationIdSharedRoute
   '/mentors/$mentorId/apply': typeof AppMentorsMentorIdApplyRoute
   '/mentors/$mentorId/sent': typeof AppMentorsMentorIdSentRoute
 }
@@ -204,6 +229,8 @@ export interface FileRoutesById {
   '/_app/applications/$applicationId': typeof AppApplicationsApplicationIdRouteWithChildren
   '/_app/me/edit': typeof AppMeEditRoute
   '/_app/me/preview': typeof AppMePreviewRoute
+  '/cheers/received/$requestId': typeof CheersReceivedRequestIdRoute
+  '/cheers/sent/$requestId': typeof CheersSentRequestIdRoute
   '/onboarding/mentor/extra': typeof OnboardingMentorExtraRoute
   '/onboarding/mentor/profile': typeof OnboardingMentorProfileRoute
   '/onboarding/mentor/verify': typeof OnboardingMentorVerifyRoute
@@ -212,6 +239,7 @@ export interface FileRoutesById {
   '/onboarding/student/verify': typeof OnboardingStudentVerifyRoute
   '/_app/me/': typeof AppMeIndexRoute
   '/_app/applications/$applicationId/share': typeof AppApplicationsApplicationIdShareRoute
+  '/_app/applications_/$applicationId/shared': typeof AppApplicationsApplicationIdSharedRoute
   '/_app/mentors/$mentorId/apply': typeof AppMentorsMentorIdApplyRoute
   '/_app/mentors_/$mentorId/sent': typeof AppMentorsMentorIdSentRoute
 }
@@ -229,6 +257,8 @@ export interface FileRouteTypes {
     | '/applications/$applicationId'
     | '/me/edit'
     | '/me/preview'
+    | '/cheers/received/$requestId'
+    | '/cheers/sent/$requestId'
     | '/onboarding/mentor/extra'
     | '/onboarding/mentor/profile'
     | '/onboarding/mentor/verify'
@@ -237,6 +267,7 @@ export interface FileRouteTypes {
     | '/onboarding/student/verify'
     | '/me/'
     | '/applications/$applicationId/share'
+    | '/applications/$applicationId/shared'
     | '/mentors/$mentorId/apply'
     | '/mentors/$mentorId/sent'
   fileRoutesByTo: FileRoutesByTo
@@ -251,6 +282,8 @@ export interface FileRouteTypes {
     | '/applications/$applicationId'
     | '/me/edit'
     | '/me/preview'
+    | '/cheers/received/$requestId'
+    | '/cheers/sent/$requestId'
     | '/onboarding/mentor/extra'
     | '/onboarding/mentor/profile'
     | '/onboarding/mentor/verify'
@@ -259,6 +292,7 @@ export interface FileRouteTypes {
     | '/onboarding/student/verify'
     | '/me'
     | '/applications/$applicationId/share'
+    | '/applications/$applicationId/shared'
     | '/mentors/$mentorId/apply'
     | '/mentors/$mentorId/sent'
   id:
@@ -275,6 +309,8 @@ export interface FileRouteTypes {
     | '/_app/applications/$applicationId'
     | '/_app/me/edit'
     | '/_app/me/preview'
+    | '/cheers/received/$requestId'
+    | '/cheers/sent/$requestId'
     | '/onboarding/mentor/extra'
     | '/onboarding/mentor/profile'
     | '/onboarding/mentor/verify'
@@ -283,6 +319,7 @@ export interface FileRouteTypes {
     | '/onboarding/student/verify'
     | '/_app/me/'
     | '/_app/applications/$applicationId/share'
+    | '/_app/applications_/$applicationId/shared'
     | '/_app/mentors/$mentorId/apply'
     | '/_app/mentors_/$mentorId/sent'
   fileRoutesById: FileRoutesById
@@ -293,6 +330,8 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRouteWithChildren
   AuthCallbackRoute: typeof AuthCallbackRoute
+  CheersReceivedRequestIdRoute: typeof CheersReceivedRequestIdRoute
+  CheersSentRequestIdRoute: typeof CheersSentRequestIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -388,6 +427,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMePreviewRouteImport
       parentRoute: typeof AppRoute
     }
+    '/cheers/received/$requestId': {
+      id: '/cheers/received/$requestId'
+      path: '/cheers/received/$requestId'
+      fullPath: '/cheers/received/$requestId'
+      preLoaderRoute: typeof CheersReceivedRequestIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cheers/sent/$requestId': {
+      id: '/cheers/sent/$requestId'
+      path: '/cheers/sent/$requestId'
+      fullPath: '/cheers/sent/$requestId'
+      preLoaderRoute: typeof CheersSentRequestIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding/mentor/extra': {
       id: '/onboarding/mentor/extra'
       path: '/mentor/extra'
@@ -436,6 +489,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/applications/$applicationId/share'
       preLoaderRoute: typeof AppApplicationsApplicationIdShareRouteImport
       parentRoute: typeof AppApplicationsApplicationIdRoute
+    }
+    '/_app/applications_/$applicationId/shared': {
+      id: '/_app/applications_/$applicationId/shared'
+      path: '/applications/$applicationId/shared'
+      fullPath: '/applications/$applicationId/shared'
+      preLoaderRoute: typeof AppApplicationsApplicationIdSharedRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/mentors/$mentorId/apply': {
       id: '/_app/mentors/$mentorId/apply'
@@ -500,6 +560,7 @@ interface AppRouteChildren {
   AppMeEditRoute: typeof AppMeEditRoute
   AppMePreviewRoute: typeof AppMePreviewRoute
   AppMeIndexRoute: typeof AppMeIndexRoute
+  AppApplicationsApplicationIdSharedRoute: typeof AppApplicationsApplicationIdSharedRoute
   AppMentorsMentorIdSentRoute: typeof AppMentorsMentorIdSentRoute
 }
 
@@ -509,6 +570,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppMeEditRoute: AppMeEditRoute,
   AppMePreviewRoute: AppMePreviewRoute,
   AppMeIndexRoute: AppMeIndexRoute,
+  AppApplicationsApplicationIdSharedRoute:
+    AppApplicationsApplicationIdSharedRoute,
   AppMentorsMentorIdSentRoute: AppMentorsMentorIdSentRoute,
 }
 
@@ -546,6 +609,8 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRouteWithChildren,
   AuthCallbackRoute: AuthCallbackRoute,
+  CheersReceivedRequestIdRoute: CheersReceivedRequestIdRoute,
+  CheersSentRequestIdRoute: CheersSentRequestIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -359,11 +359,11 @@
 
 | 화면 | 라우트 / 파일 | 피그마 (D / M) | API | 지금 코드 |
 |---|---|---|---|---|
-| 받은 신청 | `/applications` · `routes/_app/applications.tsx` | `338:9655` / `338:9530` | `GET /cheers/received` | "준비 중" 한 줄 |
-| 받은 신청 없음 | 같은 라우트 | `339:9992` / `339:9908` | 같음 | 〃 |
-| 받은 신청 내용 | `/applications/$applicationId` | `339:8525` / `339:8447` | `GET /cheers/received/{id}` | "준비 중" 한 줄 |
-| 연락처 공유 확인 | `/applications/$applicationId/share` | `339:8888` / `339:8729` | `POST /cheers/received/{id}/share-contact` | 임시 `RouteOverlay` |
-| 연락처 공유 완료 | **새로 만든다** — `/applications/$applicationId/shared` 권장 | `339:9132` / `339:9048` | — | 없음 |
+| 받은 신청 | `/applications` · `routes/_app/applications.tsx` | `338:9655` / `338:9530` | `GET /cheers/received` | ✅ (2026-11-05) |
+| 받은 신청 없음 | 같은 라우트 | `339:9992` / `339:9908` | 같음 | ✅ |
+| 받은 신청 내용 | `/applications/$applicationId` | `339:8525` / `339:8447` | `GET /cheers/received/{id}` | ✅ |
+| 연락처 공유 확인 | `/applications/$applicationId/share` | `339:8888` / `339:8729` | `POST /cheers/received/{id}/share-contact` | ✅ `ConfirmDialog`. `route-overlay.tsx` 삭제 |
+| 연락처 공유 완료 | **새로 만든다** — `/applications/$applicationId/shared` 권장 | `339:9132` / `339:9048` | — | ✅ `applications_/$applicationId/shared.tsx` |
 
 API 훅은 **이미 있다**: `receivedRequestsQuery`, `receivedRequestQuery`, `useShareContact`(`api/cheers.ts`). 새로 쓸 것은 화면뿐이다.
 
@@ -480,7 +480,9 @@ API 훅은 **이미 있다**: `receivedRequestsQuery`, `receivedRequestQuery`, `
 
 ### 4.7 알림톡으로 들어올 때 — `07 · 알림톡·웹 진입`
 
-새 신청이 오면 선배에게 알림톡이 가고, 그 링크가 `/applications/{id}` 를 연다(설계 4-3c — 경로가 하나인 이유가 이것이다). 그 링크로 들어왔는데 바로 상세를 볼 수 없는 세 경우를 시안이 따로 그렸다. 전부 화면으로 확인함(2026-11-04).
+새 신청이 오면 선배에게 알림톡이 가고, 그 링크가 `/applications/{id}` 를 연다(설계 4-3c — 경로가 하나인 이유가 이것이다).
+
+> ⚠️ **실제 링크는 아직 `/cheers/received/{id}` 다** (2026-11-05 확인, 스테이징 메일). API 경로에서 `/api/v1` 만 뗀 모양이라 프론트에 없는 경로였다. 백엔드에 `/applications/{id}` 로 바꿔 달라고 요청했고(이슈 [#28](https://github.com/gsainfoteam/cheers-fe/issues/28)), 그동안은 `src/routes/cheers/received/$requestId.tsx` · `cheers/sent/$requestId.tsx` 가 옛 경로를 `/applications/{id}` 로 넘긴다. 링크가 바뀐 뒤 이미 나간 메일을 위해 한동안 두었다가 지운다. 그 링크로 들어왔는데 바로 상세를 볼 수 없는 세 경우를 시안이 따로 그렸다. 전부 화면으로 확인함(2026-11-04).
 
 | 화면 | 피그마 (D / M) | 언제 | 헤더 |
 |---|---|---|---|
@@ -684,8 +686,8 @@ index 로 두면 미리보기를 열 때 마이페이지가 언마운트돼 모�
 1. **선배 계정으로 `/mentors` 가 열리는지 확인** — 백엔드가 열었다(§3.1). 스테이징에서 직접 확인한 뒤 2번으로. 막혀 있으면 2번 이후를 선배 계정으로 끝까지 확인할 수 없다.
 2. **명함 첨부** — 업로드 상자를 여기서 만든다. 가입 줄기의 입구.
 3. **기본 정보 → 추가 정보** — `mentor-signup-draft`, 회사명 검색 칸(§2.4a, 결과 없이 `등록하기` 만 동작하는 상태로 시작), 태그 입력. §7 #1·#2 답이 없으면 추가 정보의 저장 매핑만 주석으로 임시 결정.
-4. **받은 신청 목록 → 내용 → 공유 확인 → 공유 완료** — `request-item` 승격, `confirm-dialog` 신설, `route-overlay.tsx` 삭제.
-5. **알림톡 진입(§4.7)** — `access-message` 신설, 로그인 화면의 `reason=application` 모양, 상세 오류 화면에 404 추가. 4번의 상세가 있어야 "로그인 후 같은 신청으로 복귀" 를 끝까지 확인할 수 있다.
+4. **받은 신청 목록 → 내용 → 공유 확인 → 공유 완료** — `request-item` 승격, `confirm-dialog` 신설, `route-overlay.tsx` 삭제. → ✅ (2026-11-05)
+5. **알림톡 진입(§4.7)** — `access-message` 신설, 로그인 화면의 `reason=application` 모양, 상세 오류 화면에 404 추가. 4번의 상세가 있어야 "로그인 후 같은 신청으로 복귀" 를 끝까지 확인할 수 있다. → ✅ (2026-11-05). 실제 알림톡 링크로 로그인 → 복귀는 아직 못 해 봤다
 6. **마이페이지 라우트 구조 변경(§5.2) → 마이페이지 → 미리보기 → 정보 수정** — 정보 수정은 3번의 칸 묶음을 재사용하므로 마지막.
 7. **선배 둘러보기 선배 시점(§3.2)** — 목록 API 는 열렸으므로(§3.1) 언제 해도 되지만, 다른 화면이 기대지 않는 마무리라 마지막. → ✅ 2·3번(가입)과 함께 먼저 끝냈다 (2026-11-05).
 

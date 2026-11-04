@@ -45,8 +45,10 @@ export function ResponsiveDialog({
   /**
    * 아래 버튼 줄. 안 주면 `닫기` 하나다 — 읽기만 하는 오버레이(약관)가
    * 그 모양이고, 무언가를 보내는 오버레이(커피챗 신청)는 자기 버튼을 준다.
+   * `false` 면 버튼 줄과 그 위 구분선을 아예 그리지 않는다 — 행동이 본문
+   * 안에 있는 오버레이(받은 신청 내용)가 그 모양이다.
    */
-  actions?: React.ReactNode;
+  actions?: React.ReactNode | false;
   children?: React.ReactNode;
 }) {
   return (
@@ -88,16 +90,20 @@ export function ResponsiveDialog({
             </div>
           </div>
 
-          <div className="bg-line h-px shrink-0" />
+          {actions === false ? null : (
+            <>
+              <div className="bg-line h-px shrink-0" />
 
-          {/* 피그마 `Dialog actions` */}
-          <div className="flex shrink-0 justify-end gap-3 px-5 pt-4 pb-5 lg:px-8">
-            {actions ?? (
-              <Dialog.Close className={cn(action(), "w-full lg:w-60")}>
-                닫기
-              </Dialog.Close>
-            )}
-          </div>
+              {/* 피그마 `Dialog actions` */}
+              <div className="flex shrink-0 justify-end gap-3 px-5 pt-4 pb-5 lg:px-8">
+                {actions ?? (
+                  <Dialog.Close className={cn(action(), "w-full lg:w-60")}>
+                    닫기
+                  </Dialog.Close>
+                )}
+              </div>
+            </>
+          )}
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>
