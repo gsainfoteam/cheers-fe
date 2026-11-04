@@ -1,9 +1,12 @@
 import type { Body } from "@/api";
 
 /**
- * 선배 프로필 폼의 규칙. 가입(추가 정보 · 기본 정보)과 정보 수정이 **같은
- * 규칙**을 써야 해서 한 곳에 둔다 — 한쪽만 고치면 가입 때 막은 값이 수정에서
- * 들어오거나 그 반대가 된다.
+ * 프로필 폼의 형식 규칙. 가입(기본 정보 · 추가 정보)과 정보 수정이, 그리고
+ * 학생과 선배가 **같은 규칙**을 써야 해서 한 곳에 둔다 — 한쪽만 고치면 가입
+ * 때 막은 값이 수정에서 들어오거나 그 반대가 된다.
+ *
+ * 폼 스키마(zod)는 `features/profile/` 에 있고, 여기 있는 건 스키마와 화면이
+ * 같이 쓰는 순수 함수다.
  */
 
 /** 명세 `ContactRequestDto.phone` 의 `^01\d{8,9}$`. 저장은 숫자만 보낸다 */
@@ -56,12 +59,7 @@ export function searchCompanies(query: string): string[] {
   return [];
 }
 
-/** 연락처 묶음 때문에 저장을 막을지. 임시(#26)로 이메일·휴대폰 둘 다 필수다 */
-export function contactInvalid(email: string, phone: string): boolean {
-  return !EMAIL.test(email.trim()) || !PHONE.test(digitsOf(phone));
-}
-
-type ContactRequest =Body<"/api/v1/user/graduated/info", "post">["contact"];
+type ContactRequest = Body<"/api/v1/user/graduated/info", "post">["contact"];
 
 /**
  * 저장할 연락 설정.

@@ -9,20 +9,24 @@ import { PageContainer } from "@/components/layout/page-container";
 import { action } from "@/components/ui/action";
 import { ProfileIdentity } from "@/components/ui/profile-identity";
 import { ProfileRow } from "@/components/ui/profile-row";
-import { formatPhone } from "@/lib/mentor-profile-form";
+import { studentContactEmailOf } from "@/features/profile/student-form";
+import { formatPhone } from "@/lib/profile-form";
 import { useSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
 /**
- * 마이페이지. 선배는 피그마 `Cheers / 마이페이지 · 선배`(338:8549 / 338:8341).
+ * 마이페이지. 학생은 피그마 `Cheers / 마이페이지 · 학생`(337:8236 / 337:8086),
+ * 선배는 `Cheers / 마이페이지 · 선배`(338:8549 / 338:8341).
  *
- * **index 가 아니라 레이아웃이다.** 공개 사원증 미리보기(`me/preview`)가 이
- * 화면 위에 모달로 뜨는데(시안 338:9268 이 마이페이지를 뒷배경으로 깔았다),
- * index 로 두면 미리보기를 여는 순간 이 화면이 언마운트돼 모달 뒤가 빈다.
- * 정보 수정은 한 장짜리 화면이라 `me_/edit` 으로 이 레이아웃 밖에 선다
- * (설계 4-0, 선배 가이드 §5.2). 학생·선배 공통 구조다.
+ * **index 가 아니라 레이아웃이다.** 미리보기(`me/preview` — 학생은 전달
+ * 프로필, 선배는 공개 사원증)가 이 화면 위에 모달로 뜨는데, index 로 두면
+ * 미리보기를 여는 순간 이 화면이 언마운트돼 모달 뒤가 빈다. 정보 수정은 한
+ * 장짜리 화면이라 `me_/edit` 으로 이 레이아웃 밖에 선다(설계 4-0, 선배 가이드
+ * §5.2).
  *
- * 데이터는 전부 `me.graduated.profile` 에서 온다. 추가 요청이 없다.
+ * 두 유형이 같은 뼈대다 — 머리 줄(`마이페이지` + `내 정보 수정`), 704 + 32 +
+ * 384 두 열, 아래 구분선과 로그아웃 · 회원 탈퇴. 열 안의 카드만 다르다.
+ * 데이터는 전부 내 정보(`GET /user/info`)에서 온다. 추가 요청이 없다.
  */
 export const Route = createFileRoute("/_app/me")({
   component: RouteComponent,
@@ -33,40 +37,29 @@ function RouteComponent() {
 
   return (
     <>
-      {role === "mentor" ? (
-        <MentorMyPage />
-      ) : (
-        // 학생 마이페이지(섹션 05)는 학생 가이드의 범위다
-        <PageContainer className="pt-8 pb-12 lg:pt-14 lg:pb-16">
-          <p className="text-body text-ink-soft">
-            학생 마이페이지는 아직 준비 중이에요.
-          </p>
-        </PageContainer>
-      )}
-      {/* 공개 사원증 미리보기. 이 화면은 그대로 남아 뒤에 깔린다 */}
+      {role === "mentor" ? <MentorMyPage /> : <StudentMyPage />}
+      {/* 미리보기. 이 화면은 그대로 남아 뒤에 깔린다 */}
       <Outlet />
     </>
   );
 }
 
-function MentorMyPage() {
-  const { data: me } = useSuspenseQuery(userInfoQuery());
-  const profile = me.graduated?.profile;
-
-  // 가입을 마친 선배에게는 늘 있다. 가드를 지나 여기 왔는데 없으면 서버 쪽 사고다
-  if (!profile) {
-    return (
-      <PageContainer className="pt-8 pb-12 lg:pt-14 lg:pb-16">
-        <p role="alert" className="text-body text-ink-soft">
-          프로필을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.
-        </p>
-      </PageContainer>
-    );
-  }
-
+/**
+ * 두 유형이 같이 쓰는 뼈대. 피그마 `Content`(데스크톱 1120) — 머리 줄,
+ * `Profile layout`(두 열), 구분선, `Account management`. 구분선 위아래가 32 라
+ * 바깥 `gap-8` 이 그 간격을 낸다.
+ */
+function MyPageFrame({
+  main,
+  aside,
+}: {
+  /** 왼쪽 704 열 */
+  main: React.ReactNode;
+  /** 오른쪽 384 열. 모바일은 왼쪽 열 아래에 온다 */
+  aside: React.ReactNode;
+}) {
   return (
     <PageContainer className="flex flex-col items-center pt-8 pb-12 lg:pt-14 lg:pb-16">
-      {/* 피그마 `Content` — 데스크톱 1120 */}
       <div className="flex w-full flex-col gap-8 lg:w-280">
         {/* 피그마 `Profile title and actions` */}
         <div className="flex items-center gap-4">
@@ -85,25 +78,8 @@ function MentorMyPage() {
 
         {/* 피그마 `Profile layout` — 데스크톱 704 + 32 + 384, 모바일은 한 줄로 쌓인다 */}
         <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
-          <div className="flex min-w-0 flex-col gap-6 lg:w-176 lg:shrink-0">
-            <ProfileCard me={me} profile={profile} />
-            <ContactCard profile={profile} />
-          </div>
-
-          {/* 피그마 `Contact and preview` — 모바일은 연락처 카드 아래에 온다 */}
-          <div className="flex flex-col gap-6 lg:w-96 lg:shrink-0">
-            <h2 className="text-card-title text-ink lg:hidden">공개 사원증</h2>
-            {/* 피그마 `Public badge` */}
-            <div className="flex justify-center p-6">
-              <EmployeeBadge data={badgeDataOf(profile)} className="w-72" />
-            </div>
-            <Link
-              to="/me/preview"
-              className={cn(action({ variant: "secondary" }), "text-button w-full")}
-            >
-              사원증 미리보기
-            </Link>
-          </div>
+          <div className="flex min-w-0 flex-col gap-6 lg:w-176 lg:shrink-0">{main}</div>
+          <div className="flex flex-col gap-6 lg:w-96 lg:shrink-0">{aside}</div>
         </div>
 
         <div className="bg-line h-px" />
@@ -112,6 +88,171 @@ function MentorMyPage() {
         <AccountActions />
       </div>
     </PageContainer>
+  );
+}
+
+/** 가드를 지나 여기 왔는데 프로필이 없으면 서버 쪽 사고다 */
+function MissingProfile() {
+  return (
+    <PageContainer className="pt-8 pb-12 lg:pt-14 lg:pb-16">
+      <p role="alert" className="text-body text-ink-soft">
+        프로필을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.
+      </p>
+    </PageContainer>
+  );
+}
+
+/** 카드 머리 오른쪽 위의 고양이 도장 — 로고 마크와 같은 그림. 데스크톱 40 / 모바일 32 */
+function LetterheadSeal() {
+  return (
+    <img
+      src={catSeal}
+      alt=""
+      aria-hidden
+      className="absolute top-6 right-6 w-8 lg:top-8 lg:right-8 lg:w-10"
+    />
+  );
+}
+
+/* ───────────────── 학생 ───────────────── */
+
+function StudentMyPage() {
+  const { data: me } = useSuspenseQuery(userInfoQuery());
+  const profile = me.student?.profile;
+  if (!profile) return <MissingProfile />;
+
+  const none = "등록하지 않음";
+  const attachment = profile.attachments[0];
+  const contact = profile.contact;
+  const channels = [
+    contact?.email_enabled ? "이메일" : null,
+    contact?.kakao_enabled ? "카카오 알림톡" : null,
+  ].filter(Boolean);
+  const phone = contact?.kakao_enabled && contact.phone ? contact.phone : null;
+
+  return (
+    <MyPageFrame
+      main={
+        /* 피그마 `내 프로필` */
+        <section className="bg-surface border-line shadow-work relative flex flex-col rounded-lg border p-6 lg:p-8">
+          <LetterheadSeal />
+          <h2 className="text-card-title text-ink min-h-11">내 프로필</h2>
+          <dl>
+            <ProfileIdentity label="이름" value={me.name ?? none} />
+            <ProfileRow label="학과" value={profile.department.name} size="document" />
+            <ProfileRow
+              label="관심 분야"
+              value={profile.interests.join(" · ") || none}
+              size="document"
+            />
+            <ProfileRow
+              label="참여 활동"
+              value={profile.activities.join(" · ") || none}
+              size="document"
+            />
+            <ProfileRow
+              label={
+                <>
+                  이력서 /
+                  <br />
+                  포트폴리오
+                </>
+              }
+              value={
+                attachment ? (
+                  <a
+                    href={attachment.url}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="underline-offset-2 hover:underline"
+                  >
+                    {/* 시안은 스킴 없이 도메인부터 보인다. 파일이면 파일 이름 */}
+                    {attachment.file_name ??
+                      attachment.url.replace(/^https?:\/\//i, "").replace(/\/$/, "")}
+                  </a>
+                ) : (
+                  none
+                )
+              }
+              size="document"
+            />
+          </dl>
+          {/* 피그마 `Profile preview action` — 위 20, 데스크톱 224 · 모바일 카드 폭 */}
+          <div className="pt-5">
+            <Link
+              to="/me/preview"
+              className={cn(
+                action({ variant: "secondary" }),
+                "text-button h-12 w-full lg:w-56"
+              )}
+            >
+              전달 프로필 미리보기
+            </Link>
+          </div>
+        </section>
+      }
+      aside={
+        /* 피그마 `연락 설정` — 이름표 Body/Small · 값 Body/Medium, 사이 12 */
+        <section className="bg-surface border-line shadow-work flex flex-col rounded-lg border p-6">
+          <h2 className="text-card-title text-ink min-h-11">연락 설정</h2>
+          <dl>
+            <ProfileRow
+              label="연락받을 방법"
+              value={channels.join(" · ") || none}
+              size="comfortable"
+              className="gap-3"
+            />
+            <ProfileRow
+              label="이메일"
+              value={contact?.email ?? studentContactEmailOf(me) ?? none}
+              size="comfortable"
+              className="gap-3"
+            />
+            <ProfileRow
+              label="전화번호"
+              value={phone ? formatPhone(phone) : none}
+              size="comfortable"
+              className="gap-3"
+            />
+          </dl>
+        </section>
+      }
+    />
+  );
+}
+
+/* ───────────────── 선배 ───────────────── */
+
+function MentorMyPage() {
+  const { data: me } = useSuspenseQuery(userInfoQuery());
+  const profile = me.graduated?.profile;
+  if (!profile) return <MissingProfile />;
+
+  return (
+    <MyPageFrame
+      main={
+        <>
+          <ProfileCard me={me} profile={profile} />
+          <ContactCard profile={profile} />
+        </>
+      }
+      aside={
+        /* 피그마 `Contact and preview` — 모바일은 연락처 카드 아래에 온다 */
+        <>
+          <h2 className="text-card-title text-ink lg:hidden">공개 사원증</h2>
+          {/* 피그마 `Public badge` */}
+          <div className="flex justify-center p-6">
+            <EmployeeBadge data={badgeDataOf(profile)} className="w-72" />
+          </div>
+          <Link
+            to="/me/preview"
+            className={cn(action({ variant: "secondary" }), "text-button w-full")}
+          >
+            사원증 미리보기
+          </Link>
+        </>
+      }
+    />
   );
 }
 
@@ -124,13 +265,7 @@ function ProfileCard({ me, profile }: { me: UserInfo; profile: Profile }) {
 
   return (
     <section className="bg-surface border-line shadow-work relative flex flex-col gap-6 rounded-lg border p-6 lg:p-8">
-      {/* 피그마 `Cheers letterhead seal` — 로고 마크와 같은 그림. 데스크톱 40 / 모바일 32 */}
-      <img
-        src={catSeal}
-        alt=""
-        aria-hidden
-        className="absolute top-6 right-6 w-8 lg:top-8 lg:right-8 lg:w-10"
-      />
+      <LetterheadSeal />
 
       {/* 피그마 `사원증 정보` */}
       <div className="flex flex-col">

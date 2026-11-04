@@ -30,7 +30,8 @@ export function ProfileRow({
   size = "compact",
   className,
 }: {
-  label: string;
+  /** 보통 글자. 시안이 줄을 끊어 둔 이름표(`이력서 /` · `포트폴리오`)는 `<br />` 을 넣어 준다 */
+  label: React.ReactNode;
   /** 비어 있으면 호출부가 "등록하지 않음" 같은 문구를 넣는다 */
   value: React.ReactNode;
   size?: "compact" | "card" | "comfortable" | "document";

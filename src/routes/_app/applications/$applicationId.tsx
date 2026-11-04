@@ -8,13 +8,13 @@ import {
   userInfoQuery,
   type Attachment,
   type ReceivedRequestDetail,
-  type UserInfo,
 } from "@/api";
 import { AccessMessage } from "@/components/access-message";
 import { action } from "@/components/ui/action";
 import { ProfileRow } from "@/components/ui/profile-row";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { formatDate } from "@/lib/date";
+import { studentProfileRowsOf } from "@/features/profile/student-profile-rows";
 import { myContactEmailOf } from "@/lib/mentor-contact";
 import { useSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
@@ -422,7 +422,7 @@ function SentDetail({ applicationId }: { applicationId: string }) {
             전달한 내 정보
           </h3>
           <dl>
-            {sentProfileRowsOf(me).map((row) => (
+            {studentProfileRowsOf(me).map((row) => (
               <ProfileRow
                 key={row.label}
                 label={row.label}
@@ -466,26 +466,6 @@ function SentDetail({ applicationId }: { applicationId: string }) {
       ) : null}
     </>
   );
-}
-
-/** 시안 `Sent profile` 의 일곱 줄. 신청 화면과 순서가 다르다 */
-function sentProfileRowsOf(me: UserInfo): { label: string; value: string }[] {
-  const profile = me.student?.profile;
-  const none = "등록하지 않음";
-  const attachment = profile?.attachments[0];
-
-  return [
-    { label: "이름", value: me.name ?? none },
-    { label: "학과", value: profile?.department.name ?? none },
-    { label: "관심 분야", value: profile?.interests.join(" · ") || none },
-    { label: "참여 활동", value: profile?.activities.join(" · ") || none },
-    { label: "이메일", value: me.student?.email ?? me.email ?? none },
-    { label: "전화번호", value: profile?.contact?.phone ?? none },
-    {
-      label: "이력서 / 포트폴리오",
-      value: attachment ? (attachment.file_name ?? attachment.url) : none,
-    },
-  ];
 }
 
 /* ───────────────── 오류 ───────────────── */

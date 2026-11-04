@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   createFileRoute,
   redirect,
@@ -6,21 +5,22 @@ import {
   useRouter,
 } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FormProvider, useForm } from "react-hook-form";
 import { isApiError, useSubmitGraduatedInfo, userInfoQuery } from "@/api";
 import { PageContainer } from "@/components/layout/page-container";
 import { SignupProgress } from "@/components/signup-progress";
 import { action } from "@/components/ui/action";
-import { Field } from "@/components/ui/field";
-import { MentorContactFields } from "@/components/mentor-contact-fields";
-import { TagInput } from "@/components/ui/tag-input";
 import {
-  contactInvalid,
-  contactRequestOf,
-  digitsOf,
-  isValidLink,
-  normalizeLink,
-} from "@/lib/mentor-profile-form";
+  MentorContactFields,
+  MentorExtraFields,
+} from "@/features/profile/mentor-fields";
+import {
+  mentorExtraSchema,
+  type MentorExtraValues,
+} from "@/features/profile/mentor-form";
 import { hasBasics, useMentorSignupDraft } from "@/lib/mentor-signup-draft";
+import { contactRequestOf, digitsOf, normalizeLink } from "@/lib/profile-form";
 import { cn } from "@/lib/utils";
 
 /**
@@ -31,6 +31,8 @@ import { cn } from "@/lib/utils";
  * `POST /user/graduated/info` **한 번**으로 저장하고, 응답의 새 토큰은
  * `useSubmitGraduatedInfo` 가 받아 넣는다. 저장이 끝나면 `next_step` 이
  * null 이 되므로 `router.invalidate()` 만 부르면 가드가 `/mentors` 로 보낸다.
+ *
+ * 폼 본체(스키마 · 칸 묶음)는 정보 수정과 같이 쓴다 — `features/profile/`.
  */
 export const Route = createFileRoute("/onboarding/mentor/extra")({
   /**
@@ -54,33 +56,35 @@ function RouteComponent() {
   const { draft, patch, reset } = useMentorSignupDraft();
   const submit = useSubmitGraduatedInfo();
 
-  const [hashtags, setHashtags] = useState(draft.hashtags);
-  const [linkedin, setLinkedin] = useState(draft.linkedin);
-  /**
-   * 기본값은 구글 계정 이메일이다. 시안 예시(`alumni@example.com`)로는 판단할
-   * 수 없지만, 학생 화면도 학교 이메일을 기본값으로 세웠다(선배 가이드 §2.6).
-   */
-  const [email, setEmail] = useState(draft.email || me.email || "");
-  const [phone, setPhone] = useState(draft.phone);
-  const [linkTouched, setLinkTouched] = useState(false);
+  const form = useForm({
+    resolver: zodResolver(mentorExtraSchema),
+    mode: "all",
+    defaultValues: {
+      hashtags: draft.hashtags,
+      linkedin: draft.linkedin,
+      /**
+       * 기본값은 구글 계정 이메일이다. 시안 예시(`alumni@example.com`)로는
+       * 판단할 수 없지만, 학생 화면도 학교 이메일을 기본값으로 세웠다(§2.6).
+       */
+      email: draft.email || me.email || "",
+      phone: draft.phone,
+    },
+  });
 
-  const linkInvalid = linkedin.trim().length > 0 && !isValidLink(linkedin);
-
-  const current = () => ({
-    hashtags,
-    linkedin: linkedin.trim(),
-    email: email.trim(),
-    phone: digitsOf(phone),
+  /** 보관함에 남길 값. `이전` 과 닉네임 중복 되돌림이 쓴다 — 검사는 하지 않는다 */
+  const keep = (values: MentorExtraValues) => ({
+    hashtags: values.hashtags,
+    linkedin: values.linkedin.trim(),
+    email: values.email.trim(),
+    phone: digitsOf(values.phone),
   });
 
   const back = () => {
-    patch(current());
+    patch(keep(form.getValues()));
     void navigate({ to: "/onboarding/mentor/profile" });
   };
 
-  const finish = () => {
-    const extras = current();
-
+  const finish = form.handleSubmit((values) =>
     submit.mutate(
       {
         // 명세상 `name` 은 내 정보의 이름이 null 일 때만 받는다
@@ -89,11 +93,11 @@ function RouteComponent() {
         company: draft.company,
         department: draft.department,
         job: draft.job,
-        hashtags: extras.hashtags,
+        hashtags: values.hashtags,
         // 시안은 LinkedIn 칸 하나, 명세는 배열(최대 5)이다
-        links: extras.linkedin ? [normalizeLink(extras.linkedin)] : [],
+        links: values.linkedin ? [normalizeLink(values.linkedin)] : [],
         // 임시: 이슈 #26 — 둘 다 필수, 둘 다 켠다(`contactRequestOf` 참고)
-        contact: contactRequestOf(extras.email, extras.phone),
+        contact: contactRequestOf(values.email, values.phone),
       },
       {
         onSuccess: () => {
@@ -105,16 +109,15 @@ function RouteComponent() {
           // 닉네임 중복은 명세에 없지만, 서버가 409 로 알려 오면 그 칸이 있는
           // 기본 정보로 되돌아가 보여준다(선배 가이드 §2.4, §7 #3)
           if (isApiError(error) && error.status === 409) {
-            patch({ ...current(), takenNickname: draft.nickname });
+            patch({ ...keep(values), takenNickname: draft.nickname });
             void navigate({ to: "/onboarding/mentor/profile" });
           }
         },
       }
-    );
-  };
+    )
+  );
 
-  const canSubmit =
-    !linkInvalid && !contactInvalid(email, phone) && !submit.isPending;
+  const canSubmit = form.formState.isValid && !submit.isPending;
 
   return (
     <PageContainer className="flex flex-col items-center pt-8 pb-12 lg:pt-16 lg:pb-18">
@@ -135,77 +138,51 @@ function RouteComponent() {
         </div>
 
         {/* 피그마 `Content` — 카드 껍데기는 데스크톱에만 있다 */}
-        <form
-          noValidate
-          className="lg:border-line lg:bg-surface lg:shadow-work flex flex-col gap-7 lg:w-200 lg:shrink-0 lg:rounded-lg lg:border lg:p-10"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (canSubmit) finish();
-          }}
-        >
-          <TagInput
-            label="해시태그 (선택)"
-            placeholder="예) 전기전자"
-            hint="직무, 연차 등 나를 설명하는 키워드를 최대 5개 알려주세요."
-            value={hashtags}
-            onChange={setHashtags}
-            max={5}
-            maxLength={20}
-          />
+        <FormProvider {...form}>
+          <form
+            noValidate
+            className="lg:border-line lg:bg-surface lg:shadow-work flex flex-col gap-7 lg:w-200 lg:shrink-0 lg:rounded-lg lg:border lg:p-10"
+            onSubmit={finish}
+          >
+            <MentorExtraFields
+              hashtagHint="직무, 연차 등 나를 설명하는 키워드를 최대 5개 알려주세요."
+              linkedinPlaceholder="linkedin.com/in/…"
+            />
 
-          <Field
-            label="LinkedIn 프로필 링크 (선택)"
-            // `type="url"` 을 쓰지 않는다 — 스킴 없는 주소를 브라우저가 틀렸다고 본다
-            inputMode="url"
-            autoComplete="url"
-            maxLength={2048}
-            placeholder="linkedin.com/in/…"
-            value={linkedin}
-            onChange={(e) => setLinkedin(e.target.value)}
-            onBlur={() => setLinkTouched(true)}
-            error={
-              linkTouched && linkInvalid ? "링크 주소를 확인해 주세요." : undefined
-            }
-          />
+            <div className="bg-line h-px" />
 
-          <div className="bg-line h-px" />
+            {/* 피그마 `Contact and notification settings` — 정보 수정과 같은 묶음 */}
+            <MentorContactFields />
 
-          {/* 피그마 `Contact and notification settings` — 정보 수정과 같은 묶음 */}
-          <MentorContactFields
-            email={email}
-            phone={phone}
-            onEmailChange={setEmail}
-            onPhoneChange={setPhone}
-          />
-
-          <p className="text-body-sm text-ink-soft">
-            연락처와 연락 설정은 사원증에 공개되지 않아요.
-          </p>
-
-          {submit.error && !isNicknameTaken(submit.error) ? (
-            <p role="alert" className="text-body-sm text-danger">
-              {describeSubmitError(submit.error)}
+            <p className="text-body-sm text-ink-soft">
+              연락처와 연락 설정은 사원증에 공개되지 않아요.
             </p>
-          ) : null}
 
-          {/* 피그마 `Form actions` */}
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={back}
-              className={cn(action({ variant: "secondary" }), "w-25 lg:w-26")}
-            >
-              이전
-            </button>
-            <button
-              type="submit"
-              disabled={!canSubmit}
-              className={cn(action(), "flex-1 lg:w-60 lg:flex-none")}
-            >
-              {submit.isPending ? "저장 중…" : "가입 완료"}
-            </button>
-          </div>
-        </form>
+            {submit.error && !isNicknameTaken(submit.error) ? (
+              <p role="alert" className="text-body-sm text-danger">
+                {describeSubmitError(submit.error)}
+              </p>
+            ) : null}
+
+            {/* 피그마 `Form actions` */}
+            <div className="flex justify-end gap-3 pt-4">
+              <button
+                type="button"
+                onClick={back}
+                className={cn(action({ variant: "secondary" }), "w-25 lg:w-26")}
+              >
+                이전
+              </button>
+              <button
+                type="submit"
+                disabled={!canSubmit}
+                className={cn(action(), "flex-1 lg:w-60 lg:flex-none")}
+              >
+                {submit.isPending ? "저장 중…" : "가입 완료"}
+              </button>
+            </div>
+          </form>
+        </FormProvider>
       </div>
     </PageContainer>
   );
