@@ -3566,6 +3566,186 @@
           "학교 · 학과"
         ]
       }
+    },
+    "/api/manager/v1/dev/user": {
+      "get": {
+        "operationId": "DevUserController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1부터 시작",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "size",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PageResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/DevUserDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "query 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "superadmin이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "DEV_USER_DELETE_ENABLED가 꺼진 환경",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "회원 목록 (최근 가입 순, 탈퇴 처리 완료 포함, superadmin 전용)",
+        "tags": [
+          "개발용 회원 완전탈퇴"
+        ]
+      }
+    },
+    "/api/manager/v1/dev/user/{userPk}": {
+      "delete": {
+        "operationId": "DevUserController_delete",
+        "parameters": [
+          {
+            "name": "userPk",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "userPk가 UUID 형식이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "superadmin이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "없는 유저, DEV_USER_DELETE_ENABLED가 꺼진 환경",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "회원 완전탈퇴 (유예 없이 유저와 하위 데이터 · 첨부 · 명함 파일 삭제, superadmin 전용)",
+        "tags": [
+          "개발용 회원 완전탈퇴"
+        ]
+      }
     }
   },
   "info": {
@@ -5613,6 +5793,53 @@
         },
         "required": [
           "email_domains"
+        ]
+      },
+      "DevUserDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "student",
+              "graduated"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "description": "withdrawal_requested: 탈퇴 유예기간 중, withdrawn: 탈퇴 처리 완료 (이름 · 이메일이 지워져 있음)",
+            "enum": [
+              "pending",
+              "active",
+              "withdrawal_requested",
+              "withdrawn"
+            ],
+            "type": "string"
+          },
+          "user_pk": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "OAuth 계정 이름. 탈퇴 처리가 끝났으면 null"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "description": "OAuth 계정 이메일. 탈퇴 처리가 끝났으면 null"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "status",
+          "user_pk",
+          "name",
+          "email",
+          "created_at"
         ]
       }
     }

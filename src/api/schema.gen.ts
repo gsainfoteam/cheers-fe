@@ -758,6 +758,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/manager/v1/dev/user": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 회원 목록 (최근 가입 순, 탈퇴 처리 완료 포함, superadmin 전용) */
+        get: operations["DevUserController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/manager/v1/dev/user/{userPk}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** 회원 완전탈퇴 (유예 없이 유저와 하위 데이터 · 첨부 · 명함 파일 삭제, superadmin 전용) */
+        delete: operations["DevUserController_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1364,6 +1398,22 @@ export interface components {
              *     ]
              */
             email_domains: string[];
+        };
+        DevUserDto: {
+            /** @enum {string} */
+            type: "student" | "graduated";
+            /**
+             * @description withdrawal_requested: 탈퇴 유예기간 중, withdrawn: 탈퇴 처리 완료 (이름 · 이메일이 지워져 있음)
+             * @enum {string}
+             */
+            status: "pending" | "active" | "withdrawal_requested" | "withdrawn";
+            user_pk: string;
+            /** @description OAuth 계정 이름. 탈퇴 처리가 끝났으면 null */
+            name: string | null;
+            /** @description OAuth 계정 이메일. 탈퇴 처리가 끝났으면 null */
+            email: string | null;
+            /** Format: date-time */
+            created_at: string;
         };
     };
     responses: never;
@@ -3843,6 +3893,124 @@ export interface operations {
             };
             /** @description 인증을 마친 재학생이 있는 도메인을 뺌, 다른 학교의 도메인 */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    DevUserController_list: {
+        parameters: {
+            query?: {
+                /** @description 1부터 시작 */
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageResponseDto"] & {
+                        items?: components["schemas"]["DevUserDto"][];
+                    };
+                };
+            };
+            /** @description query 형식 오류 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description superadmin이 아님 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description DEV_USER_DELETE_ENABLED가 꺼진 환경 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    DevUserController_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userPk: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BaseResultDto"];
+                };
+            };
+            /** @description userPk가 UUID 형식이 아님 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description superadmin이 아님 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 없는 유저, DEV_USER_DELETE_ENABLED가 꺼진 환경 */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
