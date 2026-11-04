@@ -2,10 +2,8 @@ import { Link, Outlet, createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { cheersListQuery, type CheersCard } from "@/api";
 import arrowRight from "@/assets/icons/arrow-right.svg";
-import {
-  EmployeeBadge,
-  type EmployeeBadgeData,
-} from "@/components/employee-badge";
+import { EmployeeBadge } from "@/components/employee-badge";
+import { badgeDataOf } from "@/components/employee-badge-data";
 import { PageContainer } from "@/components/layout/page-container";
 import { MENTOR_LIST_PARAMS } from "@/lib/mentor-list";
 import { useSession } from "@/lib/session";
@@ -118,7 +116,7 @@ function MentorList() {
 function MentorCard({ card, canApply }: { card: CheersCard; canApply: boolean }) {
   return (
     <div className="flex flex-col gap-3">
-      <EmployeeBadge data={toBadge(card)} />
+      <EmployeeBadge data={badgeDataOf(card)} />
 
       {/*
        * 피그마 `Request action`. 카드에 인쇄되지 않는 웹 UI 라 사원증
@@ -150,16 +148,3 @@ function MentorCard({ card, canApply }: { card: CheersCard; canApply: boolean })
 /** 시안 `Request action` — 높이 48, 위쪽 테두리만 있다 */
 const REQUEST_ACTION =
   "bg-surface border-line text-label flex h-12 w-full items-center justify-between gap-2 rounded-md border-t px-4";
-
-function toBadge(card: CheersCard): EmployeeBadgeData {
-  return {
-    // 명세의 카드에는 회사 로고가 없다. 시안의 삼성·SK 로고는 예시 데이터라
-    // (설계 5.3) 실제로는 회사 이름만 선다
-    company: card.company,
-    nickname: card.nickname,
-    role: card.job,
-    meta: card.hashtags
-      .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`))
-      .join("  "),
-  };
-}

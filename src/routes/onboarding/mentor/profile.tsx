@@ -11,6 +11,8 @@ import {
   draftFromProfile,
   useMentorSignupDraft,
 } from "@/lib/mentor-signup-draft";
+// 회사 목록 API 가 아직 없어 결과는 늘 비어 있다 — 정보 수정과 같은 함수다
+import { searchCompanies } from "@/lib/mentor-profile-form";
 import { describeNicknameProblem, nicknameProblem } from "@/lib/nickname";
 import { cn } from "@/lib/utils";
 
@@ -28,18 +30,6 @@ export const Route = createFileRoute("/onboarding/mentor/profile")({
   component: RouteComponent,
 });
 
-/**
- * 회사 목록. **목록·검색 API 가 아직 없다**(선배 가이드 §2.4a, §7 #2).
- *
- * 그동안은 비워 둔다 — 모든 검색이 `등록 정보가 없습니다.` → `+ {검색어}
- * 등록하기` 로 떨어지고, 그 버튼이 검색어를 `company` 로 확정한다. 명세의
- * `company` 가 자유 문자열이라 저장도 그대로 성립한다. API 가 생기면 이
- * 함수만 바꾸면 된다(별칭·자모 검색은 서버가 하는 쪽이 낫다).
- */
-function searchCompanies(query: string): string[] {
-  void query;
-  return [];
-}
 
 function RouteComponent() {
   const navigate = useNavigate();

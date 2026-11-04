@@ -25,6 +25,7 @@ export function ConfirmDialog({
   cancelLabel = "돌아가기",
   onConfirm,
   busy = false,
+  busyLabel = "처리 중…",
   children,
 }: {
   open: boolean;
@@ -35,6 +36,8 @@ export function ConfirmDialog({
   onConfirm: () => void;
   /** 처리 중이면 주 버튼을 막고 문구를 바꾼다 — 되돌릴 수 없는 일이 두 번 가지 않게 */
   busy?: boolean;
+  /** 처리 중 주 버튼의 글자. 하는 일에 맞춰 준다(`보내는 중…`, `탈퇴하는 중…`) */
+  busyLabel?: string;
   children?: React.ReactNode;
 }) {
   return (
@@ -77,7 +80,7 @@ export function ConfirmDialog({
               aria-busy={busy || undefined}
               className={cn(action(), "lg:flex-1")}
             >
-              {busy ? "보내는 중…" : confirmLabel}
+              {busy ? busyLabel : confirmLabel}
             </button>
           </div>
         </AlertDialog.Popup>

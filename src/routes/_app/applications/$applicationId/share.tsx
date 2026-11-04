@@ -85,6 +85,7 @@ function RouteComponent() {
       confirmLabel="이름·이메일 공유"
       onConfirm={confirm}
       busy={share.isPending}
+      busyLabel="보내는 중…"
     >
       <p className="text-body text-ink">
         {request.student.name}님께 아래 정보를 보냅니다.

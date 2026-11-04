@@ -11,7 +11,15 @@ import { PageContainer } from "@/components/layout/page-container";
 import { SignupProgress } from "@/components/signup-progress";
 import { action } from "@/components/ui/action";
 import { Field } from "@/components/ui/field";
+import { MentorContactFields } from "@/components/mentor-contact-fields";
 import { TagInput } from "@/components/ui/tag-input";
+import {
+  contactInvalid,
+  contactRequestOf,
+  digitsOf,
+  isValidLink,
+  normalizeLink,
+} from "@/lib/mentor-profile-form";
 import { hasBasics, useMentorSignupDraft } from "@/lib/mentor-signup-draft";
 import { cn } from "@/lib/utils";
 
@@ -39,35 +47,6 @@ export const Route = createFileRoute("/onboarding/mentor/extra")({
   component: RouteComponent,
 });
 
-/** 명세의 `^01\d{8,9}$`. 저장은 숫자만 보낸다 */
-const PHONE = /^01\d{8,9}$/;
-/** 브라우저의 `type="email"` 검사와 같은 수준. 나머지는 서버가 본다 */
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function digitsOf(phone: string): string {
-  return phone.replace(/\D/g, "");
-}
-
-/**
- * 모바일 시안의 placeholder 가 `linkedin.com/in/…` 처럼 **스킴 없이** 적혀
- * 있어 사용자도 그렇게 칠 것이다. 명세는 `format: uri` 라 그대로 보내면
- * 400 이므로 스킴이 없으면 `https://` 를 붙인다.
- */
-function normalizeLink(link: string): string {
-  const trimmed = link.trim();
-  if (!trimmed) return "";
-  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-}
-
-function isValidLink(link: string): boolean {
-  try {
-    const url = new URL(normalizeLink(link));
-    return url.hostname.includes(".");
-  } catch {
-    return false;
-  }
-}
-
 function RouteComponent() {
   const router = useRouter();
   const navigate = useNavigate();
@@ -83,25 +62,9 @@ function RouteComponent() {
    */
   const [email, setEmail] = useState(draft.email || me.email || "");
   const [phone, setPhone] = useState(draft.phone);
-  const [touched, setTouched] = useState({
-    linkedin: false,
-    email: false,
-    phone: false,
-  });
-  const touch = (field: keyof typeof touched) =>
-    setTouched((t) => ({ ...t, [field]: true }));
+  const [linkTouched, setLinkTouched] = useState(false);
 
   const linkInvalid = linkedin.trim().length > 0 && !isValidLink(linkedin);
-  const emailInvalid = !EMAIL.test(email.trim());
-  // 임시: 이슈 #26 — 이메일·휴대폰 둘 다 필수. 비어 있어도 저장을 막는다
-  const phoneInvalid = !PHONE.test(digitsOf(phone));
-
-  /**
-   * 오류 문구는 한 번 쳐 보고 칸을 떠난 뒤에만 띄운다. 빈 칸은 문구 없이
-   * 버튼만 막는다 — 아직 아무것도 안 쳤는데 빨간 칸이 서지 않게.
-   */
-  const show = (field: keyof typeof touched, value: string, invalid: boolean) =>
-    touched[field] && value.trim().length > 0 && invalid;
 
   const current = () => ({
     hashtags,
@@ -129,15 +92,8 @@ function RouteComponent() {
         hashtags: extras.hashtags,
         // 시안은 LinkedIn 칸 하나, 명세는 배열(최대 5)이다
         links: extras.linkedin ? [normalizeLink(extras.linkedin)] : [],
-        // 임시: 이슈 #26 — 둘 다 필수. 시안의 "공유할 이메일 / 알림 받을
-        // 휴대폰" 을 `email_enabled` · `kakao_enabled` 에 어떻게 매핑할지
-        // 답이 오기 전까지 둘 다 켠다. 답이 나오면 이 블록을 걷어낸다
-        contact: {
-          email_enabled: true,
-          kakao_enabled: true,
-          email: extras.email,
-          phone: extras.phone,
-        },
+        // 임시: 이슈 #26 — 둘 다 필수, 둘 다 켠다(`contactRequestOf` 참고)
+        contact: contactRequestOf(extras.email, extras.phone),
       },
       {
         onSuccess: () => {
@@ -158,7 +114,7 @@ function RouteComponent() {
   };
 
   const canSubmit =
-    !linkInvalid && !emailInvalid && !phoneInvalid && !submit.isPending;
+    !linkInvalid && !contactInvalid(email, phone) && !submit.isPending;
 
   return (
     <PageContainer className="flex flex-col items-center pt-8 pb-12 lg:pt-16 lg:pb-18">
@@ -206,68 +162,21 @@ function RouteComponent() {
             placeholder="linkedin.com/in/…"
             value={linkedin}
             onChange={(e) => setLinkedin(e.target.value)}
-            onBlur={() => touch("linkedin")}
+            onBlur={() => setLinkTouched(true)}
             error={
-              show("linkedin", linkedin, linkInvalid)
-                ? "링크 주소를 확인해 주세요."
-                : undefined
+              linkTouched && linkInvalid ? "링크 주소를 확인해 주세요." : undefined
             }
           />
 
           <div className="bg-line h-px" />
 
-          {/* 피그마 `Contact and notification settings` */}
-          <div className="flex flex-col gap-6">
-            {/* 피그마 `Shared contact` */}
-            <div className="flex flex-col gap-3">
-              <h2 className="text-card-title text-ink">공유할 연락처</h2>
-              <Field
-                label="이메일"
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                maxLength={255}
-                placeholder="alumni@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onBlur={() => touch("email")}
-                hint="연락처 공유를 선택한 학생에게만 이름과 함께 전달돼요."
-                error={
-                  show("email", email, emailInvalid)
-                    ? "이메일 형식을 확인해 주세요."
-                    : undefined
-                }
-              />
-            </div>
-
-            <div className="bg-line h-px" />
-
-            {/* 피그마 `Private Alimtalk recipient` */}
-            <div className="flex flex-col gap-3">
-              <h2 className="text-card-title text-ink">신청 알림</h2>
-              <p className="text-body-sm text-ink-soft">
-                새 커피챗 신청을 카카오 알림톡으로 알려드려요.
-              </p>
-              <Field
-                // 임시: 이슈 #26 — 둘 다 필수. 시안 라벨의 `(선택)` 을 뗐다
-                label="알림 받을 휴대전화번호"
-                type="tel"
-                inputMode="numeric"
-                autoComplete="tel"
-                maxLength={13}
-                placeholder="010-0000-0000"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                onBlur={() => touch("phone")}
-                hint="등록한 번호로 신청 알림을 보내요. 학생에게 공유되지 않아요."
-                error={
-                  show("phone", phone, phoneInvalid)
-                    ? "휴대전화번호 형식을 확인해 주세요."
-                    : undefined
-                }
-              />
-            </div>
-          </div>
+          {/* 피그마 `Contact and notification settings` — 정보 수정과 같은 묶음 */}
+          <MentorContactFields
+            email={email}
+            phone={phone}
+            onEmailChange={setEmail}
+            onPhoneChange={setPhone}
+          />
 
           <p className="text-body-sm text-ink-soft">
             연락처와 연락 설정은 사원증에 공개되지 않아요.
