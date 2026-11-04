@@ -40,6 +40,7 @@ const COLORS: Swatch[] = [
   { figma: "v05-bg-canvas", token: "--color-canvas", hex: "#fff9f3", box: "bg-canvas" },
   { figma: "v05-bg-surface", token: "--color-surface", hex: "#ffffff", box: "bg-surface" },
   { figma: "v05-bg-muted", token: "--color-muted", hex: "#f8f0e5", box: "bg-muted" },
+  { figma: "v05-bg-subtle", token: "--color-subtle", hex: "#fff0e1", box: "bg-subtle" },
   { figma: "bg-champagne", token: "--color-champagne", hex: "#fff0d2", box: "bg-champagne" },
   { figma: "v05-border-default", token: "--color-line", hex: "#e8ddcf", box: "bg-line" },
   { figma: "v05-border-strong", token: "--color-line-strong", hex: "#685e52", box: "bg-line-strong", dark: true },

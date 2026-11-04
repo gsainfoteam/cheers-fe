@@ -22,6 +22,7 @@
  *   v05-bg-canvas               --color-canvas         bg-canvas
  *   v05-bg-surface              --color-surface        bg-surface
  *   v05-bg-muted                --color-muted          bg-muted
+ *   v05-bg-subtle               --color-subtle         bg-subtle
  *   v05-bg-ink                  --color-ink-fill       bg-ink-fill
  *   bg-champagne                --color-champagne      bg-champagne
  *   v05-border-default          --color-line           border-line
@@ -57,6 +58,8 @@
   --color-canvas: #fff9f3;
   --color-surface: #ffffff;
   --color-muted: #f8f0e5;
+  /* 명함 첨부의 파일 드래그 상태(960:9646)에서 처음 쓰인다 */
+  --color-subtle: #fff0e1;
   --color-champagne: #fff0d2;
 
   --color-line: #e8ddcf;
