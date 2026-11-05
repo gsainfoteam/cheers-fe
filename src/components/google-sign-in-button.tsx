@@ -13,6 +13,11 @@ type Props = {
   /** "다른 계정으로 로그인" — 자동 선택을 끈다 */
   switchAccount?: boolean;
   onSuccess?: () => void;
+  /**
+   * 덮개에 그릴 글자. 평소 로그인은 `Google로 계속하기`, 알림톡 진입(343:9110)은
+   * `Google로 로그인` 이다 — 이미 가입한 선배에게 "계속" 은 맞지 않는다
+   */
+  label?: string;
 };
 
 /**
@@ -42,7 +47,12 @@ const GIS_WIDTH = 400;
 /** `size: "large"` 구글 버튼의 높이. 시안 버튼은 56 이라 세로로도 늘린다 */
 const GIS_HEIGHT = 40;
 
-export function GoogleSignInButton({ role, switchAccount, onSuccess }: Props) {
+export function GoogleSignInButton({
+  role,
+  switchAccount,
+  onSuccess,
+  label = "Google로 계속하기",
+}: Props) {
   const box = useRef<HTMLDivElement>(null);
   const container = useRef<HTMLDivElement>(null);
   const login = useLogin();
@@ -152,7 +162,7 @@ export function GoogleSignInButton({ role, switchAccount, onSuccess }: Props) {
             height={24}
             className="size-6 shrink-0"
           />
-          <span>Google로 계속하기</span>
+          <span>{label}</span>
         </div>
 
         {/* 진짜 눌리는 구글 버튼. 상자 전체를 덮도록 늘린다 */}

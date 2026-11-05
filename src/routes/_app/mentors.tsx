@@ -2,16 +2,22 @@ import { Link, Outlet, createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { cheersListQuery, type CheersCard } from "@/api";
 import arrowRight from "@/assets/icons/arrow-right.svg";
-import {
-  EmployeeBadge,
-  type EmployeeBadgeData,
-} from "@/components/employee-badge";
+import { EmployeeBadge } from "@/components/employee-badge";
+import { badgeDataOf } from "@/components/employee-badge-data";
 import { PageContainer } from "@/components/layout/page-container";
 import { MENTOR_LIST_PARAMS } from "@/lib/mentor-list";
+import { useSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
 /**
- * 선배 둘러보기. 피그마 `Cheers / 선배 둘러보기 · 학생`(352:9466 / 352:9467).
+ * 선배 둘러보기. 피그마 `Cheers / 선배 둘러보기 · 학생`(352:9466 / 352:9467),
+ * `Cheers / 선배 둘러보기 · 선배`(336:7652 / 336:7423).
+ *
+ * **학생·선배가 같은 화면을 본다**(백엔드가 선배에게도 목록을 열었다 — 선배
+ * 가이드 §3.1). 시점에 따라 달라지는 건 세 곳뿐이다: 설명 문구, 사원증 아래
+ * 신청 줄, 모바일 줄 간격. 부르는 API 가 같으므로 loader 가 아니라 화면에서
+ * `useSession()` 으로 가른다 — 가이드 §1.1 의 "loader 에서 가른다" 는 학생·선배가
+ * **다른 API** 를 부르는 화면(`/applications`, `/me`)의 규칙이다.
  *
  * 목록을 index 가 아니라 **레이아웃**에 두는 이유: 신청 화면(`$mentorId/apply`)이
  * 이 위에 오버레이로 뜨므로 목록이 언마운트되면 안 된다. 데스크톱에서는 목록
@@ -39,14 +45,22 @@ function RouteComponent() {
 
 function MentorList() {
   const { data } = useSuspenseQuery(cheersListQuery(MENTOR_LIST_PARAMS));
+  /** 선배는 신청을 보낼 수 없다(`POST /cheers/request` 는 재학생만) */
+  const canApply = useSession().role === "student";
 
   return (
     <>
       {/* 피그마 `Page introduction` */}
       <PageContainer className="flex flex-col gap-3 pt-8 pb-6 lg:pt-14 lg:pb-8">
         <h1 className="text-page text-ink">선배 둘러보기</h1>
+        {/*
+         * 선배판의 텍스트 노드 이름은 학생 문구 그대로인데 화면에 그려진
+         * 글자만 바뀌어 있다. 렌더된 글자를 옮겼다(가이드 §0 경고)
+         */}
         <p className="text-body text-ink-soft">
-          선배의 사원증을 골라, 궁금한 이야기를 나눠보세요.
+          {canApply
+            ? "선배의 사원증을 골라, 궁금한 이야기를 나눠보세요."
+            : "GIST 선배들의 회사와 직무를 둘러보세요."}
         </p>
       </PageContainer>
 
@@ -69,11 +83,20 @@ function MentorList() {
            * 피그마 `Employee badge gallery` — 모바일 2열(가로 12 / 세로 32),
            * 데스크톱 4열(가로 32 / 세로 40). 353 과 1248 을 그 간격으로
            * 나누면 카드가 정확히 170.5 와 288 이 된다.
+           *
+           * 선배 시점은 신청 줄이 빠져 카드가 짧아지면서 모바일 줄 사이가
+           * 24 로 좁아진다(336:7423). 카드가 아니라 격자의 일이라 여기서
+           * 가른다. 데스크톱은 시안에 한 줄뿐이라 학생과 같은 40 으로 둔다.
            */
-          <ul className="grid grid-cols-2 gap-x-3 gap-y-8 lg:grid-cols-4 lg:gap-x-8 lg:gap-y-10">
+          <ul
+            className={cn(
+              "grid grid-cols-2 gap-x-3 lg:grid-cols-4 lg:gap-x-8 lg:gap-y-10",
+              canApply ? "gap-y-8" : "gap-y-6"
+            )}
+          >
             {data.items.map((card) => (
               <li key={card.graduated_id}>
-                <MentorCard card={card} />
+                <MentorCard card={card} canApply={canApply} />
               </li>
             ))}
           </ul>
@@ -83,17 +106,23 @@ function MentorList() {
   );
 }
 
-/** 피그마 `Alumni credential and request` — 사원증 + 그 아래 신청 줄 */
-function MentorCard({ card }: { card: CheersCard }) {
+/**
+ * 피그마 `Alumni credential and request` — 사원증 + 그 아래 신청 줄.
+ *
+ * 선배 시점에서는 사원증만 남는다. 묶음 `div` 는 그대로 두고 줄만 그리지
+ * 않는다 — 사원증 리디자인(가이드 §3.3)으로 신청 줄이 카드 **안**으로
+ * 들어가면 이 분기도 그 자리로 옮겨 가기만 하면 된다.
+ */
+function MentorCard({ card, canApply }: { card: CheersCard; canApply: boolean }) {
   return (
     <div className="flex flex-col gap-3">
-      <EmployeeBadge data={toBadge(card)} />
+      <EmployeeBadge data={badgeDataOf(card)} />
 
       {/*
        * 피그마 `Request action`. 카드에 인쇄되지 않는 웹 UI 라 사원증
        * **바깥**에 있다(컴포넌트 설명: "Request CTA is separate web UI").
        */}
-      {card.can_request ? (
+      {!canApply ? null : card.can_request ? (
         <Link
           to="/mentors/$mentorId/apply"
           params={{ mentorId: card.graduated_id }}
@@ -119,16 +148,3 @@ function MentorCard({ card }: { card: CheersCard }) {
 /** 시안 `Request action` — 높이 48, 위쪽 테두리만 있다 */
 const REQUEST_ACTION =
   "bg-surface border-line text-label flex h-12 w-full items-center justify-between gap-2 rounded-md border-t px-4";
-
-function toBadge(card: CheersCard): EmployeeBadgeData {
-  return {
-    // 명세의 카드에는 회사 로고가 없다. 시안의 삼성·SK 로고는 예시 데이터라
-    // (설계 5.3) 실제로는 회사 이름만 선다
-    company: card.company,
-    nickname: card.nickname,
-    role: card.job,
-    meta: card.hashtags
-      .map((tag) => (tag.startsWith("#") ? tag : `#${tag}`))
-      .join("  "),
-  };
-}

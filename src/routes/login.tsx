@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { z } from "zod";
+import { AccessMessage } from "@/components/access-message";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
 import { PageContainer } from "@/components/layout/page-container";
 import { PageShell } from "@/components/layout/page-shell";
@@ -60,9 +61,32 @@ export const Route = createFileRoute("/login")({
   component: RouteComponent,
 });
 
-const MESSAGE = {
-  application: "신청 내용을 보려면 로그인을 해주세요.",
-  "wrong-account": "다른 계정으로 로그인해 주세요.",
+/**
+ * 딥링크 진입의 문구. `application` 은 시안(343:9110) 그대로다 — 제목 끝에
+ * 마침표가 없다. `wrong-account` 로 온 로그인 화면은 시안이 없어 같은 모양을
+ * 빌렸다(선배 가이드 §4.7b).
+ */
+const ACCESS_COPY = {
+  application: {
+    icon: "lock",
+    title: (
+      <>
+        신청 내용을 보려면
+        <br />
+        로그인해 주세요
+      </>
+    ),
+  },
+  "wrong-account": {
+    icon: "info",
+    title: (
+      <>
+        다른 계정으로
+        <br />
+        로그인해 주세요
+      </>
+    ),
+  },
 } as const;
 
 /** 시안 문구 그대로. 임의로 바꾸지 않는다 */
@@ -81,8 +105,15 @@ function RouteComponent() {
   /**
    * 유형이 URL 에 없으면 마지막에 고른 것을 쓴다. `POST /user/oauth/login` 이
    * `type` 을 필수로 받고, 가입 중인 유저에게는 그 값이 진짜로 작용한다.
+   *
+   * **알림톡으로 들어온 경우(`application`)는 선배로 고정한다.** 알림톡을 새
+   * 기기에서 처음 열면 `lastRole()` 이 비어 학생 유형으로 로그인을 시도하게
+   * 된다. 알림톡을 받는 사람은 이미 가입을 마친 선배라 서버가 `type` 을
+   * 무시하지만(이슈 #20), 시안이 `선배 계정으로` 라고 못박은 화면에서 학생
+   * 유형을 보내지 않는다. 서버 동작은 백엔드 확인 필요(선배 가이드 §7 #16).
    */
-  const role: Role = picked ?? lastRole() ?? "student";
+  const role: Role =
+    picked ?? (reason === "application" ? "mentor" : (lastRole() ?? "student"));
   const other: Role = role === "student" ? "mentor" : "student";
 
   // URL 로 유형이 정해졌으면 기억해 둔다. 다음에 `/login` 으로 맨몸으로
@@ -102,6 +133,44 @@ function RouteComponent() {
     void router.invalidate();
   };
 
+  /*
+   * 딥링크에서 튕겨 온 경우는 **같은 라우트의 다른 모양**이다 — 피그마
+   * `07 · 알림톡·웹 진입` 의 로그인(343:9110 / 343:9054). 2열 대신 진입
+   * 안내 카드 한 장이고, 학생·선배 전환 링크도 숨김 처리된 카카오·네이버
+   * 버튼도 없다. 새 라우트를 만들지 않은 이유: 복귀(`redirect`)와 구글 버튼
+   * 덮개를 두 벌 갖게 된다.
+   */
+  if (reason) {
+    const copy = ACCESS_COPY[reason];
+    return (
+      <PageShell kind="public">
+        <PageContainer className="flex flex-col items-center pt-8 pb-12 lg:pt-16 lg:pb-18">
+          <AccessMessage
+            icon={copy.icon}
+            title={copy.title}
+            description={
+              role === "mentor"
+                ? "신청을 받은 선배 계정으로 로그인해 주세요."
+                : "신청을 보낸 학생 계정으로 로그인해 주세요."
+            }
+          >
+            <GoogleSignInButton
+              role={role}
+              switchAccount={switchAccount}
+              onSuccess={afterLogin}
+              label="Google로 로그인"
+            />
+            {redirect ? (
+              <p className="text-body-sm text-ink-soft">
+                로그인 후 신청 내용으로 이동해요.
+              </p>
+            ) : null}
+          </AccessMessage>
+        </PageContainer>
+      </PageShell>
+    );
+  }
+
   return (
     <PageShell kind="public">
       <PageContainer className="flex flex-col items-center pt-8 pb-12 lg:pt-16 lg:pb-18">
@@ -117,10 +186,6 @@ function RouteComponent() {
 
           {/* 피그마 `Content` — 카드 껍데기는 데스크톱에만 있다 */}
           <div className="lg:border-line lg:bg-surface lg:shadow-work flex flex-col gap-7 lg:w-130 lg:shrink-0 lg:rounded-lg lg:border lg:p-10">
-            {reason ? (
-              <p className="text-body-sm text-ink-soft">{MESSAGE[reason]}</p>
-            ) : null}
-
             <GoogleSignInButton
               role={role}
               // GIS 에는 prompt=select_account 가 없다. 자동 선택을 꺼서 계정 선택
