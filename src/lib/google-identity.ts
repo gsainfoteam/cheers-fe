@@ -31,11 +31,13 @@ type ButtonConfiguration = {
   size?: "large" | "medium" | "small";
   text?: "signin_with" | "signup_with" | "continue_with" | "signin";
   shape?: "rectangular" | "pill" | "circle" | "square";
+  logo_alignment?: "left" | "center";
+  /** px. 구글이 받는 범위는 200 ~ 400 이다 */
   width?: number;
   locale?: string;
 };
 
-type GoogleAccountsId = {
+export type GoogleAccountsId = {
   initialize(config: IdConfiguration): void;
   renderButton(parent: HTMLElement, config: ButtonConfiguration): void;
   prompt(): void;

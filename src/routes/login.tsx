@@ -137,8 +137,8 @@ function RouteComponent() {
    * 딥링크에서 튕겨 온 경우는 **같은 라우트의 다른 모양**이다 — 피그마
    * `07 · 알림톡·웹 진입` 의 로그인(343:9110 / 343:9054). 2열 대신 진입
    * 안내 카드 한 장이고, 학생·선배 전환 링크도 숨김 처리된 카카오·네이버
-   * 버튼도 없다. 새 라우트를 만들지 않은 이유: 복귀(`redirect`)와 구글 버튼
-   * 덮개를 두 벌 갖게 된다.
+   * 버튼도 없다. 새 라우트를 만들지 않은 이유: 복귀(`redirect`) 처리를 두 벌
+   * 갖게 된다.
    */
   if (reason) {
     const copy = ACCESS_COPY[reason];
@@ -158,7 +158,7 @@ function RouteComponent() {
               role={role}
               switchAccount={switchAccount}
               onSuccess={afterLogin}
-              label="Google로 로그인"
+              text="signin_with"
             />
             {redirect ? (
               <p className="text-body-sm text-ink-soft">

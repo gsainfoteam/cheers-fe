@@ -1,8 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLogin } from "@/api";
 import { isApiError } from "@/api";
-import googleLogo from "@/assets/brand/google-logo.svg";
-import { GOOGLE_CLIENT_ID, loadGoogleIdentity } from "@/lib/google-identity";
+import {
+  GOOGLE_CLIENT_ID,
+  loadGoogleIdentity,
+  type GoogleAccountsId,
+} from "@/lib/google-identity";
 import { createNonce } from "@/lib/nonce";
 import { toApiType } from "@/lib/role";
 import type { Role } from "@/lib/session";
@@ -14,50 +17,53 @@ type Props = {
   switchAccount?: boolean;
   onSuccess?: () => void;
   /**
-   * 덮개에 그릴 글자. 평소 로그인은 `Google로 계속하기`, 알림톡 진입(343:9110)은
-   * `Google로 로그인` 이다 — 이미 가입한 선배에게 "계속" 은 맞지 않는다
+   * 구글 버튼의 문구. 평소 로그인은 `Google로 계속하기`(continue_with),
+   * 알림톡 진입(343:9110)은 `Google로 로그인`(signin_with) 이다 — 이미 가입한
+   * 선배에게 "계속" 은 맞지 않는다.
+   *
+   * 구글 계정에 로그인된 브라우저에서는 이 값과 상관없이 구글이
+   * "○○○(으)로 로그인" 개인화 버튼을 그린다.
    */
-  label?: string;
+  text?: "continue_with" | "signin_with";
 };
 
 /**
- * 구글 로그인 버튼. 피그마 `Cheers / Social`(332:6152)의 Provider=Google.
+ * 구글 로그인 버튼. 구글(GIS)이 그린 버튼을 **그대로 보여준다.**
  *
- * **시안 버튼 위에 구글 버튼을 투명하게 덮는다.** `accounts.id` 에는 계정
- * 선택창을 코드로 여는 API 가 없어서(One Tap 의 `prompt()` 는 다른 물건이다),
- * 커스텀 버튼을 쓰려면 구글이 그린 버튼을 그대로 두고 그 위에 그림만 얹는
- * 방법밖에 없다. 구글 버튼은 iframe 이라 바깥에서 클릭을 흉내 낼 수도 없다.
+ * 예전에는 피그마 `Cheers / Social`(332:6152) 시안 버튼 위에 구글 버튼을
+ * `opacity: 0` 으로 덮고 `transform: scale()` 로 늘려 썼다. 처음 로그인할 때는
+ * 됐지만, 한 번 로그인한 브라우저에서는 구글이 같은 자리에 **개인화 버튼**
+ * ("○○○(으)로 로그인")을 그린다. 이 버튼은 팝업 없이 한 번에 토큰을 내주므로
+ * 클릭재킹을 막으려고 iframe 이 실제로 보이는지 검사하고, 투명하거나 늘어난
+ * iframe 의 클릭은 조용히 버린다. 그래서 재로그인 때 버튼을 눌러도 아무 일도
+ * 일어나지 않았다(stg 에서 확인). localhost 에서는 개인화 버튼이 안 나와
+ * 드러나지 않았다.
  *
- * 그래서 보이는 건 시안 버튼이고, 실제로 눌리는 건 그 위에 깔린 투명한
- * 구글 버튼이다. 포커스도 구글 버튼이 받으므로 보조기술에는 구글의 라벨이
- * 읽힌다 — 시안 쪽은 `aria-hidden` 으로 빼서 같은 말이 두 번 들리지 않게 했다.
- *
- * 투명해서 포커스 링이 안 보이는 건 바깥 상자의 `focus-within` 으로 되살린다.
+ * 구글 버튼을 숨기거나 변형하면 같은 일이 다시 생긴다. 모양은
+ * `renderButton` 옵션 안에서만 맞춘다.
  */
 
-/**
- * 구글 버튼을 **고정 폭**으로 그려두고 CSS 로 늘린다.
- *
- * `renderButton` 의 `width` 는 400px 이 상한이라 데스크톱 시안(440)을 그대로
- * 줄 수 없다. 폭에 맞춰 다시 그리는 방법도 있지만 창을 줄일 때마다 구글
- * 버튼이 새로 그려진다. 한 번만 그리고 `transform` 으로 덮개를 늘리면
- * 클릭 영역도 같이 늘어난다.
- */
-const GIS_WIDTH = 400;
-/** `size: "large"` 구글 버튼의 높이. 시안 버튼은 56 이라 세로로도 늘린다 */
+/** `renderButton` 의 `width` 상한. 데스크톱 시안(440)보다 좁아서 가운데 둔다 */
+const GIS_MAX_WIDTH = 400;
+/** `size: "large"` 구글 버튼의 높이. 그려지기 전에 자리를 잡아 둘 때 쓴다 */
 const GIS_HEIGHT = 40;
 
 export function GoogleSignInButton({
   role,
   switchAccount,
   onSuccess,
-  label = "Google로 계속하기",
+  text = "continue_with",
 }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const container = useRef<HTMLDivElement>(null);
   const login = useLogin();
   const [loadError, setLoadError] = useState<Error | null>(null);
   const [boxWidth, setBoxWidth] = useState(0);
+  /**
+   * `initialize` 를 마친 GIS. 초기화할 때마다 새 객체로 감싸서, 같은
+   * `accounts` 라도 다시 초기화했으면 버튼을 새로 그리게 한다
+   */
+  const [gis, setGis] = useState<{ accounts: GoogleAccountsId } | null>(null);
 
   // 설정 누락은 렌더 중에 알 수 있다. effect 로 state 를 세울 이유가 없다
   const configError = GOOGLE_CLIENT_ID
@@ -73,8 +79,8 @@ export function GoogleSignInButton({
     onSuccessRef.current = onSuccess;
   }, [onSuccess]);
 
-  // 덮개를 얼마나 늘릴지 정하려면 실제 폭을 알아야 한다. 폭은 lg 경계에서도
-  // 바뀌고 모바일 가로/세로 전환에서도 바뀌므로 관찰해 둔다
+  // 구글 버튼 폭은 숫자로만 줄 수 있다. 자리의 폭은 lg 경계에서도 바뀌고
+  // 모바일 가로/세로 전환에서도 바뀌므로 관찰해 둔다
   useLayoutEffect(() => {
     const el = box.current;
     if (!el) return;
@@ -96,10 +102,9 @@ export function GoogleSignInButton({
     void (async () => {
       try {
         const accounts = await loadGoogleIdentity();
-        // nonce 는 버튼 한 벌에 하나. 콜백이 원문을 그대로 들고 쓴다
+        // nonce 는 초기화 한 번에 하나. 콜백이 원문을 그대로 들고 쓴다
         const nonce = await createNonce();
-        const parent = container.current;
-        if (cancelled || !parent) return;
+        if (cancelled) return;
 
         accounts.initialize({
           client_id: GOOGLE_CLIENT_ID,
@@ -120,18 +125,7 @@ export function GoogleSignInButton({
         });
 
         if (switchAccount) accounts.disableAutoSelect();
-
-        // StrictMode 는 효과를 두 번 실행한다. 비우지 않으면 버튼이 두 개 생긴다
-        parent.replaceChildren();
-        accounts.renderButton(parent, {
-          type: "standard",
-          theme: "outline",
-          size: "large",
-          text: "signin_with",
-          shape: "pill",
-          locale: "ko",
-          width: GIS_WIDTH,
-        });
+        setGis({ accounts });
       } catch (error) {
         if (!cancelled) setLoadError(error as Error);
       }
@@ -142,43 +136,36 @@ export function GoogleSignInButton({
     };
   }, [mutate, switchAccount]);
 
+  // 폭이 바뀔 때만 다시 그린다. 데스크톱은 상한(400)에 걸려 창을 줄여도
+  // 그대로이고, 모바일에서는 회전할 때 정도만 다시 그려진다
+  const width = Math.min(GIS_MAX_WIDTH, Math.floor(boxWidth));
+
+  useEffect(() => {
+    const parent = container.current;
+    if (!gis || !parent || width <= 0) return;
+
+    // StrictMode 는 효과를 두 번 실행한다. 비우지 않으면 버튼이 두 개 생긴다
+    parent.replaceChildren();
+    gis.accounts.renderButton(parent, {
+      type: "standard",
+      theme: "outline",
+      size: "large",
+      text,
+      // 시안의 rounded-lg 에 가장 가까운 모양
+      shape: "rectangular",
+      logo_alignment: "left",
+      locale: "ko",
+      width,
+    });
+  }, [gis, width, text]);
+
   const message = configError ?? loadError?.message;
 
   return (
     <div className="flex flex-col gap-3">
-      <div
-        ref={box}
-        className="ring-focus/50 relative h-14 w-full rounded-lg focus-within:ring-3"
-      >
-        {/* 피그마 `Cheers / Social` — 보이기만 하는 껍데기 */}
-        <div
-          aria-hidden
-          className="border-line bg-surface text-ink text-label-lg pointer-events-none flex size-full items-center gap-3 rounded-lg border p-4"
-        >
-          <img
-            src={googleLogo}
-            alt=""
-            width={24}
-            height={24}
-            className="size-6 shrink-0"
-          />
-          <span>{label}</span>
-        </div>
-
-        {/* 진짜 눌리는 구글 버튼. 상자 전체를 덮도록 늘린다 */}
-        <div className="absolute inset-0 overflow-hidden rounded-lg opacity-0">
-          <div
-            ref={container}
-            className="origin-top-left"
-            style={
-              boxWidth
-                ? {
-                    transform: `scale(${boxWidth / GIS_WIDTH}, ${56 / GIS_HEIGHT})`,
-                  }
-                : undefined
-            }
-          />
-        </div>
+      <div ref={box} className="flex w-full justify-center">
+        {/* 진짜 구글 버튼. 숨기거나 늘리지 않는다 — 위 주석 참고 */}
+        <div ref={container} style={{ minHeight: GIS_HEIGHT }} />
       </div>
 
       {message ? (
