@@ -12,10 +12,10 @@ import { EMAIL, PHONE, digitsOf, formatPhone, isValidLink } from "@/lib/profile-
 /* ───────────────── 회사 · 부서 · 직무 (가입 · 수정 공통) ───────────────── */
 
 const workShape = {
-  // 회사명은 검색 칸에서 고르거나 `등록하기` 로 확정한다(선배 가이드 §2.4a)
+  // 회사명은 검색 칸에서 고르거나, 결과가 없으면 친 이름 그대로 확정한다(선배 가이드 §2.4a)
   company: z.string().trim().min(1, "회사명을 선택해 주세요.").max(128),
   /**
-   * 검색 결과에서 골랐으면 그 회사의 id, `등록하기` 로 직접 친 이름이면 null.
+   * 검색 결과에서 골랐으면 그 회사의 id, 목록에 없어 직접 친 이름이면 null.
    * 보낼 때 `company_id` / `company_name` 을 가르는 값이다(`companyRequestOf`).
    */
   company_id: z.number().nullable(),

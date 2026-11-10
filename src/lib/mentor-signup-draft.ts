@@ -17,7 +17,7 @@ export type MentorSignupDraft = {
   name: string;
   nickname: string;
   company: string;
-  /** 검색 결과에서 고른 회사. `등록하기` 로 직접 친 이름이면 null */
+  /** 검색 결과에서 고른 회사. 목록에 없어 직접 친 이름이면 null */
   company_id: number | null;
   /** 비공개. 다른 회원에게 보이지 않는다 */
   department: string;

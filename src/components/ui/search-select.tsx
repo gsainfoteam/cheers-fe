@@ -1,6 +1,5 @@
 import { useEffect, useId, useRef } from "react";
 import closeIcon from "@/assets/icons/close.svg";
-import plusIcon from "@/assets/icons/plus.svg";
 import searchBrandIcon from "@/assets/icons/search-brand.svg";
 import searchNeutralIcon from "@/assets/icons/search-neutral.svg";
 import { cn } from "@/lib/utils";
@@ -25,12 +24,18 @@ import { cn } from "@/lib/utils";
  * ## 결과는 쓰는 쪽이 준다
  *
  * 검색 규칙(앞부분 일치, 조합 중인 자모, 영문 별칭)은 목록 데이터와 같은
- * 자리에서 정해져야 해서 이 컴포넌트는 모른다. `results` 가 비어 있으면
- * `+ {검색어} 등록하기` 가 나오고, 누르면 검색어 그대로 확정한다.
+ * 자리에서 정해져야 해서 이 컴포넌트는 모른다.
  *
- * `pending` 이면(검색어를 치는 중 · 결과를 받는 중) 빈 결과를 "등록 정보
- * 없음" 으로 보지 않는다. 그러지 않으면 결과가 오기 전 잠깐 `등록하기` 가
- * 떴다 사라지고, 그 사이 Enter 가 이미 있는 회사를 새 이름으로 확정한다.
+ * ## 목록에 없는 이름은 닫을 때 확정한다
+ *
+ * `results` 가 비어 있으면 가운데에 `검색된 회사명이 없습니다` 만 선다.
+ * 시안(`971:13948`)의 `+ {검색어} 등록하기` 버튼은 두지 않는다 — 백엔드와
+ * 정한 결과, 목록에 없는 이름은 별칭이나 새 회사로 "등록" 되는 게 아니라
+ * 그 이름 그대로 저장될 뿐이라 버튼 문구가 사실과 다르다(2026-11-10).
+ *
+ * 대신 **결과가 없는 채로 패널을 닫으면** 검색어를 그대로 확정한다 — 모바일
+ * ✕, 데스크톱 바깥 클릭, Enter 모두 같다. 결과가 있는데 고르지 않고 닫으면
+ * 확정하지 않는다(목록에서 고르라는 칸이다). **Esc 는 언제나 취소**다.
  *
  * 결과 칩은 `Choice` 가 아니다 — 선택 상태가 없고 누르면 바로 확정되며
  * 패널이 닫힌다.
@@ -44,7 +49,6 @@ export function SearchSelect({
   query,
   onQueryChange,
   results,
-  pending = false,
   open,
   onOpenChange,
   maxLength,
@@ -60,8 +64,6 @@ export function SearchSelect({
   query: string;
   onQueryChange: (query: string) => void;
   results: string[];
-  /** 결과를 아직 받는 중. 빈 결과여도 `등록하기` 를 내지 않는다 */
-  pending?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   maxLength?: number;
@@ -86,6 +88,22 @@ export function SearchSelect({
     close();
   };
 
+  /**
+   * Esc 가 아닌 방법으로 닫는다(✕ · 바깥 클릭 · Enter). 결과가 없으면 검색어를
+   * 그대로 확정하고, 결과가 있으면 고르지 않은 것으로 보고 그냥 닫는다.
+   */
+  const dismiss = (returnFocus = true) => {
+    if (trimmed && results.length === 0) onSelect(trimmed);
+    close(returnFocus);
+  };
+
+  // 바깥 클릭 리스너는 열릴 때 한 번 붙는다. 그 사이 바뀐 검색어 · 결과로
+  // 판단하도록 최신 `dismiss` 를 ref 로 넘긴다
+  const dismissRef = useRef(dismiss);
+  useEffect(() => {
+    dismissRef.current = dismiss;
+  });
+
   // 열리면 검색 입력으로 포커스를 옮긴다 — 모바일 시안이 키보드가 올라온
   // 상태로 그려져 있다
   useEffect(() => {
@@ -108,16 +126,18 @@ export function SearchSelect({
     };
   }, [open]);
 
-  // 데스크톱에서 칸 바깥을 누르면 닫는다. 모바일은 화면 전체가 패널이라
-  // 바깥이 없다
+  // 데스크톱에서 칸 바깥을 누르면 닫는다(결과가 없으면 검색어로 확정).
+  // 모바일은 화면 전체가 패널이라 바깥이 없다. 포커스는 누른 곳으로 가게 둔다
   useEffect(() => {
     if (!open) return;
     const onPointerDown = (e: PointerEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) onOpenChange(false);
+      if (!rootRef.current?.contains(e.target as Node)) {
+        dismissRef.current(false);
+      }
     };
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [open, onOpenChange]);
+  }, [open]);
 
   /** 칩 사이를 왼/오른쪽 화살표로 옮긴다. 칩이 가로로 흐르므로 위/아래는 쓰지 않는다 */
   const moveAmongChips = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -199,7 +219,7 @@ export function SearchSelect({
             <button
               type="button"
               aria-label="닫기"
-              onClick={() => close()}
+              onClick={() => dismiss()}
               className="flex size-11 items-center justify-center"
             >
               <img src={closeIcon} alt="" />
@@ -227,12 +247,12 @@ export function SearchSelect({
                   }
                   if (e.key === "Enter" && !e.nativeEvent.isComposing) {
                     e.preventDefault();
-                    // 결과와 똑같은 이름을 쳤거나 결과가 없으면 그대로 확정한다.
-                    // 결과가 여럿이면 고르게 둔다 — 첫 번째를 몰래 고르지 않는다
+                    // 결과와 똑같은 이름을 쳤으면 그 결과를, 결과가 없으면 검색어를
+                    // 확정한다. 결과가 있는데 다르면 고르게 둔다 — 첫 번째를 몰래
+                    // 고르지 않는다
                     const exact = results.find((r) => r === trimmed);
                     if (exact) pick(exact);
-                    else if (trimmed && results.length === 0 && !pending)
-                      pick(trimmed);
+                    else if (trimmed && results.length === 0) dismiss();
                   }
                 }}
                 className="text-label-lg text-brand min-w-0 flex-1 bg-transparent outline-none"
@@ -261,20 +281,12 @@ export function SearchSelect({
                   ))}
                 </div>
               ) : trimmed ? (
-                // 피그마 `등록 정보 없는 경우`
-                <div className="flex h-full flex-col items-center justify-center gap-6 py-6">
-                  <p className="text-body-sm text-ink-soft">
-                    등록 정보가 없습니다.
+                // 피그마 `등록 정보 없는 경우` — `등록하기` 버튼은 뺐다(머리말).
+                // 닫으면 검색어가 그대로 회사명이 된다
+                <div className="flex h-full items-center justify-center py-6">
+                  <p role="status" className="text-body-sm text-ink-soft text-center">
+                    검색된 회사명이 없습니다
                   </p>
-                  <button
-                    type="button"
-                    data-result
-                    onClick={() => pick(trimmed)}
-                    className={`${RESULT_CHIP} gap-1`}
-                  >
-                    <img src={plusIcon} alt="" />
-                    {trimmed} 등록하기
-                  </button>
                 </div>
               ) : null}
             </div>

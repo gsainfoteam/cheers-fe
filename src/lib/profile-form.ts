@@ -52,9 +52,9 @@ type GraduatedInfoRequest = Body<"/api/v1/user/graduated/info", "post">;
  * 저장할 회사. 명세는 `company_id` 와 `company_name` 중 **하나만** 받는다.
  *
  * - 검색 결과에서 골랐으면 `company_id` — 표기가 갈리지 않는다
- * - `+ {검색어} 등록하기` 로 확정했으면 `company_name`. 서버가 이미 있는
- *   표기(대소문자 · 공백 무시)면 그 회사로, 아니면 새 회사로 등록해 어드민
- *   확인을 기다린다
+ * - 결과가 없어 친 이름 그대로 확정했으면 `company_name`. 서버가 이미 있는
+ *   표기(대소문자 · 공백 무시)면 그 회사로 맞추고, 아니면 **그 이름으로
+ *   가입만 된다** — 별칭으로 등록되지 않는다(백엔드와 확인, 2026-11-10)
  */
 export function companyRequestOf(
   company: string,
