@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useLogout, useWithdraw } from "@/api";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { forgetLocalAccount } from "@/lib/sign-out";
 
 /**
  * 마이페이지 맨 아래 `로그아웃` · `회원 탈퇴`. 피그마 `Account management`
@@ -17,7 +18,11 @@ export function AccountActions() {
   const withdraw = useWithdraw();
   const [confirming, setConfirming] = useState(false);
 
-  const toLanding = () => void navigate({ to: "/", replace: true });
+  const toLanding = () => {
+    // 훅이 모르는 브라우저 쪽 흔적(가입 보관함 · 구글 자동 선택)까지 지운다
+    forgetLocalAccount();
+    void navigate({ to: "/", replace: true });
+  };
 
   return (
     <div className="flex gap-6">

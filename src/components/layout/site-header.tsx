@@ -1,5 +1,7 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useLogout } from "@/api";
 import catCheers from "@/assets/brand/cat-cheers.svg";
+import { forgetLocalAccount } from "@/lib/sign-out";
 import { cn } from "@/lib/utils";
 import { PageContainer } from "./page-container";
 
@@ -22,6 +24,7 @@ type NavItem = { label: string; to: string };
  * 묶음 이름이 `Action / landing` 이다). 로그인한 사용자는 첫 화면인
  * `/mentors`, 아니면 랜딩으로 보낸다 — `/` 의 가드가 로그인 상태를 보고
  * 어차피 `/mentors` 로 되돌리므로, 한 번 덜 튕기게 미리 갈라 둔다.
+ * 가입 도중(Onboarding)의 로고만 다르다 — 로그아웃 후 랜딩(`LeaveSignupBrand`).
  */
 const NAV: Record<HeaderKind, NavItem[]> = {
   public: [{ label: "로그인", to: "/login" }],
@@ -57,7 +60,11 @@ export function SiteHeader({ kind }: { kind: HeaderKind }) {
     <header className="bg-surface">
       {/* 피그마 `Site header` — 모바일 min-h 60 / 데스크톱 72 */}
       <PageContainer className="flex min-h-15 items-center gap-6 py-3.5 lg:min-h-18">
-        <BrandLink signedIn={SIGNED_IN.includes(kind)} />
+        {kind === "onboarding" ? (
+          <LeaveSignupBrand />
+        ) : (
+          <BrandLink signedIn={SIGNED_IN.includes(kind)} />
+        )}
 
         {/* 피그마 `Flexible space` */}
         <div className="h-px flex-1" />
@@ -93,12 +100,11 @@ export function SiteHeader({ kind }: { kind: HeaderKind }) {
 }
 
 /** 피그마 `Action / landing` — 고양이 마크 + 워드마크. 폭 120 고정이다. */
-function BrandLink({ signedIn }: { signedIn: boolean }) {
+const BRAND_CLASS = "flex w-30 shrink-0 items-center gap-2";
+
+function BrandMark() {
   return (
-    <Link
-      to={signedIn ? "/mentors" : "/"}
-      className="flex w-30 shrink-0 items-center gap-2"
-    >
+    <>
       <img
         src={catCheers}
         alt=""
@@ -107,7 +113,64 @@ function BrandLink({ signedIn }: { signedIn: boolean }) {
         className="w-8 shrink-0"
       />
       <span className="text-h3 text-ink whitespace-nowrap">취얼스</span>
+    </>
+  );
+}
+
+function BrandLink({ signedIn }: { signedIn: boolean }) {
+  return (
+    <Link to={signedIn ? "/mentors" : "/"} className={BRAND_CLASS}>
+      <BrandMark />
     </Link>
+  );
+}
+
+/**
+ * 가입 도중의 로고 — **가입을 멈추고 랜딩으로 돌아가는 출구**다.
+ *
+ * 그냥 `/` 로 보내면 안 된다. 세션이 남아 있으면 랜딩 가드
+ * (`redirectIfSignedIn`)가 곧장 `/onboarding` 으로 되돌려 보내서, 눌러도
+ * 아무 일도 없는 버튼이 된다(실제로 그랬다). 그래서 로그아웃부터 한다.
+ *
+ * 랜딩으로 보내는 이유는 거기에 학생/선배 선택이 있어서다. 이 한 길로
+ * 두 경우를 다 받는다.
+ * - **다른 구글 계정으로 가입** — 유형을 고르면 로그인 화면의 구글 버튼에서
+ *   계정을 고른다.
+ * - **유형을 잘못 고름** — 반대 유형을 고르고 같은 계정으로 로그인하면,
+ *   서버가 가입 중(pending) 유저의 유형을 새 값으로 바꾸고 처음 단계부터
+ *   다시 시작시킨다(`lib/role.ts` 주석).
+ *
+ * 따로 "다른 구글 계정으로 로그인" 버튼을 두지 않고 이 흐름으로 처리하기로
+ * 했다(이슈 #33).
+ *
+ * 서버 진행 상태(약관 동의 · 본인 확인)는 로그아웃으로 지워지지 않는다.
+ * 같은 계정 · 같은 유형으로 돌아오면 이어서 진행된다. 사라지는 건 아직
+ * 저장하지 않은 기본 정보 · 추가 정보 입력값뿐이다.
+ */
+function LeaveSignupBrand() {
+  const navigate = useNavigate();
+  const logout = useLogout();
+
+  const leave = () =>
+    logout.mutate(undefined, {
+      // 훅의 onSettled(토큰 · 캐시 비우기)가 이것보다 먼저 돈다. 그래서
+      // 랜딩에 도착했을 때 가드가 세션을 보지 못하고 랜딩을 그대로 보여준다
+      onSettled: () => {
+        forgetLocalAccount();
+        void navigate({ to: "/", replace: true });
+      },
+    });
+
+  return (
+    <button
+      type="button"
+      onClick={leave}
+      disabled={logout.isPending}
+      aria-label="가입을 멈추고 처음 화면으로"
+      className={cn(BRAND_CLASS, "cursor-pointer disabled:opacity-60")}
+    >
+      <BrandMark />
+    </button>
   );
 }
 
