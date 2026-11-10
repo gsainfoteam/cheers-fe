@@ -6,6 +6,9 @@ import { PageContainer } from "./page-container";
  * 모바일은 세로로 쌓고(393×101), 데스크톱은 한 줄에 양끝 정렬이다(1440×69).
  * 구분선이 본문 위가 아니라 **푸터 맨 위**에 붙는 게 헤더와 다른 점이다.
  */
+
+const tos_link = "https://terms.gistory.me/cheers/tos/261101/"
+const privacy_link = "https://terms.gistory.me/cheers/privacy/261101/";
 export function SiteFooter() {
   return (
     <footer className="bg-surface">
@@ -24,8 +27,8 @@ export function SiteFooter() {
          * 글자로 둔다 — 눌러서 아무 일도 안 일어나는 쪽이 더 나쁘다.
          */}
         <div className="text-label-sm text-ink-soft flex items-center gap-6 whitespace-nowrap">
-          <span>이용약관</span>
-          <span>개인정보 수집·이용</span>
+          <span><a href={tos_link} target="_blank"  rel="noopener noreferrer">이용약관</a></span>
+          <span><a href={privacy_link} target="_blank"  rel="noopener noreferrer">개인정보 수집·이용</a></span>
         </div>
       </PageContainer>
     </footer>
