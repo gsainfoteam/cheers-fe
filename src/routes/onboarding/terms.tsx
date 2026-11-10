@@ -31,18 +31,36 @@ export const Route = createFileRoute("/onboarding/terms")({
 /**
  * 서버가 주는 `type` 은 자유 문자열이라 사람이 읽을 이름을 코드가 들고 있다.
  *
- * **실제 값은 아직 확인하지 못했다.** 시안 문구에 맞춰 둘을 적어 뒀고,
- * 모르는 값이 오면 `type` 을 그대로 보여준다 — 빈칸보다는 낫고, 개발 중
- * `/verify.html` 로 실제 응답을 보면 바로 드러난다.
+ * 서버가 실제로 주는 값은 `tos` / `privacy` 다. 모르는 값이 오면 `type` 을
+ * 그대로 보여준다 — 빈칸보다는 낫고, 화면에서 바로 드러난다.
+ *
+ * `url` 은 본문 페이지. terms.gistory.me 의 **`/embedded/` 경로**를 쓴다 —
+ * 일반 경로는 약관 사이트 자체 헤더까지 같이 그려져 다이얼로그 안에서
+ * 제목이 두 번 나온다. 모르는 항목만 서버가 준 `url` 로 떨어진다. 약관이
+ * 개정되면 주소의 버전(`261101`)을 함께 올려야 한다.
  */
-const CONSENT_LABEL: Record<string, string> = {
-  terms_of_service: "서비스 이용약관",
-  privacy_policy: "개인정보 수집·이용 동의",
+const CONSENT_DOC: Record<string, { label: string; url: string }> = {
+  tos: {
+    label: "서비스 이용약관",
+    url: "https://terms.gistory.me/embedded/cheers/tos/261101/",
+  },
+  privacy: {
+    label: "개인정보처리방침",
+    url: "https://terms.gistory.me/embedded/cheers/privacy/261101/",
+  },
 };
 
+function nameOf(consent: Consent): string {
+  return CONSENT_DOC[consent.type]?.label ?? consent.type;
+}
+
 function labelOf(consent: Consent): string {
-  const name = CONSENT_LABEL[consent.type] ?? consent.type;
+  const name = nameOf(consent);
   return consent.is_required ? `[필수] ${name}` : name;
+}
+
+function urlOf(consent: Consent): string {
+  return CONSENT_DOC[consent.type]?.url ?? consent.url;
 }
 
 function RouteComponent() {
@@ -147,21 +165,57 @@ function RouteComponent() {
         </div>
       </div>
 
-      {/*
-       * 약관 본문. 설계 5.3 대로 PC 는 모달, 모바일은 전체 화면이다.
-       *
-       * 본문은 서버가 준 `url` 에 있다. 여기서는 아직 받아오지 않고 뼈대만
-       * 보여준다 — 그 URL 이 HTML 인지 마크다운인지, 교차 출처인지에 따라
-       * 받는 방법이 갈려서 실제 응답을 한 번 봐야 한다.
-       */}
+      {/* 약관 본문. 설계 5.3 대로 PC 는 모달, 모바일은 전체 화면이다 */}
       <ResponsiveDialog
         open={opened !== null}
         onOpenChange={(next) => !next && setOpened(null)}
-        title={opened ? (CONSENT_LABEL[opened.type] ?? opened.type) : ""}
+        title={opened ? nameOf(opened) : ""}
+        bleed
       >
-        <DialogBodySkeleton />
+        {opened ? (
+          // 약관마다 새로 마운트해야 로딩 상태가 처음부터 다시 돈다
+          <TermsFrame
+            key={opened.type}
+            title={nameOf(opened)}
+            src={urlOf(opened)}
+          />
+        ) : null}
       </ResponsiveDialog>
     </PageContainer>
+  );
+}
+
+/**
+ * 외부 약관 페이지(terms.gistory.me)를 그대로 끼워 보여준다.
+ *
+ * 본문을 받아와 다시 그리지 않고 iframe 을 쓰는 이유: 그 페이지는 완성된
+ * HTML 문서(자체 스타일·목차)라서, 가져와 파싱하면 약관 사이트가 바뀔
+ * 때마다 이쪽도 따라 고쳐야 한다. 그 서버는 `X-Frame-Options` /
+ * `frame-ancestors` 를 걸지 않아 임베딩이 막히지 않는다.
+ *
+ * iframe 이 첫 화면을 그릴 때까지는 시안의 `Loading paragraph` 뼈대를
+ * 위에 덮어 둔다. `sandbox` 는 페이지가 쓰는 스크립트(tailwind CDN)와
+ * 목차 앵커만 허용하고, **최상위 창을 이동시키는 것은 막는다.**
+ */
+function TermsFrame({ title, src }: { title: string; src: string }) {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <>
+      <iframe
+        src={src}
+        title={`${title} 전문`}
+        onLoad={() => setLoaded(true)}
+        sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+        referrerPolicy="strict-origin-when-cross-origin"
+        className="absolute inset-0 size-full border-0"
+      />
+      {loaded ? null : (
+        <div className="bg-surface absolute inset-0 flex flex-col gap-6 px-5 py-6 lg:px-8">
+          <DialogBodySkeleton />
+        </div>
+      )}
+    </>
   );
 }
 
