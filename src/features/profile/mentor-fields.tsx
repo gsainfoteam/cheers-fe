@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Controller, useFormContext } from "react-hook-form";
+import { companySearchQuery } from "@/api";
 import { Field } from "@/components/ui/field";
 import { SearchSelect } from "@/components/ui/search-select";
 import { TagInput } from "@/components/ui/tag-input";
 import { nicknameProblem } from "@/lib/nickname";
-import { searchCompanies } from "@/lib/profile-form";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
 import type { MentorFormValues } from "./mentor-form";
 
 /**
@@ -96,12 +98,29 @@ export function MentorIdentityFields({
  * 수정만 자유 입력으로 두면 가입 때 막은 표기 흔들림(삼성전자 / 삼성 전자)이
  * 다시 생긴다(피그마 TODO `889:31017`). 검색어 · 열림은 이 묶음이 들고 있어
  * 열린 채로 1024px 경계를 넘어도 살아남는다.
+ *
+ * 검색은 서버(`GET /api/v1/company`)가 한다 — 별칭(`마소` → Microsoft) ·
+ * 표기 흔들림을 클라이언트가 흉내 낼 수 없다(선배 가이드 §2.4a). 결과 칩을
+ * 고르면 `company_id` 가 선다. 결과가 없어 검색어 그대로 확정되면(닫을 때 —
+ * `SearchSelect` 머리말) null 이고, 그 이름으로만 가입된다. 검색이 실패해도
+ * 결과가 빈 것과 같다 — 이름으로 저장해도 서버가 같은 표기의 회사로 맞춰
+ * 주므로 막지 않는다.
  */
 export function MentorWorkFields() {
-  const { control, register, getFieldState, formState, getValues } =
+  const { control, register, getFieldState, formState, getValues, setValue } =
     useFormContext<Values>();
   const [query, setQuery] = useState(() => getValues("company"));
   const [open, setOpen] = useState(false);
+
+  const debounced = useDebouncedValue(query.trim());
+  const search = useQuery({
+    ...companySearchQuery(debounced),
+    // 닫힌 칸에는 결과가 필요 없다. 처음 값(정보 수정)으로 요청이 나가지 않게
+    enabled: open && debounced.length > 0,
+  });
+  const companies = query.trim() ? (search.data ?? []) : [];
+  // 같은 이름이 둘 오면 칩 key 가 겹친다. 먼저 온 쪽을 쓴다
+  const results = [...new Set(companies.map((company) => company.name))];
   const error = (name: "department" | "job") => {
     const state = getFieldState(name, formState);
     return state.isTouched ? state.error?.message : undefined;
@@ -120,14 +139,16 @@ export function MentorWorkFields() {
             maxLength={128}
             value={field.value}
             onSelect={(value) => {
+              // 결과 칩이면 그 회사의 id, 직접 친 이름이면 목록에 없으니 null
+              const picked = companies.find((company) => company.name === value);
+              setValue("company_id", picked?.company_id ?? null);
               field.onChange(value);
               field.onBlur();
               setQuery(value);
             }}
             query={query}
             onQueryChange={setQuery}
-            // 회사 목록 API 가 아직 없어 결과는 늘 비어 있다(선배 가이드 §2.4a)
-            results={searchCompanies(query)}
+            results={results}
             open={open}
             onOpenChange={setOpen}
           />

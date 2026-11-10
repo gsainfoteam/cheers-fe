@@ -69,6 +69,7 @@ function RouteComponent() {
       name: initial.name || me.name || "",
       nickname: initial.nickname,
       company: initial.company,
+      company_id: initial.company_id,
       department: initial.department,
       job: initial.job,
     },
@@ -79,6 +80,7 @@ function RouteComponent() {
       name: nameLocked ? "" : values.name.trim(),
       nickname: values.nickname,
       company: values.company,
+      company_id: values.company_id,
       department: values.department,
       job: values.job,
       // 재인증 선배의 나머지 값도 추가 정보로 넘긴다

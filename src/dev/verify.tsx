@@ -507,7 +507,8 @@ export function App() {
         const data = await submitGraduatedInfo.mutateAsync({
           ...(me?.name ? {} : { name }),
           nickname,
-          company,
+          // 검색을 거치지 않는 검증용 저장 — 직접 입력한 이름으로 보낸다
+          company_name: company,
           department: graduatedDepartment,
           job,
           hashtags: csv(hashtags),

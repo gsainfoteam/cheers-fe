@@ -11,6 +11,11 @@ import type { EmployeeBadgeData } from "./employee-badge";
  */
 type BadgeSource = {
   company: string;
+  /**
+   * `CheersCardDto` 에만 있다. `GraduatedProfileDto` 에는 로고가 없어
+   * 마이페이지 · 미리보기 사원증은 회사 이름만 선다
+   */
+  company_logo_url?: string | null;
   nickname: string;
   job: string;
   hashtags: string[];
@@ -18,8 +23,7 @@ type BadgeSource = {
 
 export function badgeDataOf(source: BadgeSource): EmployeeBadgeData {
   return {
-    // 명세에 회사 로고가 없다. 시안의 삼성·SK 로고는 예시 데이터라
-    // (설계 5.3) 실제로는 회사 이름만 선다
+    companyLogo: source.company_logo_url ?? undefined,
     company: source.company,
     nickname: source.nickname,
     role: source.job,

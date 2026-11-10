@@ -9,7 +9,7 @@
  *  - client.ts      토큰 주입 + 401 자동 갱신이 붙은 타입 세이프 클라이언트
  *  - auth.ts        refresh 단일화(탭 안 · 탭 사이), 가입 완료 시 토큰 교체
  *  - tokens.ts      토큰 저장소 (localStorage, 탭 간 동기화)
- *  - user / student / graduated / cheers / file — 명세의 섹션과 1:1
+ *  - user / student / graduated / company / cheers / file — 명세의 섹션과 1:1
  *
  * 요청은 생성, 응답은 손으로. 경계가 갈린 이유는 dto.ts 머리말에 있다.
  *
@@ -61,6 +61,7 @@ export {
   useVerifyStudentCode,
 } from "./student";
 export { useSubmitGraduatedInfo, useVerifyBusinessCard } from "./graduated";
+export { companySearchQuery } from "./company";
 export {
   cheersListQuery,
   receivedRequestQuery,

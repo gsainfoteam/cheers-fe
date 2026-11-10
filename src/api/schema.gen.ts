@@ -395,6 +395,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/company": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 회사 검색 (최대 10개) */
+        get: operations["CompanyController_search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -603,6 +620,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/manager/v1/coffee-chat/notification-log/{pk}/delivery-lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 알림톡의 카카오 최종 결과를 지금 알리고에서 조회 (CRB-77). 결과가 나왔으면 저장 */
+        post: operations["ManagerCoffeeChatController_lookupDelivery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/manager/v1/consent": {
         parameters: {
             query?: never;
@@ -792,6 +826,178 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/manager/v1/company": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 회사 목록 (검토가 필요한 회사가 맨 위, 그다음 최근 등록 순) */
+        get: operations["AdminCompanyController_list"];
+        put?: never;
+        /** 회사 미리 등록 (회사 이름 + 다른 표기) */
+        post: operations["AdminCompanyController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/manager/v1/company/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 현업자 입력창의 회사 검색과 같은 결과 (GET /api/v1/company 미리보기) */
+        get: operations["AdminCompanyController_search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/manager/v1/company/logo/upload-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 로고 업로드용 presigned PUT URL 발급 (png · jpeg · webp, 2MB) */
+        post: operations["AdminCompanyController_createLogoUploadUrl"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/manager/v1/company/import/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 회사 · 표기 일괄 등록 미리보기 (DB에 저장하지 않음) */
+        post: operations["AdminCompanyController_previewImport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/manager/v1/company/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 회사 · 표기 일괄 등록 (전체 검증 후 한 번에 저장) */
+        post: operations["AdminCompanyController_importCompanies"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/manager/v1/company/{pk}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** 회사 삭제 (고른 현업자가 없을 때만) */
+        delete: operations["AdminCompanyController_remove"];
+        options?: never;
+        head?: never;
+        /** 회사 이름 변경 · 검토 완료 */
+        patch: operations["AdminCompanyController_update"];
+        trace?: never;
+    };
+    "/api/manager/v1/company/{pk}/name": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 표기 추가 */
+        post: operations["AdminCompanyController_addName"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/manager/v1/company/{pk}/name/{namePk}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** 표기 삭제 (회사 이름 표기는 삭제 불가) */
+        delete: operations["AdminCompanyController_removeName"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/manager/v1/company/{pk}/merge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 회사 병합: 이 회사의 표기 · 현업자를 target_id 회사로 옮기고 이 회사를 삭제 */
+        post: operations["AdminCompanyController_merge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/manager/v1/company/{pk}/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** 업로드한 로고 확정 · 연결 (이전 로고 대체) */
+        put: operations["AdminCompanyController_updateLogo"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -863,6 +1069,8 @@ export interface components {
         };
         GraduatedProfileDto: {
             nickname: string;
+            /** @description 회사 검색 결과의 company_id */
+            company_id: number;
             company: string;
             department: string;
             job: string;
@@ -1024,7 +1232,13 @@ export interface components {
             name?: string;
             /** @description 첫 저장에만 필수. 가입 후 변경 불가라 이후 보내면 무시 */
             nickname?: string;
-            company: string;
+            /** @description 회사 검색(GET /api/v1/company) 결과에서 고른 회사. company_name과 둘 중 하나만 */
+            company_id?: number;
+            /**
+             * @description 검색 결과에 원하는 회사가 없을 때 직접 입력한 이름. company_id와 둘 중 하나만.
+             *     이미 등록된 표기(대소문자 · 공백 무시)면 그 회사로 저장, 아니면 새 회사로 등록되어 어드민 확인을 기다림
+             */
+            company_name?: string;
             /** @description 비공개 (다른 회원에게 보이지 않음) */
             department: string;
             job: string;
@@ -1043,6 +1257,8 @@ export interface components {
             graduated_id: string;
             nickname: string;
             company: string;
+            /** @description 회사 로고 presigned GET URL. 로고가 없으면 null */
+            company_logo_url: string | null;
             job: string;
             hashtags: string[];
             links: string[];
@@ -1139,6 +1355,15 @@ export interface components {
             contact_shared_at: string;
             shared_email: string | null;
             shared_phone: string | null;
+        };
+        CompanySearchItemDto: {
+            company_id: number;
+            /** @description 화면에 나갈 회사 이름 */
+            name: string;
+            /** @description 로고 presigned GET URL. 로고가 없으면 null */
+            logo_url: string | null;
+            /** @description 검색어와 맞은 표기 (예: 검색어 "마소" → "마소", name은 "Microsoft") */
+            matched_name: string;
         };
         ManagerLoginRequestDto: {
             /** @description IdP가 콜백으로 보낸 authorization code */
@@ -1243,9 +1468,33 @@ export interface components {
             channel: "email" | "kakao_alimtalk";
             /** @enum {string} */
             status: "sent" | "failed";
+            /**
+             * @description 알림톡 접수 뒤 카카오 단계 최종 결과 (CRB-77). pending 대기 · delivered 도달 · failed 카카오 단계 실패 ·
+             *     unknown 24시간이 지나도 결과 없음. 이메일 · 접수 실패(status=failed)는 null
+             * @enum {string|null}
+             */
+            delivery_status: "pending" | "delivered" | "failed" | "unknown" | null;
             pk: string;
             /** @description 실패 사유. 이메일 · 전화번호는 가려서 내려줌 */
             error: string | null;
+            /** @description 발송사 메시지 ID. 알림톡은 알리고 mid (알리고 콘솔 전송결과에서 찾을 때 씀) */
+            provider_message_id: string | null;
+            /** @description 알리고 전송결과 코드 (rslt) */
+            delivery_code: string | null;
+            /** @description 알리고 전송결과 메시지 (rslt_message). 실패 사유이며 이메일 · 전화번호는 가려서 내려줌 */
+            delivery_message: string | null;
+            /**
+             * Format: date-time
+             * @description 알리고가 카카오 결과를 받은 시각 (rsltdate)
+             */
+            delivery_reported_at: string | null;
+            /** @description 몇 번째 발송 시도인지 (1 = 처음 발송, 최대 4) */
+            attempt: number;
+            /**
+             * Format: date-time
+             * @description 실패한 발송을 다시 보낼 예정 시각. 재시도 대상이 아니면 null (성공 · 마지막 시도 · 이미 재시도함)
+             */
+            next_retry_at: string | null;
             /** Format: date-time */
             created_at: string;
         };
@@ -1284,12 +1533,46 @@ export interface components {
             channel: "email" | "kakao_alimtalk";
             /** @enum {string} */
             status: "sent" | "failed";
+            /**
+             * @description 알림톡 접수 뒤 카카오 단계 최종 결과 (CRB-77). pending 대기 · delivered 도달 · failed 카카오 단계 실패 ·
+             *     unknown 24시간이 지나도 결과 없음. 이메일 · 접수 실패(status=failed)는 null
+             * @enum {string|null}
+             */
+            delivery_status: "pending" | "delivered" | "failed" | "unknown" | null;
             pk: string;
             /** @description 실패 사유. 이메일 · 전화번호는 가려서 내려줌 */
             error: string | null;
+            /** @description 발송사 메시지 ID. 알림톡은 알리고 mid (알리고 콘솔 전송결과에서 찾을 때 씀) */
+            provider_message_id: string | null;
+            /** @description 알리고 전송결과 코드 (rslt) */
+            delivery_code: string | null;
+            /** @description 알리고 전송결과 메시지 (rslt_message). 실패 사유이며 이메일 · 전화번호는 가려서 내려줌 */
+            delivery_message: string | null;
+            /**
+             * Format: date-time
+             * @description 알리고가 카카오 결과를 받은 시각 (rsltdate)
+             */
+            delivery_reported_at: string | null;
+            /** @description 몇 번째 발송 시도인지 (1 = 처음 발송, 최대 4) */
+            attempt: number;
+            /**
+             * Format: date-time
+             * @description 실패한 발송을 다시 보낼 예정 시각. 재시도 대상이 아니면 null (성공 · 마지막 시도 · 이미 재시도함)
+             */
+            next_retry_at: string | null;
             /** Format: date-time */
             created_at: string;
             coffee_chat_request_pk: string;
+        };
+        NotificationDeliveryLookupDto: {
+            /**
+             * @description 이번 조회 결과. delivered · failed는 저장했고, pending은 아직 전송 중이라 바꾸지 않음
+             *     (스케줄러가 계속 조회)
+             * @enum {string}
+             */
+            lookup: "delivered" | "failed" | "pending";
+            /** @description 조회 뒤의 로그 */
+            log: components["schemas"]["NotificationLogItemDto"];
         };
         ConsentVersionListItemDto: {
             /** @description 이 종류의 최신 버전 (사용자에게 보여 주는 버전) */
@@ -1414,6 +1697,67 @@ export interface components {
             email: string | null;
             /** Format: date-time */
             created_at: string;
+        };
+        AdminCompanyNameDto: {
+            name_id: number;
+            name: string;
+        };
+        AdminCompanyDto: {
+            company_id: number;
+            name: string;
+            /** @description 로고 presigned GET URL. 없으면 null */
+            logo_url: string | null;
+            /** @description true: 현업자가 직접 입력해 생긴 회사로 아직 확인하지 않음 */
+            needs_review: boolean;
+            /** @description 검색에 쓰이는 표기 (회사 이름 포함) */
+            names: components["schemas"]["AdminCompanyNameDto"][];
+            /** @description 이 회사를 고른 현업자 수 */
+            graduated_count: number;
+            created_at: string;
+        };
+        CreateAdminCompanyRequestDto: {
+            /** @description 화면에 나갈 회사 이름. 표기에도 자동으로 들어감 */
+            name: string;
+            /** @description 함께 등록할 다른 표기 (예: 마이크로소프트, 마소, MS) */
+            names?: string[];
+        };
+        CompanyImportRowDto: {
+            /** @description 파일의 행 번호 (헤더는 1행) */
+            row: number;
+            name: string;
+            names: string[];
+            company_id: number | null;
+            /** @description 기존 회사에 합칠 때 유지되는 대표명 */
+            target_name: string | null;
+            /** @enum {string} */
+            action: "error" | "create" | "merge" | "skip";
+            added_names: string[];
+            errors: string[];
+        };
+        CompanyImportResultDto: {
+            valid: boolean;
+            created_companies: number;
+            updated_companies: number;
+            added_names: number;
+            skipped_rows: number;
+            rows: components["schemas"]["CompanyImportRowDto"][];
+        };
+        UpdateAdminCompanyRequestDto: {
+            /** @description 회사 이름 변경. 새 이름은 표기에도 추가되고 기존 표기는 남음 */
+            name?: string;
+            /** @description false로 보내면 검토 완료 (승인) */
+            needs_review?: boolean;
+        };
+        AdminCompanyNameRequestDto: {
+            name: string;
+        };
+        MergeAdminCompanyRequestDto: {
+            /** @description 합쳐질 회사. 요청 경로의 회사가 이 회사로 합쳐지고 지워짐 */
+            target_id: number;
+        };
+        UpdateAdminCompanyLogoRequestDto: {
+            /** @description 로고 업로드 URL 발급 때 받은 key */
+            key: string;
         };
     };
     responses: never;
@@ -2228,7 +2572,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
-            /** @description 가입을 마치지 않음, 재학생이 아님 */
+            /** @description 가입을 마치지 않음 */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -2600,6 +2944,55 @@ export interface operations {
             };
             /** @description 재학생이 탈퇴했거나 탈퇴 유예기간 중 */
             410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    CompanyController_search: {
+        parameters: {
+            query: {
+                /** @description 검색어. 표기(대소문자 · 공백 무시)의 일부만 맞아도 걸림 */
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanySearchItemDto"][];
+                };
+            };
+            /** @description query 형식 오류 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 현업자가 아님, 가입 중인데 next_step이 profile이 아님 */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3288,6 +3681,8 @@ export interface operations {
                 channel?: "email" | "kakao_alimtalk";
                 status?: "sent" | "failed";
                 event?: "coffee_chat_requested" | "contact_shared";
+                /** @description 알림톡 최종 결과로 거름 (CRB-77) */
+                delivery_status?: "pending" | "delivered" | "failed" | "unknown";
                 /** @description 이 시각부터 (포함). UTC 오프셋이 있는 ISO 8601 */
                 created_from?: string;
                 /** @description 이 시각 전까지 (미포함). UTC 오프셋이 있는 ISO 8601 */
@@ -3320,6 +3715,63 @@ export interface operations {
             };
             /** @description access token이 없거나 유효하지 않음 */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    ManagerCoffeeChatController_lookupDelivery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pk: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationDeliveryLookupDto"];
+                };
+            };
+            /** @description pk 형식 오류, 알리고 접수에 성공한 알림톡이 아님 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 없는 로그 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 알리고 조회 실패 */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4010,6 +4462,644 @@ export interface operations {
                 };
             };
             /** @description 없는 유저, DEV_USER_DELETE_ENABLED가 꺼진 환경 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminCompanyController_list: {
+        parameters: {
+            query?: {
+                /** @description 1부터 시작 */
+                page?: number;
+                size?: number;
+                /** @description 표기 중 하나라도 포함하면 걸림 (대소문자 · 공백 무시) */
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageResponseDto"] & {
+                        items?: components["schemas"]["AdminCompanyDto"][];
+                    };
+                };
+            };
+            /** @description query 형식 오류 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminCompanyController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAdminCompanyRequestDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCompanyDto"];
+                };
+            };
+            /** @description 요청 형식 오류 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 이미 다른 회사에 등록된 표기 */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminCompanyController_search: {
+        parameters: {
+            query: {
+                /** @description 검색어. 표기(대소문자 · 공백 무시)의 일부만 맞아도 걸림 */
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanySearchItemDto"][];
+                };
+            };
+            /** @description query 형식 오류 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminCompanyController_createLogoUploadUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UploadUrlRequestDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadUrlResponseDto"];
+                };
+            };
+            /** @description 요청 형식 오류, 허용되지 않은 파일 형식 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 파일 크기 초과 */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminCompanyController_previewImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description .xlsx 또는 UTF-8 .csv (company name, alias1, alias2, …), 최대 1000행 · 별칭 50개 · 2MB
+                     */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyImportResultDto"];
+                };
+            };
+            /** @description 파일 누락, 파일 형식 · 헤더 오류, 행 · 열 제한 초과 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 파일 크기 초과 */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminCompanyController_importCompanies: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description .xlsx 또는 UTF-8 .csv (company name, alias1, alias2, …), 최대 1000행 · 별칭 50개 · 2MB
+                     */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyImportResultDto"];
+                };
+            };
+            /** @description 파일 형식 오류 또는 표기 충돌 (전체 등록 취소) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 동시 변경으로 재시도 필요 */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 파일 크기 초과 */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminCompanyController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pk: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BaseResultDto"];
+                };
+            };
+            /** @description pk 형식 오류 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 없는 회사 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 현업자가 고른 회사 (병합으로 처리) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminCompanyController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pk: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAdminCompanyRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCompanyDto"];
+                };
+            };
+            /** @description 요청 형식 오류 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 없는 회사 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 새 이름이 이미 다른 회사에 등록된 표기 */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminCompanyController_addName: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pk: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminCompanyNameRequestDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCompanyDto"];
+                };
+            };
+            /** @description 요청 형식 오류 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 없는 회사 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 이미 등록된 표기 */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminCompanyController_removeName: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pk: number;
+                namePk: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCompanyDto"];
+                };
+            };
+            /** @description pk 형식 오류, 회사 이름 표기 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 없는 회사, 이 회사의 표기가 아님 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminCompanyController_merge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pk: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MergeAdminCompanyRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCompanyDto"];
+                };
+            };
+            /** @description 요청 형식 오류, 자기 자신으로 병합 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 없는 회사 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminCompanyController_updateLogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pk: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAdminCompanyLogoRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BaseResultDto"];
+                };
+            };
+            /** @description 요청 형식 오류, 내가 발급받은 key가 아님, 업로드되지 않음, 허용 범위를 벗어난 파일 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 없는 회사 */
             404: {
                 headers: {
                     [name: string]: unknown;
