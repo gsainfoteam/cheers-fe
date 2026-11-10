@@ -35,6 +35,7 @@ export function ResponsiveDialog({
   title,
   className,
   actions,
+  bleed = false,
   children,
 }: {
   open: boolean;
@@ -49,6 +50,12 @@ export function ResponsiveDialog({
    * 안에 있는 오버레이(받은 신청 내용)가 그 모양이다.
    */
   actions?: React.ReactNode | false;
+  /**
+   * 본문 영역을 여백·스크롤 없이 통째로 넘긴다. 외부 약관 페이지처럼
+   * **스스로 스크롤하는 내용**(iframe)을 꽉 채울 때 쓴다 — 기본 본문에
+   * 넣으면 여백 안에 갇히고 스크롤이 두 겹이 된다.
+   */
+  bleed?: boolean;
   children?: React.ReactNode;
 }) {
   return (
@@ -84,11 +91,15 @@ export function ResponsiveDialog({
           <div className="bg-line h-px shrink-0" />
 
           {/* 피그마 `Scrollable dialog body` — 여기만 스크롤한다 */}
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <div className="flex flex-col gap-6 px-5 py-6 lg:px-8">
-              {children}
+          {bleed ? (
+            <div className="relative min-h-0 flex-1">{children}</div>
+          ) : (
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <div className="flex flex-col gap-6 px-5 py-6 lg:px-8">
+                {children}
+              </div>
             </div>
-          </div>
+          )}
 
           {actions === false ? null : (
             <>
