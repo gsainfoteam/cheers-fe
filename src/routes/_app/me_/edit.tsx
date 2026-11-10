@@ -39,7 +39,11 @@ import {
   studentEditDefaults,
   studentEditSchema,
 } from "@/features/profile/student-form";
-import { contactRequestOf, normalizeLink } from "@/lib/profile-form";
+import {
+  companyRequestOf,
+  contactRequestOf,
+  normalizeLink,
+} from "@/lib/profile-form";
 import { useSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
@@ -189,7 +193,7 @@ function MentorEditForm({
   const save = form.handleSubmit((values) =>
     submit.mutate(
       {
-        company: values.company,
+        ...companyRequestOf(values.company, values.company_id),
         department: values.department,
         job: values.job,
         hashtags: values.hashtags,

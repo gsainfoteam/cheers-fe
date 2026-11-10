@@ -46,6 +46,7 @@ const MAP = {
   InterestListResponseDto: "InterestListSchema",
   SendCodeResponseDto: "SendCodeResultSchema",
   UploadUrlResponseDto: "UploadUrlSchema",
+  CompanySearchItemDto: "CompanySearchItemSchema",
   CheersCardDto: "CheersCardSchema",
   CreateRequestResponseDto: "CheersRequestResultSchema",
   RequestGraduatedDto: "RequestGraduatedSchema",

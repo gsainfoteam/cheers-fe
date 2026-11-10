@@ -17,6 +17,8 @@ export type MentorSignupDraft = {
   name: string;
   nickname: string;
   company: string;
+  /** 검색 결과에서 고른 회사. `등록하기` 로 직접 친 이름이면 null */
+  company_id: number | null;
   /** 비공개. 다른 회원에게 보이지 않는다 */
   department: string;
   job: string;
@@ -37,6 +39,7 @@ const EMPTY: MentorSignupDraft = {
   name: "",
   nickname: "",
   company: "",
+  company_id: null,
   department: "",
   job: "",
   hashtags: [],
@@ -59,7 +62,7 @@ export const useMentorSignupDraft = create<Store>((set) => ({
 }));
 
 /**
- * 기본 정보가 채워졌는지. 명세가 필수로 받는 셋(`company`·`department`·
+ * 기본 정보가 채워졌는지. 명세가 필수로 받는 셋(회사·`department`·
  * `job`)과 첫 저장에 필수인 `nickname`, 그리고 내 정보에 이름이 없으면
  * `name` 까지가 기준이다.
  */
@@ -86,6 +89,7 @@ export function draftFromProfile(
   return {
     nickname: profile.nickname,
     company: profile.company,
+    company_id: profile.company_id,
     department: profile.department,
     job: profile.job,
     hashtags: profile.hashtags,

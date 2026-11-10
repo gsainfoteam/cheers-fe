@@ -46,17 +46,23 @@ export function isValidLink(link: string): boolean {
   }
 }
 
+type GraduatedInfoRequest = Body<"/api/v1/user/graduated/info", "post">;
+
 /**
- * 회사 목록. **목록·검색 API 가 아직 없다**(선배 가이드 §2.4a, §7 #2).
+ * 저장할 회사. 명세는 `company_id` 와 `company_name` 중 **하나만** 받는다.
  *
- * 그동안은 비워 둔다 — 모든 검색이 `등록 정보가 없습니다.` → `+ {검색어}
- * 등록하기` 로 떨어지고, 그 버튼이 검색어를 `company` 로 확정한다. 명세의
- * `company` 가 자유 문자열이라 저장도 그대로 성립한다. API 가 생기면 이
- * 함수만 바꾸면 된다(별칭·자모 검색은 서버가 하는 쪽이 낫다).
+ * - 검색 결과에서 골랐으면 `company_id` — 표기가 갈리지 않는다
+ * - `+ {검색어} 등록하기` 로 확정했으면 `company_name`. 서버가 이미 있는
+ *   표기(대소문자 · 공백 무시)면 그 회사로, 아니면 새 회사로 등록해 어드민
+ *   확인을 기다린다
  */
-export function searchCompanies(query: string): string[] {
-  void query;
-  return [];
+export function companyRequestOf(
+  company: string,
+  companyId: number | null
+): Pick<GraduatedInfoRequest, "company_id" | "company_name"> {
+  return companyId !== null
+    ? { company_id: companyId }
+    : { company_name: company.trim() };
 }
 
 type ContactRequest = Body<"/api/v1/user/graduated/info", "post">["contact"];

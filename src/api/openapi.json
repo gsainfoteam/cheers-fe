@@ -1080,7 +1080,7 @@
             }
           },
           "403": {
-            "description": "가입을 마치지 않음, 재학생이 아님",
+            "description": "가입을 마치지 않음",
             "content": {
               "application/json": {
                 "schema": {
@@ -1631,6 +1631,77 @@
         "summary": "내 연락처 공유",
         "tags": [
           "커피챗 · 현업자"
+        ]
+      }
+    },
+    "/api/v1/company": {
+      "get": {
+        "operationId": "CompanyController_search",
+        "parameters": [
+          {
+            "name": "q",
+            "required": true,
+            "in": "query",
+            "description": "검색어. 표기(대소문자 · 공백 무시)의 일부만 맞아도 걸림",
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompanySearchItemDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "query 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "현업자가 아님, 가입 중인데 next_step이 profile이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "회사 검색 (최대 10개)",
+        "tags": [
+          "회사"
         ]
       }
     },
@@ -2670,6 +2741,21 @@
             }
           },
           {
+            "name": "delivery_status",
+            "required": false,
+            "in": "query",
+            "description": "알림톡 최종 결과로 거름 (CRB-77)",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "delivered",
+                "failed",
+                "unknown"
+              ]
+            }
+          },
+          {
             "name": "created_from",
             "required": false,
             "in": "query",
@@ -2740,6 +2826,82 @@
           }
         ],
         "summary": "알림 발송 결과 목록 (최근 발송 순)",
+        "tags": [
+          "어드민 커피챗"
+        ]
+      }
+    },
+    "/api/manager/v1/coffee-chat/notification-log/{pk}/delivery-lookup": {
+      "post": {
+        "operationId": "ManagerCoffeeChatController_lookupDelivery",
+        "parameters": [
+          {
+            "name": "pk",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationDeliveryLookupDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "pk 형식 오류, 알리고 접수에 성공한 알림톡이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "없는 로그",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "알리고 조회 실패",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "알림톡의 카카오 최종 결과를 지금 알리고에서 조회 (CRB-77). 결과가 나왔으면 저장",
         "tags": [
           "어드민 커피챗"
         ]
@@ -3746,6 +3908,929 @@
           "개발용 회원 완전탈퇴"
         ]
       }
+    },
+    "/api/manager/v1/company": {
+      "get": {
+        "operationId": "AdminCompanyController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1부터 시작",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "size",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "표기 중 하나라도 포함하면 걸림 (대소문자 · 공백 무시)",
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PageResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/AdminCompanyDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "query 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "회사 목록 (검토가 필요한 회사가 맨 위, 그다음 최근 등록 순)",
+        "tags": [
+          "회사"
+        ]
+      },
+      "post": {
+        "operationId": "AdminCompanyController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAdminCompanyRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCompanyDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "이미 다른 회사에 등록된 표기",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "회사 미리 등록 (회사 이름 + 다른 표기)",
+        "tags": [
+          "회사"
+        ]
+      }
+    },
+    "/api/manager/v1/company/search": {
+      "get": {
+        "operationId": "AdminCompanyController_search",
+        "parameters": [
+          {
+            "name": "q",
+            "required": true,
+            "in": "query",
+            "description": "검색어. 표기(대소문자 · 공백 무시)의 일부만 맞아도 걸림",
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompanySearchItemDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "query 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "현업자 입력창의 회사 검색과 같은 결과 (GET /api/v1/company 미리보기)",
+        "tags": [
+          "회사"
+        ]
+      }
+    },
+    "/api/manager/v1/company/logo/upload-url": {
+      "post": {
+        "operationId": "AdminCompanyController_createLogoUploadUrl",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadUrlRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadUrlResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 허용되지 않은 파일 형식",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "파일 크기 초과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "로고 업로드용 presigned PUT URL 발급 (png · jpeg · webp, 2MB)",
+        "tags": [
+          "회사"
+        ]
+      }
+    },
+    "/api/manager/v1/company/import/preview": {
+      "post": {
+        "operationId": "AdminCompanyController_previewImport",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": ".xlsx 또는 UTF-8 .csv (company name, alias1, alias2, …), 최대 1000행 · 별칭 50개 · 2MB"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyImportResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "파일 누락, 파일 형식 · 헤더 오류, 행 · 열 제한 초과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "파일 크기 초과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "회사 · 표기 일괄 등록 미리보기 (DB에 저장하지 않음)",
+        "tags": [
+          "회사"
+        ]
+      }
+    },
+    "/api/manager/v1/company/import": {
+      "post": {
+        "operationId": "AdminCompanyController_importCompanies",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": ".xlsx 또는 UTF-8 .csv (company name, alias1, alias2, …), 최대 1000행 · 별칭 50개 · 2MB"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyImportResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "파일 형식 오류 또는 표기 충돌 (전체 등록 취소)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "동시 변경으로 재시도 필요",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "파일 크기 초과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "회사 · 표기 일괄 등록 (전체 검증 후 한 번에 저장)",
+        "tags": [
+          "회사"
+        ]
+      }
+    },
+    "/api/manager/v1/company/{pk}": {
+      "patch": {
+        "operationId": "AdminCompanyController_update",
+        "parameters": [
+          {
+            "name": "pk",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAdminCompanyRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCompanyDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "없는 회사",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "새 이름이 이미 다른 회사에 등록된 표기",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "회사 이름 변경 · 검토 완료",
+        "tags": [
+          "회사"
+        ]
+      },
+      "delete": {
+        "operationId": "AdminCompanyController_remove",
+        "parameters": [
+          {
+            "name": "pk",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "pk 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "없는 회사",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "현업자가 고른 회사 (병합으로 처리)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "회사 삭제 (고른 현업자가 없을 때만)",
+        "tags": [
+          "회사"
+        ]
+      }
+    },
+    "/api/manager/v1/company/{pk}/name": {
+      "post": {
+        "operationId": "AdminCompanyController_addName",
+        "parameters": [
+          {
+            "name": "pk",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminCompanyNameRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCompanyDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "없는 회사",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "이미 등록된 표기",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "표기 추가",
+        "tags": [
+          "회사"
+        ]
+      }
+    },
+    "/api/manager/v1/company/{pk}/name/{namePk}": {
+      "delete": {
+        "operationId": "AdminCompanyController_removeName",
+        "parameters": [
+          {
+            "name": "pk",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "namePk",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCompanyDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "pk 형식 오류, 회사 이름 표기",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "없는 회사, 이 회사의 표기가 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "표기 삭제 (회사 이름 표기는 삭제 불가)",
+        "tags": [
+          "회사"
+        ]
+      }
+    },
+    "/api/manager/v1/company/{pk}/merge": {
+      "post": {
+        "operationId": "AdminCompanyController_merge",
+        "parameters": [
+          {
+            "name": "pk",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MergeAdminCompanyRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCompanyDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 자기 자신으로 병합",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "없는 회사",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "회사 병합: 이 회사의 표기 · 현업자를 target_id 회사로 옮기고 이 회사를 삭제",
+        "tags": [
+          "회사"
+        ]
+      }
+    },
+    "/api/manager/v1/company/{pk}/logo": {
+      "put": {
+        "operationId": "AdminCompanyController_updateLogo",
+        "parameters": [
+          {
+            "name": "pk",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAdminCompanyLogoRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 형식 오류, 내가 발급받은 key가 아님, 업로드되지 않음, 허용 범위를 벗어난 파일",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "없는 회사",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "업로드한 로고 확정 · 연결 (이전 로고 대체)",
+        "tags": [
+          "회사"
+        ]
+      }
     }
   },
   "info": {
@@ -4006,6 +5091,10 @@
           "nickname": {
             "type": "string"
           },
+          "company_id": {
+            "type": "number",
+            "description": "회사 검색 결과의 company_id"
+          },
           "company": {
             "type": "string"
           },
@@ -4039,6 +5128,7 @@
         },
         "required": [
           "nickname",
+          "company_id",
           "company",
           "department",
           "job",
@@ -4581,8 +5671,15 @@
             "description": "첫 저장에만 필수. 가입 후 변경 불가라 이후 보내면 무시",
             "pattern": "^[가-힣A-Za-z0-9_]{2,10}$"
           },
-          "company": {
+          "company_id": {
+            "type": "number",
+            "description": "회사 검색(GET /api/v1/company) 결과에서 고른 회사. company_name과 둘 중 하나만",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "company_name": {
             "type": "string",
+            "description": "검색 결과에 원하는 회사가 없을 때 직접 입력한 이름. company_id와 둘 중 하나만.\n이미 등록된 표기(대소문자 · 공백 무시)면 그 회사로 저장, 아니면 새 회사로 등록되어 어드민 확인을 기다림",
             "maxLength": 128
           },
           "department": {
@@ -4619,7 +5716,6 @@
           }
         },
         "required": [
-          "company",
           "department",
           "job",
           "contact"
@@ -4663,6 +5759,11 @@
           "company": {
             "type": "string"
           },
+          "company_logo_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "회사 로고 presigned GET URL. 로고가 없으면 null"
+          },
           "job": {
             "type": "string"
           },
@@ -4690,6 +5791,7 @@
           "graduated_id",
           "nickname",
           "company",
+          "company_logo_url",
           "job",
           "hashtags",
           "links",
@@ -5041,6 +6143,33 @@
           "shared_phone"
         ]
       },
+      "CompanySearchItemDto": {
+        "type": "object",
+        "properties": {
+          "company_id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string",
+            "description": "화면에 나갈 회사 이름"
+          },
+          "logo_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "로고 presigned GET URL. 로고가 없으면 null"
+          },
+          "matched_name": {
+            "type": "string",
+            "description": "검색어와 맞은 표기 (예: 검색어 \"마소\" → \"마소\", name은 \"Microsoft\")"
+          }
+        },
+        "required": [
+          "company_id",
+          "name",
+          "logo_url",
+          "matched_name"
+        ]
+      },
       "ManagerLoginRequestDto": {
         "type": "object",
         "properties": {
@@ -5343,6 +6472,17 @@
             ],
             "type": "string"
           },
+          "delivery_status": {
+            "nullable": true,
+            "description": "알림톡 접수 뒤 카카오 단계 최종 결과 (CRB-77). pending 대기 · delivered 도달 · failed 카카오 단계 실패 ·\nunknown 24시간이 지나도 결과 없음. 이메일 · 접수 실패(status=failed)는 null",
+            "enum": [
+              "pending",
+              "delivered",
+              "failed",
+              "unknown"
+            ],
+            "type": "string"
+          },
           "pk": {
             "type": "string"
           },
@@ -5350,6 +6490,37 @@
             "type": "string",
             "nullable": true,
             "description": "실패 사유. 이메일 · 전화번호는 가려서 내려줌"
+          },
+          "provider_message_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "발송사 메시지 ID. 알림톡은 알리고 mid (알리고 콘솔 전송결과에서 찾을 때 씀)"
+          },
+          "delivery_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "알리고 전송결과 코드 (rslt)"
+          },
+          "delivery_message": {
+            "type": "string",
+            "nullable": true,
+            "description": "알리고 전송결과 메시지 (rslt_message). 실패 사유이며 이메일 · 전화번호는 가려서 내려줌"
+          },
+          "delivery_reported_at": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "알리고가 카카오 결과를 받은 시각 (rsltdate)"
+          },
+          "attempt": {
+            "type": "number",
+            "description": "몇 번째 발송 시도인지 (1 = 처음 발송, 최대 4)"
+          },
+          "next_retry_at": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "실패한 발송을 다시 보낼 예정 시각. 재시도 대상이 아니면 null (성공 · 마지막 시도 · 이미 재시도함)"
           },
           "created_at": {
             "format": "date-time",
@@ -5360,8 +6531,15 @@
           "event",
           "channel",
           "status",
+          "delivery_status",
           "pk",
           "error",
+          "provider_message_id",
+          "delivery_code",
+          "delivery_message",
+          "delivery_reported_at",
+          "attempt",
+          "next_retry_at",
           "created_at"
         ]
       },
@@ -5457,6 +6635,17 @@
             ],
             "type": "string"
           },
+          "delivery_status": {
+            "nullable": true,
+            "description": "알림톡 접수 뒤 카카오 단계 최종 결과 (CRB-77). pending 대기 · delivered 도달 · failed 카카오 단계 실패 ·\nunknown 24시간이 지나도 결과 없음. 이메일 · 접수 실패(status=failed)는 null",
+            "enum": [
+              "pending",
+              "delivered",
+              "failed",
+              "unknown"
+            ],
+            "type": "string"
+          },
           "pk": {
             "type": "string"
           },
@@ -5464,6 +6653,37 @@
             "type": "string",
             "nullable": true,
             "description": "실패 사유. 이메일 · 전화번호는 가려서 내려줌"
+          },
+          "provider_message_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "발송사 메시지 ID. 알림톡은 알리고 mid (알리고 콘솔 전송결과에서 찾을 때 씀)"
+          },
+          "delivery_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "알리고 전송결과 코드 (rslt)"
+          },
+          "delivery_message": {
+            "type": "string",
+            "nullable": true,
+            "description": "알리고 전송결과 메시지 (rslt_message). 실패 사유이며 이메일 · 전화번호는 가려서 내려줌"
+          },
+          "delivery_reported_at": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "알리고가 카카오 결과를 받은 시각 (rsltdate)"
+          },
+          "attempt": {
+            "type": "number",
+            "description": "몇 번째 발송 시도인지 (1 = 처음 발송, 최대 4)"
+          },
+          "next_retry_at": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "실패한 발송을 다시 보낼 예정 시각. 재시도 대상이 아니면 null (성공 · 마지막 시도 · 이미 재시도함)"
           },
           "created_at": {
             "format": "date-time",
@@ -5477,10 +6697,43 @@
           "event",
           "channel",
           "status",
+          "delivery_status",
           "pk",
           "error",
+          "provider_message_id",
+          "delivery_code",
+          "delivery_message",
+          "delivery_reported_at",
+          "attempt",
+          "next_retry_at",
           "created_at",
           "coffee_chat_request_pk"
+        ]
+      },
+      "NotificationDeliveryLookupDto": {
+        "type": "object",
+        "properties": {
+          "lookup": {
+            "description": "이번 조회 결과. delivered · failed는 저장했고, pending은 아직 전송 중이라 바꾸지 않음\n(스케줄러가 계속 조회)",
+            "enum": [
+              "delivered",
+              "failed",
+              "pending"
+            ],
+            "type": "string"
+          },
+          "log": {
+            "description": "조회 뒤의 로그",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationLogItemDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "lookup",
+          "log"
         ]
       },
       "ConsentVersionListItemDto": {
@@ -5840,6 +7093,230 @@
           "name",
           "email",
           "created_at"
+        ]
+      },
+      "AdminCompanyNameDto": {
+        "type": "object",
+        "properties": {
+          "name_id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name_id",
+          "name"
+        ]
+      },
+      "AdminCompanyDto": {
+        "type": "object",
+        "properties": {
+          "company_id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "logo_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "로고 presigned GET URL. 없으면 null"
+          },
+          "needs_review": {
+            "type": "boolean",
+            "description": "true: 현업자가 직접 입력해 생긴 회사로 아직 확인하지 않음"
+          },
+          "names": {
+            "description": "검색에 쓰이는 표기 (회사 이름 포함)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminCompanyNameDto"
+            }
+          },
+          "graduated_count": {
+            "type": "number",
+            "description": "이 회사를 고른 현업자 수"
+          },
+          "created_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "company_id",
+          "name",
+          "logo_url",
+          "needs_review",
+          "names",
+          "graduated_count",
+          "created_at"
+        ]
+      },
+      "CreateAdminCompanyRequestDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "화면에 나갈 회사 이름. 표기에도 자동으로 들어감",
+            "maxLength": 128
+          },
+          "names": {
+            "description": "함께 등록할 다른 표기 (예: 마이크로소프트, 마소, MS)",
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 128
+            }
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "CompanyImportRowDto": {
+        "type": "object",
+        "properties": {
+          "row": {
+            "type": "number",
+            "description": "파일의 행 번호 (헤더는 1행)"
+          },
+          "name": {
+            "type": "string"
+          },
+          "names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "company_id": {
+            "type": "number",
+            "nullable": true
+          },
+          "target_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "기존 회사에 합칠 때 유지되는 대표명"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "error",
+              "create",
+              "merge",
+              "skip"
+            ]
+          },
+          "added_names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "row",
+          "name",
+          "names",
+          "company_id",
+          "target_name",
+          "action",
+          "added_names",
+          "errors"
+        ]
+      },
+      "CompanyImportResultDto": {
+        "type": "object",
+        "properties": {
+          "valid": {
+            "type": "boolean"
+          },
+          "created_companies": {
+            "type": "number"
+          },
+          "updated_companies": {
+            "type": "number"
+          },
+          "added_names": {
+            "type": "number"
+          },
+          "skipped_rows": {
+            "type": "number"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CompanyImportRowDto"
+            }
+          }
+        },
+        "required": [
+          "valid",
+          "created_companies",
+          "updated_companies",
+          "added_names",
+          "skipped_rows",
+          "rows"
+        ]
+      },
+      "UpdateAdminCompanyRequestDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "회사 이름 변경. 새 이름은 표기에도 추가되고 기존 표기는 남음",
+            "maxLength": 128
+          },
+          "needs_review": {
+            "type": "boolean",
+            "description": "false로 보내면 검토 완료 (승인)"
+          }
+        }
+      },
+      "AdminCompanyNameRequestDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "MergeAdminCompanyRequestDto": {
+        "type": "object",
+        "properties": {
+          "target_id": {
+            "type": "number",
+            "description": "합쳐질 회사. 요청 경로의 회사가 이 회사로 합쳐지고 지워짐",
+            "minimum": 1,
+            "maximum": 2147483647
+          }
+        },
+        "required": [
+          "target_id"
+        ]
+      },
+      "UpdateAdminCompanyLogoRequestDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "로고 업로드 URL 발급 때 받은 key"
+          }
+        },
+        "required": [
+          "key"
         ]
       }
     }

@@ -20,7 +20,12 @@ import {
   type MentorExtraValues,
 } from "@/features/profile/mentor-form";
 import { hasBasics, useMentorSignupDraft } from "@/lib/mentor-signup-draft";
-import { contactRequestOf, digitsOf, normalizeLink } from "@/lib/profile-form";
+import {
+  companyRequestOf,
+  contactRequestOf,
+  digitsOf,
+  normalizeLink,
+} from "@/lib/profile-form";
 import { cn } from "@/lib/utils";
 
 /**
@@ -90,7 +95,7 @@ function RouteComponent() {
         // 명세상 `name` 은 내 정보의 이름이 null 일 때만 받는다
         ...(me.name ? {} : { name: draft.name }),
         nickname: draft.nickname,
-        company: draft.company,
+        ...companyRequestOf(draft.company, draft.company_id),
         department: draft.department,
         job: draft.job,
         hashtags: values.hashtags,

@@ -28,6 +28,10 @@ import { cn } from "@/lib/utils";
  * 자리에서 정해져야 해서 이 컴포넌트는 모른다. `results` 가 비어 있으면
  * `+ {검색어} 등록하기` 가 나오고, 누르면 검색어 그대로 확정한다.
  *
+ * `pending` 이면(검색어를 치는 중 · 결과를 받는 중) 빈 결과를 "등록 정보
+ * 없음" 으로 보지 않는다. 그러지 않으면 결과가 오기 전 잠깐 `등록하기` 가
+ * 떴다 사라지고, 그 사이 Enter 가 이미 있는 회사를 새 이름으로 확정한다.
+ *
  * 결과 칩은 `Choice` 가 아니다 — 선택 상태가 없고 누르면 바로 확정되며
  * 패널이 닫힌다.
  */
@@ -40,6 +44,7 @@ export function SearchSelect({
   query,
   onQueryChange,
   results,
+  pending = false,
   open,
   onOpenChange,
   maxLength,
@@ -55,6 +60,8 @@ export function SearchSelect({
   query: string;
   onQueryChange: (query: string) => void;
   results: string[];
+  /** 결과를 아직 받는 중. 빈 결과여도 `등록하기` 를 내지 않는다 */
+  pending?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   maxLength?: number;
@@ -183,7 +190,7 @@ export function SearchSelect({
             "fixed inset-0 z-50",
             // 데스크톱: 닫힌 칸 자리에서 아래로 펼쳐진다. 라벨(20) + 간격(8)
             // 아래에서 시작해 높이 256 으로 아래 칸들을 덮는다
-            "lg:border-control lg:absolute lg:inset-auto lg:top-7 lg:right-0 lg:left-0 lg:z-20 lg:h-64 lg:rounded-md lg:border lg:px-4 lg:py-3.5"
+            "lg:border-control lg:absolute lg:inset-auto lg:top-7 lg:right-0 lg:left-0 lg:z-20 lg:h-72 lg:rounded-md lg:border lg:px-4 lg:py-3.5"
           )}
         >
           {/* 모바일 머리. 데스크톱은 칸 위의 라벨이 그 자리를 한다 */}
@@ -224,7 +231,8 @@ export function SearchSelect({
                     // 결과가 여럿이면 고르게 둔다 — 첫 번째를 몰래 고르지 않는다
                     const exact = results.find((r) => r === trimmed);
                     if (exact) pick(exact);
-                    else if (trimmed && results.length === 0) pick(trimmed);
+                    else if (trimmed && results.length === 0 && !pending)
+                      pick(trimmed);
                   }
                 }}
                 className="text-label-lg text-brand min-w-0 flex-1 bg-transparent outline-none"

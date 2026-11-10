@@ -76,6 +76,12 @@ export const StudentInfoSchema = z.object({
 
 export const GraduatedProfileSchema = z.object({
   nickname: z.string(),
+  /**
+   * 회사 검색 결과의 `company_id`. 정보 수정에서 회사를 바꾸지 않으면 이 값을
+   * 그대로 돌려보낸다 — 이름(`company_name`)으로 보내면 표기가 어드민 확인
+   * 대기 중인 회사로 갈릴 수 있다.
+   */
+  company_id: z.number(),
   company: z.string(),
   /** 비공개 — 다른 회원에게 보이지 않는다 */
   department: z.string(),
@@ -191,6 +197,26 @@ export const UploadUrlSchema = z.object({
   expires_in: z.number(),
 });
 
+/**
+ * 회사 검색 결과 하나 (`GET /api/v1/company`).
+ *
+ * 별칭 · 표기 흔들림(대소문자 · 공백)은 서버가 맞춘다. 그래서 `name` 은
+ * 검색어와 전혀 달라 보일 수 있다 — "마소" 로 찾으면 `name` 은 "Microsoft",
+ * `matched_name` 이 "마소" 다.
+ */
+export const CompanySearchItemSchema = z.object({
+  company_id: z.number(),
+  /** 화면에 나갈 회사 이름 */
+  name: z.string(),
+  /** 로고 presigned GET URL. 로고가 없으면 null */
+  logo_url: z.string().nullable(),
+  /** 검색어와 맞은 표기 */
+  matched_name: z.string(),
+});
+
+/** 명세상 페이징 없는 맨 배열이다. 서버가 최대 10개로 자른다 */
+export const CompanySearchResultSchema = z.array(CompanySearchItemSchema);
+
 export const CheersStatusSchema = z.enum([
   "requested",
   "viewed",
@@ -201,6 +227,8 @@ export const CheersCardSchema = z.object({
   graduated_id: z.string(),
   nickname: z.string(),
   company: z.string(),
+  /** 회사 로고 presigned GET URL. 로고가 없으면 null */
+  company_logo_url: z.string().nullable(),
   job: z.string(),
   hashtags: z.array(z.string()),
   links: z.array(z.string()),
@@ -335,6 +363,7 @@ export type DepartmentList = z.infer<typeof DepartmentListSchema>;
 export type InterestList = z.infer<typeof InterestListSchema>;
 export type SendCodeResult = z.infer<typeof SendCodeResultSchema>;
 export type UploadUrl = z.infer<typeof UploadUrlSchema>;
+export type CompanySearchItem = z.infer<typeof CompanySearchItemSchema>;
 export type CheersStatus = z.infer<typeof CheersStatusSchema>;
 export type CheersCard = z.infer<typeof CheersCardSchema>;
 export type CheersList = z.infer<typeof CheersListSchema>;
