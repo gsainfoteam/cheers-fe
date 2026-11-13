@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
+import { imagetools } from "vite-imagetools";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -13,6 +14,13 @@ export default defineConfig(({ mode }) => {
       tanstackRouter({ target: "react", autoCodeSplitting: true }),
       react(),
       tailwindcss(),
+      /**
+       * 래스터 이미지는 import 쿼리로 빌드 때 줄이고 WebP 로 바꾼다
+       * (`?w=740;1254&format=webp&as=srcset`). 원본 PNG 는 소스로만 남고,
+       * 쿼리 없이 import 하면 원본이 그대로 배포되므로 쓰지 않는다.
+       * 기준은 docs/superpowers/specs/2026-11-14-rendering-performance-guideline.md §3.1.
+       */
+      imagetools(),
     ],
     resolve: {
       alias: { "@": path.resolve(import.meta.dirname, "src") },

@@ -1,10 +1,20 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import badgeScene from "@/assets/landing/badge-scene.png";
+/*
+ * 원본 PNG 는 1254² RGBA 1.5MB 다. 표시 폭이 모바일 370 / 데스크톱 690 이라
+ * 2배 밀도까지만 내보낸다 — 740(모바일 2x)과 원본 폭 1254(데스크톱 2x 상한).
+ * `src` 는 srcset 을 모르는 환경용이고 740 과 같은 파일로 합쳐진다.
+ */
+import badgeSceneSrcset from "@/assets/landing/badge-scene.png?w=740;1254&format=webp&as=srcset";
+import badgeSceneSrc from "@/assets/landing/badge-scene.png?w=740&format=webp";
 import champagneGrain from "@/assets/landing/champagne-grain.svg";
 import closingGlow from "@/assets/landing/closing-glow.svg";
-import hyundaiLogo from "@/assets/landing/logos/hyundai.png";
-import samsungLogo from "@/assets/landing/logos/samsung.png";
-import skHynixLogo from "@/assets/landing/logos/sk-hynix.png";
+/*
+ * 로고 상자는 카드 안에서 최대 약 118×42(데스크톱 카드)다. 2배 밀도인
+ * 240×84 상자 안에 비율을 지켜 줄인다. 원본은 600~1000px 폭이었다.
+ */
+import hyundaiLogo from "@/assets/landing/logos/hyundai.png?w=240&h=84&fit=inside&format=webp";
+import samsungLogo from "@/assets/landing/logos/samsung.png?w=240&h=84&fit=inside&format=webp";
+import skHynixLogo from "@/assets/landing/logos/sk-hynix.png?w=240&h=84&fit=inside&format=webp";
 import {
   EmployeeBadge,
   type EmployeeBadgeData,
@@ -158,10 +168,23 @@ function Hero() {
 
         {/* 피그마 `Cheers / Landing / 3D badge scene` */}
         <div className="flex w-full justify-center lg:flex-1">
+          {/*
+           * 랜딩의 LCP 요소다. 그래서 lazy 를 걸지 않고 우선순위를 올린다.
+           * width/height 는 원본 비율(1:1)을 미리 알려 자리를 잡아 두는 용도다 —
+           * 없으면 이미지가 도착할 때 아래 섹션이 통째로 밀린다(CLS).
+           * 실제 크기는 클래스가 정하고 `h-auto` 가 비율을 지킨다.
+           * `sizes` 는 위 max-w 두 값과 같아야 한다.
+           */}
           <img
-            src={badgeScene}
+            src={badgeSceneSrc}
+            srcSet={badgeSceneSrcset}
+            sizes="(min-width: 1024px) 690px, 370px"
+            width={1254}
+            height={1254}
+            fetchPriority="high"
+            decoding="async"
             alt="취얼스 사원증 두 장이 걸린 그림"
-            className="w-full max-w-[370px] lg:max-w-[690px]"
+            className="h-auto w-full max-w-[370px] lg:max-w-[690px]"
           />
         </div>
       </PageContainer>
@@ -237,7 +260,8 @@ function MeetAlumniPreview() {
         <ul className="grid grid-cols-2 gap-x-3 gap-y-6 lg:grid-cols-4 lg:gap-8">
           {PREVIEW_BADGES.map((badge) => (
             <li key={badge.nickname}>
-              <EmployeeBadge data={badge} />
+              {/* 첫 화면(Hero) 아래라 로고는 스크롤이 다가올 때 받는다 */}
+              <EmployeeBadge data={badge} logoLoading="lazy" />
             </li>
           ))}
         </ul>
