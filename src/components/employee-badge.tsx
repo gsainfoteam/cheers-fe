@@ -58,9 +58,16 @@ export type EmployeeBadgeData = {
 export function EmployeeBadge({
   data,
   className,
+  logoLoading = "eager",
 }: {
   data: EmployeeBadgeData;
   className?: string;
+  /**
+   * 회사 로고 `<img loading>`. 카드가 첫 화면 아래에 놓이는 곳(랜딩 미리보기)
+   * 에서만 `"lazy"` 를 준다. 목록·마이페이지처럼 카드가 첫 화면에 바로 보이는
+   * 곳에서 lazy 를 걸면 오히려 늦게 뜬다
+   */
+  logoLoading?: "eager" | "lazy";
 }) {
   return (
     /*
@@ -88,6 +95,8 @@ export function EmployeeBadge({
             <img
               src={data.companyLogo}
               alt=""
+              loading={logoLoading}
+              decoding="async"
               className="h-[calc(24.865*var(--u))] w-[calc(69.858*var(--u))] object-contain"
             />
           ) : null}
