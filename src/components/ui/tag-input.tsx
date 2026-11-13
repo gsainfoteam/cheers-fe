@@ -1,5 +1,5 @@
 import { useId, useState } from "react";
-import removeIcon from "@/assets/icons/tag-remove.svg";
+import { Hashtag } from "./hashtag";
 
 /**
  * 태그 입력. 피그마 `Cheers / Hastag`(875:30520), 쓰는 곳은 선배 추가 정보
@@ -53,25 +53,8 @@ export function TagInput({
       {/* 피그마 `Input / 참여 활동` — 생김새는 `Field` 와 같고 높이만 늘어난다 */}
       <div className="border-control bg-surface focus-within:border-focus focus-within:ring-focus flex min-h-13 w-full flex-wrap items-center gap-1 rounded-md border px-4 py-3 focus-within:ring-1 focus-within:ring-inset">
         {value.map((tag) => (
-          // 피그마 `Hastag / State=Complete`
-          <span
-            key={tag}
-            className="bg-muted text-body-sm text-brand flex items-center gap-1 rounded-md py-1 pr-1 pl-2.5"
-          >
-            #{tag}
-            {/*
-             * 시안은 모바일 칩에만 ✕ 가 있다. 데스크톱에서도 마우스로 지울
-             * 길이 있어야 해서 두 폭 모두 둔다.
-             */}
-            <button
-              type="button"
-              aria-label={`${tag} 태그 지우기`}
-              onClick={() => remove(tag)}
-              className="focus-visible:ring-focus flex rounded-sm focus-visible:ring-1 focus-visible:outline-none"
-            >
-              <img src={removeIcon} alt="" />
-            </button>
-          </span>
+          // 피그마 `Hastag / State=Complete` — ✕ 는 두 폭 모두 둔다(`Hashtag` 주석)
+          <Hashtag key={tag} value={tag} onRemove={() => remove(tag)} />
         ))}
 
         {/*

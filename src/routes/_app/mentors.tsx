@@ -126,7 +126,7 @@ function MentorCard({ card, canApply }: { card: CheersCard; canApply: boolean })
         <Link
           to="/mentors/$mentorId/apply"
           params={{ mentorId: card.graduated_id }}
-          className={cn(REQUEST_ACTION, "text-ink")}
+          className={cn(REQUEST_ACTION, REQUEST_ACTION_INTERACTIVE, "text-ink")}
         >
           커피챗 신청
           <img src={arrowRight} alt="" className="shrink-0" />
@@ -148,3 +148,11 @@ function MentorCard({ card, canApply }: { card: CheersCard; canApply: boolean })
 /** 시안 `Request action` — 높이 48, 위쪽 테두리만 있다 */
 const REQUEST_ACTION =
   "bg-surface border-line text-label flex h-12 w-full items-center justify-between gap-2 rounded-md border-t px-4";
+
+/**
+ * 누를 수 있는 쪽에만 붙는 상태. 시안 State=Hover 는 캔버스색, State=Focus 는
+ * 사방 2px focus 테두리다 — 자리가 밀리지 않게 안쪽 링으로 낸다.
+ * 사원증 본체는 Hover · Focus 에서도 Default 와 같다. 상태는 이 줄에만 있다.
+ */
+const REQUEST_ACTION_INTERACTIVE =
+  "hover:bg-canvas active:bg-canvas focus-visible:ring-focus focus-visible:ring-2 focus-visible:ring-inset focus-visible:outline-none";

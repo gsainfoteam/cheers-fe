@@ -366,7 +366,7 @@ function PickButton({
     <button
       type="button"
       onClick={onClick}
-      className={cn(action({ variant: "secondary" }), "text-button")}
+      className={action({ variant: "secondary" })}
     >
       <img src={imagePlusIcon} alt="" />
       {children}

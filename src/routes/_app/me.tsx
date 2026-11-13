@@ -1,8 +1,8 @@
 import { Link, Outlet, createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { userInfoQuery, type UserInfo } from "@/api";
-import catSeal from "@/assets/brand/cat-cheers.svg";
 import { AccountActions } from "@/components/account-actions";
+import { BrandCat } from "@/components/brand-cat";
 import { EmployeeBadge } from "@/components/employee-badge";
 import { badgeDataOf, hashtagText } from "@/components/employee-badge-data";
 import { PageContainer } from "@/components/layout/page-container";
@@ -69,7 +69,7 @@ function MyPageFrame({
             to="/me/edit"
             className={cn(
               action({ variant: "secondary" }),
-              "text-button w-31 shrink-0 lg:w-40"
+              "w-31 shrink-0 lg:w-40"
             )}
           >
             내 정보 수정
@@ -105,10 +105,8 @@ function MissingProfile() {
 /** 카드 머리 오른쪽 위의 고양이 도장 — 로고 마크와 같은 그림. 데스크톱 40 / 모바일 32 */
 function LetterheadSeal() {
   return (
-    <img
-      src={catSeal}
-      alt=""
-      aria-hidden
+    <BrandCat
+      sizes="(min-width: 1024px) 40px, 32px"
       className="absolute top-6 right-6 w-8 lg:top-8 lg:right-8 lg:w-10"
     />
   );
@@ -183,7 +181,7 @@ function StudentMyPage() {
               to="/me/preview"
               className={cn(
                 action({ variant: "secondary" }),
-                "text-button h-12 w-full lg:w-56"
+                "h-12 w-full lg:w-56"
               )}
             >
               전달 프로필 미리보기
@@ -246,7 +244,7 @@ function MentorMyPage() {
           </div>
           <Link
             to="/me/preview"
-            className={cn(action({ variant: "secondary" }), "text-button w-full")}
+            className={cn(action({ variant: "secondary" }), "w-full")}
           >
             사원증 미리보기
           </Link>

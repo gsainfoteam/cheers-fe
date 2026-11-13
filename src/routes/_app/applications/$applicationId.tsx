@@ -351,7 +351,8 @@ function ContactChoice({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-surface border-line shadow-work flex min-w-0 flex-1 flex-col gap-3 rounded-lg border p-6">
+    // 시안 State=Focus — 안의 버튼에 포커스가 오면 카드 그림자가 빠진다
+    <div className="bg-surface border-line shadow-work has-[:focus-visible]:shadow-none flex min-w-0 flex-1 flex-col gap-3 rounded-lg border p-6">
       <h4 className="text-card-title text-ink">{title}</h4>
       <p className="text-body-sm text-ink-soft min-h-10">{description}</p>
       <p className="text-body text-ink min-h-6 break-all">{value}</p>
@@ -360,11 +361,11 @@ function ContactChoice({
   );
 }
 
-/** Secondary 껍데기에 글자는 Web/Button(16), 호버·포커스는 시안 상태 */
-const CHOICE_ACTION = cn(
-  action({ variant: "secondary" }),
-  "text-button hover:bg-champagne focus-visible:border-focus focus-visible:ring-focus w-full focus-visible:ring-1 focus-visible:outline-none"
-);
+/**
+ * 시안 `Contact choice action` 은 Secondary Button 그대로다(hover 캔버스색,
+ * focus 2px 테두리). 상태는 `action()` 이 이미 갖고 있어 폭만 더한다.
+ */
+const CHOICE_ACTION = cn(action({ variant: "secondary" }), "w-full");
 
 /** 버튼 자리를 대신하는 문구. 같은 높이를 지켜 두 카드의 줄이 어긋나지 않게 한다 */
 const CHOICE_STATUS =
@@ -554,7 +555,7 @@ function ReceivedErrorDialog({ error }: { error: unknown }) {
             </Link>
             <Link
               to="/applications"
-              className={cn(action({ variant: "secondary" }), "text-button")}
+              className={action({ variant: "secondary" })}
             >
               받은 신청 목록
             </Link>

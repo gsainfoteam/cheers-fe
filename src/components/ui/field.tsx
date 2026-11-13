@@ -1,3 +1,4 @@
+import { Select as BaseSelect } from "@base-ui/react/select";
 import { useId } from "react";
 import chevronDown from "@/assets/icons/chevron-down.svg";
 import { cn } from "@/lib/utils";
@@ -23,7 +24,7 @@ import { cn } from "@/lib/utils";
  */
 
 /**
- * 입력 상자의 모양. `<input>` 과 `<select>` 가 나눠 쓴다.
+ * 입력 상자의 모양. `<input>` 과 `Select` 의 트리거가 나눠 쓴다.
  *
  * 시안에서 학과 선택은 `Cheers / Field` 에 쐐기 아이콘만 붙은 모양이다.
  * 같은 컴포넌트이므로 클래스도 한 벌이어야 한다 — 두 벌이 되면 둘이
@@ -37,9 +38,13 @@ function controlClass(error: boolean, readOnly: boolean) {
     // 시안 Focus — 테두리 2px 대신 같은 색 안쪽 링을 겹쳐 자리 밀림을 막는다
     "focus-within:border-focus focus-within:ring-focus focus-within:ring-1 focus-within:ring-inset focus-within:outline-none",
     error ? "border-danger" : "border-control",
-    // 시안 ReadOnly — 바탕이 캔버스색으로 내려앉아 "못 고치는 칸" 으로 읽힌다
-    "read-only:bg-canvas read-only:focus-within:ring-0",
-    readOnly ? "bg-canvas" : "bg-surface"
+    /*
+     * 시안 ReadOnly — 바탕이 캔버스색으로 내려앉아 "못 고치는 칸" 으로 읽힌다.
+     * CSS `:read-only` 로 걸지 않는다. 그 선택자는 편집할 수 없는 요소 전부에
+     * 맞아서 Select 의 트리거(`<button>`)가 늘 ReadOnly 로 그려지고 포커스
+     * 링도 꺼졌다. 호출부가 넘긴 `readOnly` 로만 정한다.
+     */
+    readOnly ? "bg-canvas focus-within:ring-0" : "bg-surface"
   );
 }
 
@@ -130,17 +135,18 @@ export function Field({
 }
 
 /**
- * 고르는 필드. 시안에서는 `Cheers / Field` 에 `Select chevron`(20px)이
- * 붙은 모양이다.
+ * 고르는 필드. 피그마 `Cheers / Field` 의 `select` + `dropdown`
+ * (862:17197 / 875:25360) — 쐐기 달린 칸을 누르면 옵션 목록이 칸을 덮으며 열린다.
  *
- * **네이티브 `<select>` 를 쓴다.** 시안 설명의 *"real web form layouts,
- * not native OS controls"* 는 OS 피커의 생김새를 쓰지 말라는 뜻이지 동작까지
- * 직접 만들라는 뜻이 아니다. 목록을 직접 그리면 키보드·포커스·모바일
- * 스크롤을 전부 다시 만들어야 하고, 이 화면에 그만한 요구가 없다.
+ * **listbox 다(동기화 가이드 D0-3).** 네이티브 `<select>` 는 목록 모양을
+ * 바꿀 수 없어서 시안의 드롭다운을 그릴 수 없다. 그렇다고 직접 만들면
+ * 키보드 이동 · 글자로 찾기 · 포커스 · 바깥 클릭 · 스크롤 잠금을 전부 다시
+ * 짜야 하므로 `@base-ui/react/select` 에 맡기고 모양만 입힌다.
  *
- * 쐐기는 네이티브 화살표를 끄고(`appearance-none`) 그 자리에 시안 아이콘을
- * 올린 것이다. 클릭은 아이콘을 통과해 select 로 간다.
+ * 값은 문자열이다. 숫자 id 를 쓰는 호출부는 경계에서 바꾼다.
  */
+export type SelectOption = { value: string; label: string };
+
 export function Select({
   label,
   labelHidden,
@@ -148,9 +154,28 @@ export function Select({
   error,
   className,
   id,
-  children,
-  ...select
-}: Shell & React.ComponentProps<"select">) {
+  name,
+  placeholder,
+  options,
+  value,
+  onValueChange,
+  onBlur,
+  disabled,
+  ref,
+}: Shell & {
+  className?: string;
+  id?: string;
+  name?: string;
+  /** 고르기 전 칸에 보이는 글자. 시안 Empty 상태의 `입력해 주세요` 자리 */
+  placeholder: string;
+  options: SelectOption[];
+  value: string | null;
+  onValueChange: (value: string | null) => void;
+  onBlur?: () => void;
+  disabled?: boolean;
+  /** 트리거 버튼. 폼 검증이 실패했을 때 여기로 포커스를 옮긴다 */
+  ref?: React.Ref<HTMLButtonElement>;
+}) {
   const autoId = useId();
   const fieldId = id ?? autoId;
   const message = error ?? hint;
@@ -164,26 +189,79 @@ export function Select({
       className={className}
       fieldId={fieldId}
     >
-      <div className="relative w-full">
-        <select
+      <BaseSelect.Root
+        name={name}
+        items={options}
+        value={value}
+        onValueChange={(next) => onValueChange(next ?? null)}
+        disabled={disabled}
+      >
+        <BaseSelect.Trigger
           id={fieldId}
+          ref={ref}
+          onBlur={onBlur}
           aria-invalid={error ? true : undefined}
           aria-describedby={message ? `${fieldId}-message` : undefined}
           className={cn(
             controlClass(Boolean(error), false),
-            // 쐐기(20) + 오른쪽 여백(16) 만큼 글자 자리를 비운다
-            "appearance-none pr-11"
+            "flex cursor-pointer items-center gap-2 text-left",
+            // 목록이 열려 있는 동안은 칸이 포커스 상태로 보인다(시안 Focus + dropdown)
+            "data-popup-open:border-focus data-popup-open:ring-focus data-popup-open:ring-1 data-popup-open:ring-inset"
           )}
-          {...select}
         >
-          {children}
-        </select>
-        <img
-          src={chevronDown}
-          alt=""
-          className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2"
-        />
-      </div>
+          <BaseSelect.Value
+            placeholder={placeholder}
+            className="min-w-0 flex-1 truncate data-placeholder:text-ink-soft"
+          />
+          {/* 피그마 `Select chevron` — 20 칸 */}
+          <BaseSelect.Icon className="flex size-5 shrink-0 items-center justify-center">
+            <img src={chevronDown} alt="" />
+          </BaseSelect.Icon>
+        </BaseSelect.Trigger>
+
+        <BaseSelect.Portal>
+          {/*
+           * 기본값 `alignItemWithTrigger` 가 고른 옵션을 칸 위에 겹쳐 연다 —
+           * 시안의 "목록이 칸을 덮는다" 와 같다. 터치 기기에서는 Base UI 가
+           * 알아서 칸 아래로 연다.
+           */}
+          <BaseSelect.Positioner className="z-50 outline-none">
+            <BaseSelect.Popup
+              className={cn(
+                "bg-surface border-control relative w-(--anchor-width) overflow-hidden rounded-md border",
+                // 시안 Dropdown 그림자. 이 목록에서만 쓰여 토큰으로 올리지 않았다
+                "shadow-[0_2px_5px_0_rgba(0,0,0,0.15)]"
+              )}
+            >
+              {/*
+               * 피그마 Dropdown 의 `Select chevron` — 열린 목록 오른쪽 위에
+               * 위로 뒤집힌 쐐기. 목록이 칸을 덮어 칸의 쐐기를 가리므로 여기서
+               * 다시 그린다. 옵션 글자와 겹치지 않게 옵션 오른쪽 여백을 늘렸다.
+               */}
+              <span className="pointer-events-none absolute top-[15px] right-4 z-10 flex size-5 items-center justify-center">
+                <img src={chevronDown} alt="" className="rotate-180" />
+              </span>
+              {/* 옵션 다섯 줄(51 × 5)이 보이는 높이. 학과는 그보다 많다 */}
+              <BaseSelect.List className="max-h-[255px] overflow-y-auto outline-none">
+                {options.map((option) => (
+                  <BaseSelect.Item
+                    key={option.value}
+                    value={option.value}
+                    className={cn(
+                      "text-body text-ink flex h-[51px] cursor-pointer items-center py-3.5 pr-11 pl-4 outline-none select-none",
+                      "border-control border-b last:border-b-0",
+                      // 시안 — 가리킨 옵션은 2px focus 테두리. 자리가 밀리지 않게 안쪽 링
+                      "data-highlighted:ring-focus data-highlighted:rounded-[2px] data-highlighted:ring-2 data-highlighted:ring-inset"
+                    )}
+                  >
+                    <BaseSelect.ItemText className="truncate">{option.label}</BaseSelect.ItemText>
+                  </BaseSelect.Item>
+                ))}
+              </BaseSelect.List>
+            </BaseSelect.Popup>
+          </BaseSelect.Positioner>
+        </BaseSelect.Portal>
+      </BaseSelect.Root>
     </FieldShell>
   );
 }

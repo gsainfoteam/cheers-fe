@@ -154,7 +154,7 @@ function StudentEditForm({ me }: { me: UserInfo }) {
          */}
         <StudentIdentityFields nameLocked departments={departments} />
         {/* 시안은 라벨과 칩 사이도 28 이다 — 가입 화면에 있는 설명 줄이 없다 */}
-        <StudentInterestsField options={interests} className="gap-7" />
+        <StudentInterestsField options={interests} className="gap-7" editing />
 
         <div className="bg-line h-px" />
 
@@ -163,7 +163,7 @@ function StudentEditForm({ me }: { me: UserInfo }) {
 
         <div className="bg-line h-px" />
 
-        <StudentContactFields contactEmail={contactEmail} />
+        <StudentContactFields contactEmail={contactEmail} editing />
 
         <SaveError error={submit.error} />
         <SaveActions busy={submit.isPending} disabled={!form.formState.isValid} />
@@ -254,7 +254,7 @@ function SaveActions({ busy, disabled }: { busy: boolean; disabled: boolean }) {
     <div className="flex justify-end gap-3 pt-2">
       <Link
         to="/me"
-        className={cn(action({ variant: "secondary" }), "text-button w-26.25 lg:w-30")}
+        className={cn(action({ variant: "secondary" }), "w-26.25 lg:w-30")}
       >
         취소
       </Link>

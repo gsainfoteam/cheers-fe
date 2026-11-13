@@ -19,12 +19,8 @@ export function SiteFooter() {
         <p className="text-label text-ink-soft lg:flex-1">취얼스</p>
 
         {/*
-         * 피그마 `Legal links`.
-         *
-         * 아직 누를 수 없는 글자다. 약관·개인정보 본문은 단계 3에서 만드는
-         * 반응형 오버레이(데스크톱 다이얼로그 / 모바일 전체 화면)로 열리고,
-         * 지금은 그 오버레이도 띄울 라우트도 없다. 갈 곳 없는 링크를 두느니
-         * 글자로 둔다 — 눌러서 아무 일도 안 일어나는 쪽이 더 나쁘다.
+         * 피그마 `Legal links`. 약관 · 개인정보 본문은 외부 약관 사이트에 있어
+         * 새 탭으로 연다. 모양은 시안의 글자 그대로다(Label/Small, 보조색).
          */}
         <div className="text-label-sm text-ink-soft flex items-center gap-6 whitespace-nowrap">
           <span><a href={tos_link} target="_blank"  rel="noopener noreferrer">이용약관</a></span>

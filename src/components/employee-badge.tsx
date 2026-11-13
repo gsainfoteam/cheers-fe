@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
-import brandSeal from "@/assets/landing/brand-seal.svg";
 import signatureRibbon from "@/assets/landing/signature-ribbon.svg";
 import { cn } from "@/lib/utils";
+import { BrandCat } from "./brand-cat";
 
 /**
  * 사원증 카드. 피그마 `Cheers / Employee badge`(354:9525).
@@ -144,11 +144,14 @@ export function EmployeeBadge({
           >
             GIST ALUMNI
           </p>
-          <img
-            src={brandSeal}
-            alt=""
-            aria-hidden
-            className="absolute top-[calc(13.62*var(--u))] left-[calc(137.35*var(--u))] h-[calc(16.158*var(--u))] w-[calc(18.944*var(--u))]"
+          {/*
+           * 피그마 `Cheers brand seal` — 건배하는 고양이 인스턴스. 띠 세로
+           * 가운데, 왼쪽 127.12, 폭 31.83(높이는 비율로 27.15). 표시 폭은
+           * 모바일 카드 약 32px, 데스크톱 카드 약 54px 다.
+           */}
+          <BrandCat
+            sizes="54px"
+            className="absolute top-1/2 left-[calc(127.12*var(--u))] w-[calc(31.827*var(--u))] -translate-y-1/2"
           />
         </div>
 

@@ -71,22 +71,17 @@ export function StudentIdentityFields({
             label="학과"
             name={field.name}
             ref={field.ref}
-            value={field.value ?? ""}
+            placeholder="학과를 선택해 주세요"
+            options={departments.map((department) => ({
+              value: String(department.id),
+              label: department.name,
+            }))}
+            // 폼 값은 숫자 id, 칸의 값은 문자열이다. 경계에서 바꾼다
+            value={field.value == null ? null : String(field.value)}
+            onValueChange={(next) => field.onChange(next == null ? null : Number(next))}
             onBlur={field.onBlur}
-            onChange={(e) =>
-              field.onChange(e.target.value ? Number(e.target.value) : null)
-            }
             className="lg:w-87"
-          >
-            <option value="" disabled>
-              학과를 선택해 주세요
-            </option>
-            {departments.map((department) => (
-              <option key={department.id} value={department.id}>
-                {department.name}
-              </option>
-            ))}
-          </Select>
+          />
         )}
       />
     </div>
@@ -106,8 +101,11 @@ export function StudentInterestsField({
   options,
   description,
   className,
+  editing = false,
 }: {
   options: string[];
+  /** 저장된 값을 고치는 화면(`/me/edit`). 선택된 칩에 연필이 붙는다 */
+  editing?: boolean;
   /** 가입 화면은 `하나 이상 선택해 주세요.`, 정보 수정 시안은 설명이 없다 */
   description?: string;
   /** 묶음 안 간격. 기본 12, 정보 수정 시안은 28(`gap-7`) */
@@ -145,6 +143,7 @@ export function StudentInterestsField({
                 <Choice
                   key={interest}
                   selected={field.value.includes(interest)}
+                  edit={editing}
                   onClick={() => toggle(interest)}
                 >
                   {interest}
@@ -236,7 +235,14 @@ export function StudentPortfolioField({ hint }: { hint?: string }) {
  * "둘 다 끔" 을 400 으로 막는다(설계 3-6b). 휴대폰 칸은 시안에 없지만 알림톡을
  * 켜면 명세가 번호를 요구해서 만들었다.
  */
-export function StudentContactFields({ contactEmail }: { contactEmail: string }) {
+export function StudentContactFields({
+  contactEmail,
+  editing = false,
+}: {
+  contactEmail: string;
+  /** 저장된 값을 고치는 화면(`/me/edit`). 선택된 칩에 연필이 붙는다 */
+  editing?: boolean;
+}) {
   const { control, setValue, trigger, getFieldState, formState } =
     useFormContext<Values>();
   const labelId = useId();
@@ -267,12 +273,14 @@ export function StudentContactFields({ contactEmail }: { contactEmail: string })
       <div role="group" aria-labelledby={labelId} className="flex flex-wrap gap-2">
         <Choice
           selected={emailEnabled}
+          edit={editing}
           onClick={() => toggle("emailEnabled", emailEnabled)}
         >
           이메일
         </Choice>
         <Choice
           selected={kakaoEnabled}
+          edit={editing}
           onClick={() => toggle("kakaoEnabled", kakaoEnabled)}
         >
           카카오 알림톡

@@ -67,8 +67,7 @@ export function ConfirmDialog({
             <AlertDialog.Close
               className={cn(
                 action({ variant: "secondary" }),
-                // 이 상자의 Secondary 는 글자가 Web/Button(16)이다
-                "text-button lg:w-30 lg:shrink-0"
+                "lg:w-30 lg:shrink-0"
               )}
             >
               {cancelLabel}

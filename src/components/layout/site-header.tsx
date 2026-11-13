@@ -112,9 +112,9 @@ function BrandMark() {
         height={27.2941}
         className="w-8 shrink-0"
       />
-      <span className="text-h3 text-ink whitespace-nowrap">취얼스</span>
+      <span className="text-h3  text-ink whitespace-nowrap">취얼스</span>
     </>
-  );
+  );p
 }
 
 function BrandLink({ signedIn }: { signedIn: boolean }) {

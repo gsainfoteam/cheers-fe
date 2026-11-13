@@ -100,20 +100,30 @@ function SentList() {
     <ul className="flex flex-col gap-4">
       {data.items.map((request) => (
         <li key={request.id}>
+          {/*
+           * 피그마 `Cheers / Sent Requests`(1237:11072). 시안 예시 데이터가
+           * 학생 정보(학과 · 관심 분야 · 참여 활동)로 채워져 있는데, 보낸 신청에
+           * 보여야 할 건 상대 선배다. 무엇을 보여 줄지 정해지기 전까지(동기화
+           * 가이드 D0-7) 지금 갖고 있는 회사 · 직무를 정의 행으로 옮겨 둔다.
+           */}
           <RequestItem
             applicationId={request.id}
-            title={`${request.graduated.nickname} 선배`}
-            detail={
-              /*
-               * 탈퇴한 선배도 기록은 남는다(명세 `graduated_withdrawn`). 시안에
-               * 이 상태가 없어서 회사·직무 자리에 그 사실을 적는다 — 빈칸으로
-               * 두면 "정보가 없는 선배" 처럼 읽힌다.
-               */
-              request.graduated_withdrawn
-                ? "탈퇴한 선배"
-                : `${request.graduated.company} · ${request.graduated.job}`
-            }
+            name={`${request.graduated.nickname} 선배`}
             date={request.created_at}
+            /*
+             * 탈퇴한 선배도 기록은 남는다(명세 `graduated_withdrawn`). 시안에
+             * 이 상태가 없어서 행 대신 그 사실을 적는다 — 빈칸으로 두면
+             * "정보가 없는 선배" 처럼 읽힌다.
+             */
+            note={request.graduated_withdrawn ? "탈퇴한 선배" : undefined}
+            rows={
+              request.graduated_withdrawn
+                ? []
+                : [
+                    { label: "회사", value: request.graduated.company },
+                    { label: "직무", value: request.graduated.job },
+                  ]
+            }
           />
         </li>
       ))}
@@ -167,17 +177,26 @@ function ReceivedList() {
   );
 }
 
-/** 피그마 `Action / received` */
+/**
+ * 피그마 `Cheers / Received Requests`(1237:10977).
+ *
+ * 시안에는 학과 · 관심 분야 · 참여 활동이 있지만 목록 명세
+ * (`ReceivedRequestDto`)에는 학과만 있다. 상세를 부르면 읽음 처리가 되므로
+ * 목록에서 채울 수 없다(가이드 §7 #13). 관심 분야 · 참여 활동은 명세에
+ * 생기면 `rows` · `tags` 에 더한다(동기화 가이드 D0-6).
+ */
 function ReceivedRow({ request }: { request: ReceivedRequest }) {
+  const rows = [{ label: "학과", value: request.department }];
+
   // 탈퇴한 학생의 신청은 상세가 410 으로 막힌다(명세: "프론트는 목록 클릭을
   // 막음"). 이름 자리에 서버가 `탈퇴한 학생의 신청서입니다` 를 보내 주므로
   // `님의 신청` 을 붙이지 않는다. 시안에 없는 상태다
   if (request.student_withdrawn) {
     return (
       <RequestItem
-        title={request.student_name}
-        detail={request.department}
+        name={request.student_name}
         date={request.created_at}
+        rows={rows}
       />
     );
   }
@@ -185,11 +204,11 @@ function ReceivedRow({ request }: { request: ReceivedRequest }) {
   return (
     <RequestItem
       applicationId={request.id}
-      title={`${request.student_name}님의 신청`}
-      // 시안 둘째 줄은 `학과 · 관심 분야` 인데 목록 명세(`ReceivedRequestDto`)에
-      // 관심 분야가 없다. 상세를 부르면 읽음 처리가 되므로 학과만 둔다(가이드 §7 #13)
-      detail={request.department}
+      // 시안은 이름만 쓰지만 `님의 신청` 을 유지한다(동기화 가이드 D0-8)
+      name={`${request.student_name}님의 신청`}
       date={request.created_at}
+      rows={rows}
+      tagsLabel="참여 활동"
     />
   );
 }
