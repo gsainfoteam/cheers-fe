@@ -15,6 +15,7 @@ import { ProfileRow } from "@/components/ui/profile-row";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { formatDate } from "@/lib/date";
 import { studentProfileRowsOf } from "@/features/profile/student-profile-rows";
+import { attachmentLabel } from "@/lib/attachments";
 import { mySharedContactOf } from "@/lib/mentor-contact";
 import { formatPhone } from "@/lib/profile-form";
 import { useSession } from "@/lib/session";
@@ -151,8 +152,6 @@ function StudentProfileCard({
 }) {
   const { student } = request;
   const none = "등록하지 않음";
-  // 시안은 한 줄이다. 파일 첨부(최대 3개)가 학생 화면에 들어오면 같이 바꾼다
-  const attachment = student.attachments[0];
 
   return (
     <section className="bg-surface border-line shadow-work flex flex-col rounded-lg border p-6 lg:w-90 lg:shrink-0">
@@ -173,11 +172,17 @@ function StudentProfileCard({
         <ProfileRow
           label="포트폴리오"
           value={
-            attachment ? (
-              <AttachmentLink
-                applicationId={applicationId}
-                attachment={attachment}
-              />
+            student.attachments.length ? (
+              // 학생 첨부가 3개까지라 한 줄에 하나씩(동기화 가이드 02장 2.6.4)
+              <span className="flex flex-col gap-1">
+                {student.attachments.map((attachment) => (
+                  <AttachmentLink
+                    key={`${attachment.source}:${attachment.file_name ?? attachment.url}`}
+                    applicationId={applicationId}
+                    attachment={attachment}
+                  />
+                ))}
+              </span>
             ) : (
               none
             )
@@ -211,10 +216,7 @@ function AttachmentLink({
   attachment: Attachment;
 }) {
   const queryClient = useQueryClient();
-  const label =
-    attachment.source === "file"
-      ? (attachment.file_name ?? "첨부 파일")
-      : attachment.url.replace(/^https?:\/\//i, "").replace(/\/$/, "");
+  const label = attachmentLabel(attachment);
 
   const openFresh = async (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (attachment.source !== "file") return;

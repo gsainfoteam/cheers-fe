@@ -11,6 +11,7 @@ import imagePlusIcon from "@/assets/icons/media-image-plus.svg";
 import { PageContainer } from "@/components/layout/page-container";
 import { SignupProgressSlot } from "@/components/signup-progress";
 import { action } from "@/components/ui/action";
+import { FilePickButton, useFileDrop } from "@/components/ui/file-drop";
 import { cn } from "@/lib/utils";
 
 /**
@@ -43,7 +44,6 @@ function RouteComponent() {
   const verify = useVerifyBusinessCard();
 
   const [upload, setUpload] = useState<Upload>({ status: "empty" });
-  const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   /** 진행 중인 업로드. 파일을 바꾸면 끊는다 */
   const inFlight = useRef<AbortController | null>(null);
@@ -102,6 +102,7 @@ function RouteComponent() {
   };
 
   const openPicker = () => inputRef.current?.click();
+  const { dragging, dropProps } = useFileDrop((files) => choose(files[0]));
 
   const submit = () => {
     if (upload.status !== "uploaded") return;
@@ -183,28 +184,7 @@ function RouteComponent() {
            * 문구가 없는 건 손가락으로 끌 일이 없어서지 기능을 막으라는 뜻이
            * 아니다(태블릿 + 마우스).
            */}
-          <div
-            onDragEnter={(e) => {
-              e.preventDefault();
-              setDragging(true);
-            }}
-            onDragOver={(e) => {
-              e.preventDefault();
-              e.dataTransfer.dropEffect = "copy";
-            }}
-            onDragLeave={(e) => {
-              // 상자 안의 자식으로 옮겨 갈 때도 leave 가 온다. 상자 밖으로
-              // 나갈 때만 끈다
-              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
-                setDragging(false);
-              }
-            }}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDragging(false);
-              choose(e.dataTransfer.files[0]);
-            }}
-          >
+          <div {...dropProps}>
             {upload.status === "uploading" || upload.status === "uploaded" ? (
               <Preview
                 src={upload.preview}
@@ -291,7 +271,9 @@ function Dropzone({
           </p>
         )}
       </div>
-      <PickButton onClick={onPick}>파일 선택</PickButton>
+      <FilePickButton icon={imagePlusIcon} onClick={onPick}>
+        파일 선택
+      </FilePickButton>
     </div>
   );
 }
@@ -345,31 +327,10 @@ function Preview({
           명함을 올리는 중이에요…
         </p>
       ) : null}
-      <PickButton onClick={onReplace}>다른 이미지 선택</PickButton>
+      <FilePickButton icon={imagePlusIcon} onClick={onReplace}>
+        다른 이미지 선택
+      </FilePickButton>
     </div>
-  );
-}
-
-/**
- * 피그마 `Action / uploaded`. Secondary 와 같은 껍데기지만 글자가
- * Label/Medium(14)이 아니라 Web/Button(16)이고 아이콘이 붙는다.
- */
-function PickButton({
-  onClick,
-  children,
-}: {
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={action({ variant: "secondary" })}
-    >
-      <img src={imagePlusIcon} alt="" />
-      {children}
-    </button>
   );
 }
 

@@ -19,7 +19,10 @@ import { useStudentSignupDraft } from "@/lib/student-signup-draft";
 import { cn } from "@/lib/utils";
 
 /**
- * 학생 기본 정보. 피그마 `Cheers / 학생 기본 정보`(335:6814 / 335:6675).
+ * 학생 기본 정보. 피그마 `Cheers / 학생 기본 정보`(911:34663 / 911:34691),
+ * 학과 선택(828:8063 / 911:35966), 관심 분야(828:8301 / 828:8329), 기타 관심
+ * 분야 추가·완료·수정(911:36201 · 920:40858 / 911:36234 · 920:40900 · 920:41288).
+ * 동기화 가이드 02장 2.5.
  *
  * 앞의 세 화면과 같은 2열 뼈대지만 **카드가 넓다** — 이름·학과가 데스크톱에서
  * 좌우로 서야 해서 시안이 560 이 아니라 800 을 썼다(작업 영역 976 → 1216).
@@ -121,7 +124,7 @@ function RouteComponent() {
                 disabled={!form.formState.isValid}
                 className={cn(action(), "flex-1 lg:w-60 lg:flex-none")}
               >
-                추가 정보 입력
+                다음
               </button>
             </div>
           </form>

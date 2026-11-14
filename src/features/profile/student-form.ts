@@ -1,14 +1,19 @@
 import { z } from "zod";
 import type { Body, StudentAttachment, UserInfo } from "@/api";
-import { PHONE, digitsOf } from "@/lib/profile-form";
+import { contactChannelsSchema } from "@/features/profile/contact-channel-form";
+import { INTEREST_MAX, INTEREST_MAX_LENGTH } from "@/features/profile/interests";
+import { contactChannelsOf, type ContactChannels } from "@/lib/profile-form";
 
 /**
  * 학생 프로필 폼 — 가입 기본 정보 · 추가 정보와 정보 수정이 같은 스키마를
  * 나눠 쓴다(이슈 #10). 화면은 이 스키마로 `useForm` 을 세우고
  * `student-fields.tsx` 의 칸 묶음을 `FormProvider` 안에 늘어놓기만 한다.
  *
- * 규칙의 근거는 명세 `SaveStudentInfoRequestDto` 다 — 관심 분야 1~20개,
- * 활동 최대 20개 · 각 50자 · 중복 불가, 재학생은 연락 방법 "둘 다 끔" 이 400.
+ * 규칙의 근거는 명세 `SaveStudentInfoRequestDto` 와 동기화 가이드 02장이다.
+ * - 관심 분야 1~20개 · 각 50자 · 중복 불가. 목록에 없는 값(기타)도 받는다(D2-3)
+ * - 활동 최대 20개 · 각 50자 · 중복 불가
+ * - 첨부는 화면에서 3개까지(시안 `pdf 파일을 최대 3개`, 명세 상한은 10)
+ * - 연락 수단은 하나 이상 필수(D2-2) — 명세도 재학생의 "둘 다 끔" 을 400 으로 막는다
  */
 
 /* ───────────────── 기본 정보 ───────────────── */
@@ -27,72 +32,154 @@ export function studentBasicsSchema(nameRequired: boolean) {
       .nullable()
       .refine((id) => id !== null, "학과를 선택해 주세요."),
     interests: z
-      .array(z.string())
+      .array(z.string().trim().min(1).max(INTEREST_MAX_LENGTH))
       .min(1, "하나 이상 선택해 주세요.")
-      .max(20, "20개까지 고를 수 있어요."),
+      .max(INTEREST_MAX, `${INTEREST_MAX}개까지 고를 수 있어요.`),
   });
 }
 
 /** 폼이 들고 있는 값(입력 타입). 학과는 고르기 전까지 null 이다 */
 export type StudentBasicsValues = z.input<ReturnType<typeof studentBasicsSchema>>;
 
-/* ───────────────── 추가 정보 ───────────────── */
+/* ───────────────── 첨부 ───────────────── */
+
+/** 시안 `pdf 파일을 최대 3개 첨부할 수 있어요.` */
+export const ATTACHMENT_MAX = 3;
 
 /**
- * 활동은 `{ value }` 묶음의 배열이다 — `useFieldArray` 가 원시값 배열을 다루지
- * 못한다. 보낼 때 `activitiesOf` 로 풀어 빈 줄과 중복을 거른다.
+ * 폼이 들고 있는 첨부 하나.
+ *
+ * - `file`: 올린 파일. `key` 가 명세에 보낼 값이고 `href` 는 화면에서 여는
+ *   주소다(새로 올린 파일은 로컬 blob URL, 저장된 파일은 presigned URL).
+ * - `link`: 링크 첨부. 새로 넣는 칸은 없어졌지만(가이드 2.6.2) 예전에 저장한
+ *   링크는 지워지지 않게 그대로 들고 다닌다.
  */
-const extraShape = {
-  activities: z
-    .array(z.object({ value: z.string().max(50, "50자까지 쓸 수 있어요.") }))
-    .max(20),
-  /**
-   * 시안은 이력서와 포트폴리오를 **한 칸**으로 받는다. 학생 화면은 처음부터
-   * `https://` 로 시작하는 주소만 받았다 — 선배 LinkedIn 처럼 스킴을 붙여
-   * 주지 않는 이유는 도움말이 그렇게 안내하기 때문이다.
-   */
-  portfolioUrl: z
-    .string()
-    .trim()
-    .max(2048)
-    .refine(
-      (url) => url === "" || url.startsWith("https://"),
-      "https:// 로 시작하는 주소만 저장할 수 있어요."
-    ),
-  emailEnabled: z.boolean(),
-  kakaoEnabled: z.boolean(),
-  phone: z.string(),
-};
+export type StudentAttachmentValue =
+  | {
+      kind: "cv" | "portfolio";
+      source: "file";
+      key: string;
+      fileName: string;
+      href?: string;
+    }
+  | { kind: "cv" | "portfolio"; source: "link"; url: string };
 
-type ContactFields = {
-  emailEnabled: boolean;
-  kakaoEnabled: boolean;
-  phone: string;
-};
+const attachmentSchema = z.discriminatedUnion("source", [
+  z.object({
+    kind: z.enum(["cv", "portfolio"]),
+    source: z.literal("file"),
+    key: z.string().min(1),
+    fileName: z.string().min(1),
+    href: z.string().optional(),
+  }),
+  z.object({
+    kind: z.enum(["cv", "portfolio"]),
+    source: z.literal("link"),
+    url: z.string().min(1),
+  }),
+]);
 
 /**
- * 연락 설정 규칙. 객체 하나에 걸린 규칙이라 칸 단위 스키마가 아니라 여기서
- * 따로 건다 — 기본 정보와 합친 정보 수정 스키마에도 그대로 붙인다.
+ * 내 정보의 첨부 → 폼 값. `key` 가 없는 파일은 다시 보낼 방법이 없어 버린다
+ * (명세: 기존 파일을 지키려면 내 정보가 준 `key` 를 그대로 보낸다).
  */
-function contactRules<T extends ContactFields>(values: T, ctx: z.RefinementCtx) {
-  // 재학생은 둘 다 끄는 선택("희망하지 않음")이 허용되지 않는다 — 명세 400
-  if (!values.emailEnabled && !values.kakaoEnabled) {
+export function attachmentValuesOf(
+  attachments: StudentAttachment[] = []
+): StudentAttachmentValue[] {
+  return attachments.flatMap((a): StudentAttachmentValue[] => {
+    if (a.source === "link") return [{ kind: a.kind, source: "link", url: a.url }];
+    if (!a.key) return [];
+    return [
+      {
+        kind: a.kind,
+        source: "file",
+        key: a.key,
+        fileName: a.file_name ?? "첨부 파일",
+        href: a.url,
+      },
+    ];
+  });
+}
+
+type StudentInfoBody = Body<"/api/v1/user/student/info", "post">;
+
+/**
+ * 폼 값 → 저장할 첨부. **전체 교체 방식**이라 화면의 목록이 곧 저장될 목록이다.
+ * 링크는 `url` 만, 파일은 `key` · `file_name` 만 보낸다(섞으면 400).
+ */
+export function attachmentRequestsOf(
+  values: StudentAttachmentValue[]
+): NonNullable<StudentInfoBody["attachments"]> {
+  return values.map((a) =>
+    a.source === "file"
+      ? { kind: a.kind, source: "file" as const, key: a.key, file_name: a.fileName }
+      : { kind: a.kind, source: "link" as const, url: a.url }
+  );
+}
+
+/* ───────────────── 연락(알림) 설정 ───────────────── */
+
+/**
+ * 채널별 형식 검사(`contactChannelsSchema`, 선배와 같은 규칙) + **하나 이상**.
+ * 오류는 `kakao` 자리에 건다 — 화면은 두 체크박스가 모두 꺼졌을 때 체크박스
+ * 아래에 문구를 띄운다(`ContactChannelFields` 의 `requireOne`).
+ */
+export const studentContactSchema = contactChannelsSchema.superRefine((value, ctx) => {
+  if (!value.kakao && !value.email) {
     ctx.addIssue({
       code: "custom",
-      path: ["emailEnabled"],
+      path: ["kakao"],
       message: "연락 방법을 하나 이상 선택해 주세요.",
     });
   }
-  if (values.kakaoEnabled && !PHONE.test(digitsOf(values.phone))) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["phone"],
-      message: "숫자만 10~11자리로 입력해 주세요.",
-    });
+});
+
+/**
+ * 연락 설정의 처음 값(가이드 2.6.3).
+ *
+ * - 저장된 설정이 있으면 그대로(정보 수정). 주소가 비어 있으면 인증한 메일
+ * - 없으면(가입) **이메일만 켜고 인증할 때 쓴 학교 이메일을 채운다.** 아무것도
+ *   건드리지 않아도 `가입 완료` 를 누를 수 있다. 선배(두 채널 모두 켬)와 다르다
+ */
+export function studentContactDefaults(
+  saved: Parameters<typeof contactChannelsOf>[0],
+  verifiedEmail: string
+): ContactChannels {
+  if (!saved) {
+    return { kakao: false, email: true, phone: "", emailAddress: verifiedEmail };
   }
+  return contactChannelsOf(saved, verifiedEmail);
 }
 
-export const studentExtraSchema = z.object(extraShape).superRefine(contactRules);
+/**
+ * 인증을 마친 학교 이메일. 알림 이메일 칸의 처음 값이다.
+ */
+export function studentContactEmailOf(me: UserInfo): string {
+  return me.student?.email ?? me.email ?? "";
+}
+
+/**
+ * 선배에게 전달되는 이메일 — 알림 설정에서 이메일을 켰을 때의 주소(명세
+ * `RequestStudentDto.email`: 끄면 null). 칸을 고칠 수 있게 되면서(가이드
+ * 2.6.3) 학교 이메일과 다를 수 있다. 연락 설정이 아직 없으면 인증한 메일.
+ */
+export function studentSharedEmailOf(me: UserInfo): string | null {
+  const contact = me.student?.profile?.contact;
+  if (!contact) return studentContactEmailOf(me) || null;
+  if (!contact.email_enabled) return null;
+  return contact.email ?? (studentContactEmailOf(me) || null);
+}
+
+/* ───────────────── 추가 정보 ───────────────── */
+
+const extraShape = {
+  /** 값에는 `#` 이 없다. 화면에만 붙인다(`TagInput`) */
+  activities: z.array(z.string().max(50, "50자까지 쓸 수 있어요.")).max(20),
+  attachments: z.array(attachmentSchema).max(ATTACHMENT_MAX),
+  contact: studentContactSchema,
+};
+
+export const studentExtraSchema = z.object(extraShape);
 
 export type StudentExtraValues = z.input<typeof studentExtraSchema>;
 
@@ -102,85 +189,26 @@ export type StudentExtraValues = z.input<typeof studentExtraSchema>;
  * 정보 수정은 기본 정보와 추가 정보를 **한 화면**에서 고친다. 이름은 가입
  * 뒤로 바뀌지 않으므로 검사하지 않는다(`nameRequired = false`).
  */
-export const studentEditSchema = studentBasicsSchema(false)
-  .extend(extraShape)
-  .superRefine(contactRules);
+export const studentEditSchema = studentBasicsSchema(false).extend(extraShape);
 
 export type StudentEditValues = z.input<typeof studentEditSchema>;
 
 /** 정보 수정 폼의 처음 값 — 지금 내 정보 그대로 */
 export function studentEditDefaults(me: UserInfo): StudentEditValues {
   const profile = me.student?.profile;
-  const link = profile?.attachments.find((a) => a.source === "link");
   return {
     name: me.name ?? "",
     departmentId: profile?.department.id ?? null,
     interests: profile?.interests ?? [],
-    // 시안에 칸이 하나 그려져 있다 — 비어 있어도 한 줄은 보여준다
-    activities: profile?.activities.length
-      ? profile.activities.map((value) => ({ value }))
-      : [{ value: "" }],
-    portfolioUrl: link?.url ?? "",
-    emailEnabled: profile?.contact?.email_enabled ?? true,
-    kakaoEnabled: profile?.contact?.kakao_enabled ?? false,
-    phone: profile?.contact?.phone ?? "",
+    activities: profile?.activities ?? [],
+    attachments: attachmentValuesOf(profile?.attachments),
+    contact: studentContactDefaults(profile?.contact ?? null, studentContactEmailOf(me)),
   };
 }
 
 /* ───────────────── 저장 본문 ───────────────── */
 
-type StudentInfoBody = Body<"/api/v1/user/student/info", "post">;
-
-/** 빈 줄을 버리고, 같은 값이 두 번 들어가면 하나로 — `uniqueItems` 라 400 이다 */
-export function activitiesOf(rows: { value: string }[]): string[] {
-  return [...new Set(rows.map((row) => row.value.trim()).filter(Boolean))];
-}
-
-/**
- * 저장할 첨부. **전체 교체 방식**이라 이 화면에 보이지 않는 첨부도 다시
- * 보내야 지워지지 않는다.
- *
- * - 링크 칸 하나는 `portfolio` / `link` 로 보낸다.
- * - 파일 첨부(가입 뒤 올린 이력서 등)는 화면에 칸이 없지만 내 정보가 준
- *   `key` · `file_name` 그대로 돌려보낸다(명세: 기존 파일 유지).
- */
-export function attachmentsOf(
-  portfolioUrl: string,
-  existing: StudentAttachment[] = []
-): NonNullable<StudentInfoBody["attachments"]> {
-  const files = existing
-    .filter((a) => a.source === "file" && a.key && a.file_name)
-    .map((a) => ({
-      kind: a.kind,
-      source: "file" as const,
-      key: a.key!,
-      file_name: a.file_name!,
-    }));
-  const link = portfolioUrl.trim();
-  return [
-    ...(link ? [{ kind: "portfolio" as const, source: "link" as const, url: link }] : []),
-    ...files,
-  ];
-}
-
-/** 연락 설정. 빈 문자열은 400 이라 값이 없으면 키를 뺀다 */
-export function studentContactOf(
-  values: ContactFields,
-  contactEmail: string
-): StudentInfoBody["contact"] {
-  const phone = digitsOf(values.phone);
-  return {
-    email_enabled: values.emailEnabled,
-    kakao_enabled: values.kakaoEnabled,
-    ...(values.emailEnabled && contactEmail ? { email: contactEmail } : {}),
-    ...(values.kakaoEnabled && phone ? { phone } : {}),
-  };
-}
-
-/**
- * 연락받을 이메일. 시안의 읽기 전용 이메일 칸에 인증을 마친 학교 이메일이
- * 선다 — 가입 추가 정보와 정보 수정, 마이페이지가 같은 값을 보여줘야 한다.
- */
-export function studentContactEmailOf(me: UserInfo): string {
-  return me.student?.email ?? me.email ?? "";
+/** 빈 값을 버리고, 같은 값이 두 번 들어가면 하나로 — `uniqueItems` 라 400 이다 */
+export function activitiesOf(values: string[]): string[] {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }

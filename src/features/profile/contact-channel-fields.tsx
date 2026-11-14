@@ -7,8 +7,9 @@ import type { ContactChannels } from "@/lib/profile-form";
 /**
  * 연락 채널 묶음 — 체크박스(카카오 알림톡 · 이메일) + 켠 채널의 입력 칸.
  * 피그마 선배 `커피챗 참여 설정`(1159:10067 / 1159:10229, 동기화 가이드
- * 3.5.3). 학생 `알림 설정`(943:9742, 가이드 2.6.3)도 같은 모양이라 학생 화면을
- * 구현할 때 이 묶음에 `알림 받지 않기` 선택지만 더해 쓴다.
+ * 3.5.3). 학생 `알림 설정`(943:9742, 가이드 2.6.3)도 같은 묶음을 쓴다 — 학생은
+ * 시안의 `알림 받지 않기` 를 두지 않고(가이드 D2-2) 하나 이상을 요구한다
+ * (`requireOne`). 선배는 둘 다 끄는 것이 "커피챗 미참여" 라 허용한다.
  *
  * | | 데스크톱 | 모바일 |
  * |---|---|---|
@@ -29,6 +30,7 @@ export function ContactChannelFields({
   title,
   description,
   notice,
+  requireOne,
 }: {
   /** 바깥 닻. 마이페이지의 `연락처·알림 번호 수정` 이 이 자리로 바로 온다 */
   id?: string;
@@ -36,6 +38,11 @@ export function ContactChannelFields({
   description: React.ReactNode;
   /** 설명 아래 한 줄 더. 시안에 없는 임시 안내를 둘 때 쓴다 */
   notice?: string;
+  /**
+   * 두 채널을 모두 끄면 체크박스 아래에 띄울 문구. 주면 "하나 이상 필수" 다.
+   * 저장 버튼은 스키마(`studentContactSchema`)가 막고, 여기는 이유만 알린다
+   */
+  requireOne?: string;
 }) {
   const titleId = useId();
   const { control } = useFormContext<Values>();
@@ -109,6 +116,12 @@ export function ContactChannelFields({
           }
         />
       </div>
+
+      {requireOne && !kakao && !email ? (
+        <p role="alert" className="text-body-sm text-danger">
+          {requireOne}
+        </p>
+      ) : null}
     </fieldset>
   );
 }

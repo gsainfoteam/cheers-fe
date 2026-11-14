@@ -12,6 +12,8 @@ import { action } from "@/components/ui/action";
 import { ProfileRow } from "@/components/ui/profile-row";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { useSession } from "@/lib/session";
+import { studentSharedEmailOf } from "@/features/profile/student-form";
+import { attachmentLabelsOf } from "@/lib/attachments";
 import { cn } from "@/lib/utils";
 import { MENTOR_LIST_PARAMS } from "@/lib/mentor-list";
 
@@ -246,19 +248,15 @@ function RouteComponent() {
 function profileRowsOf(me: UserInfo): { label: string; value: string }[] {
   const profile = me.student?.profile;
   const none = "등록하지 않음";
-  const attachment = profile?.attachments[0];
-
   return [
     { label: "이름", value: me.name ?? none },
-    { label: "이메일", value: me.student?.email ?? me.email ?? none },
+    // 학교 이메일이 아니라 알림 설정에서 켠 주소가 전달된다(가이드 2.6.3)
+    { label: "이메일", value: studentSharedEmailOf(me) ?? none },
     { label: "학과", value: profile?.department.name ?? none },
     { label: "관심 분야", value: profile?.interests.join(" · ") || none },
     { label: "참여 활동", value: profile?.activities.join(" · ") || none },
     { label: "전화번호", value: profile?.contact?.phone ?? none },
-    {
-      label: "이력서 / 포트폴리오",
-      value: attachment ? (attachment.file_name ?? attachment.url) : none,
-    },
+    { label: "이력서 / 포트폴리오", value: attachmentLabelsOf(profile?.attachments) ?? none },
   ];
 }
 

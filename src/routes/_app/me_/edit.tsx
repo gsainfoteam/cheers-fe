@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,16 +27,14 @@ import {
 } from "@/features/profile/mentor-form";
 import {
   StudentActivitiesField,
+  StudentAttachmentsField,
   StudentContactFields,
   StudentIdentityFields,
   StudentInterestsField,
-  StudentPortfolioField,
 } from "@/features/profile/student-fields";
 import {
   activitiesOf,
-  attachmentsOf,
-  studentContactEmailOf,
-  studentContactOf,
+  attachmentRequestsOf,
   studentEditDefaults,
   studentEditSchema,
 } from "@/features/profile/student-form";
@@ -119,7 +118,8 @@ function StudentEditForm({ me }: { me: UserInfo }) {
   const { data: departments } = useSuspenseQuery(studentDepartmentsQuery());
   const { data: interests } = useSuspenseQuery(studentInterestsQuery());
   const submit = useSubmitStudentInfo();
-  const contactEmail = studentContactEmailOf(me);
+  /** 첨부를 올리는 중. 끝나기 전에 저장하면 그 파일이 빠진다 */
+  const [uploading, setUploading] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(studentEditSchema),
@@ -133,13 +133,10 @@ function StudentEditForm({ me }: { me: UserInfo }) {
         department_id: values.departmentId,
         interests: values.interests,
         activities: activitiesOf(values.activities),
-        // 화면에 칸이 없는 파일 첨부도 그대로 돌려보낸다 — 전체 교체라 안
-        // 보내면 지워진다(`attachmentsOf` 참고)
-        attachments: attachmentsOf(
-          values.portfolioUrl,
-          me.student?.profile?.attachments
-        ),
-        contact: studentContactOf(values, contactEmail),
+        // 전체 교체다. 화면의 목록(예전 링크 첨부 포함)이 곧 저장될 목록이다
+        attachments: attachmentRequestsOf(values.attachments),
+        // 끈 채널의 값은 보내지 않는다(`contactRequestFrom`)
+        contact: contactRequestFrom(values.contact),
       },
       // 가입 완료가 아니라 응답에 토큰이 없다. `keys.user` 무효화는 훅이 한다
       { onSuccess: () => void navigate({ to: "/me" }) }
@@ -160,14 +157,17 @@ function StudentEditForm({ me }: { me: UserInfo }) {
         <div className="bg-line h-px" />
 
         <StudentActivitiesField />
-        <StudentPortfolioField />
+        <StudentAttachmentsField onBusyChange={setUploading} />
 
         <div className="bg-line h-px" />
 
-        <StudentContactFields contactEmail={contactEmail} editing />
+        <StudentContactFields />
 
         <SaveError error={submit.error} />
-        <SaveActions busy={submit.isPending} disabled={!form.formState.isValid} />
+        <SaveActions
+          busy={submit.isPending}
+          disabled={!form.formState.isValid || uploading}
+        />
       </form>
     </FormProvider>
   );

@@ -1,6 +1,7 @@
 import { Select as BaseSelect } from "@base-ui/react/select";
 import { useId } from "react";
 import chevronDown from "@/assets/icons/chevron-down.svg";
+import { BELOW_LG, useMediaQuery } from "@/lib/use-media-query";
 import { cn } from "@/lib/utils";
 
 /**
@@ -179,6 +180,8 @@ export function Select({
   const autoId = useId();
   const fieldId = id ?? autoId;
   const message = error ?? hint;
+  /** 모바일은 바텀시트(가이드 2.5.2). 열린 목록의 구조가 달라서 클래스가 아니라 분기다 */
+  const sheet = useMediaQuery(BELOW_LG);
 
   return (
     <FieldShell
@@ -220,38 +223,69 @@ export function Select({
         </BaseSelect.Trigger>
 
         <BaseSelect.Portal>
+          {sheet ? (
+            // 바텀시트 뒤 배경막 — ink 44%(다이얼로그와 같은 값)
+            <BaseSelect.Backdrop className="bg-ink-fill/44 fixed inset-0 z-50" />
+          ) : null}
           {/*
-           * 기본값 `alignItemWithTrigger` 가 고른 옵션을 칸 위에 겹쳐 연다 —
-           * 시안의 "목록이 칸을 덮는다" 와 같다. 터치 기기에서는 Base UI 가
-           * 알아서 칸 아래로 연다.
+           * 데스크톱: 기본값 `alignItemWithTrigger` 가 고른 옵션을 칸 위에 겹쳐
+           * 연다 — 시안의 "목록이 칸을 덮는다" 와 같다.
+           *
+           * 모바일: 바텀시트(가이드 2.5.2, 시안 `916:38718`). Positioner 가
+           * 인라인으로 넣는 위치를 `!` 로 덮어 화면 아래에 붙인다 — 리스트박스
+           * 동작(키보드 · 글자로 찾기 · 포커스 · 스크롤 잠금)은 그대로 쓴다.
            */}
-          <BaseSelect.Positioner className="z-50 outline-none">
+          <BaseSelect.Positioner
+            alignItemWithTrigger={!sheet}
+            className={cn(
+              "z-50 outline-none",
+              sheet && "fixed! inset-x-0! top-auto! bottom-0! w-full! transform-none!"
+            )}
+          >
             <BaseSelect.Popup
               className={cn(
-                "bg-surface border-control relative w-(--anchor-width) overflow-hidden rounded-md border",
-                // 시안 Dropdown 그림자. 이 목록에서만 쓰여 토큰으로 올리지 않았다
-                "shadow-[0_2px_5px_0_rgba(0,0,0,0.15)]"
+                "bg-surface relative overflow-hidden",
+                sheet
+                  ? "flex w-full flex-col rounded-t-xl px-4 pb-4"
+                  : cn(
+                      "border-control w-(--anchor-width) rounded-md border",
+                      // 시안 Dropdown 그림자. 이 목록에서만 쓰여 토큰으로 올리지 않았다
+                      "shadow-[0_2px_5px_0_rgba(0,0,0,0.15)]"
+                    )
               )}
             >
-              {/*
-               * 피그마 Dropdown 의 `Select chevron` — 열린 목록 오른쪽 위에
-               * 위로 뒤집힌 쐐기. 목록이 칸을 덮어 칸의 쐐기를 가리므로 여기서
-               * 다시 그린다. 옵션 글자와 겹치지 않게 옵션 오른쪽 여백을 늘렸다.
-               */}
-              <span className="pointer-events-none absolute top-[15px] right-4 z-10 flex size-5 items-center justify-center">
-                <img src={chevronDown} alt="" className="rotate-180" />
-              </span>
-              {/* 옵션 다섯 줄(51 × 5)이 보이는 높이. 학과는 그보다 많다 */}
-              <BaseSelect.List className="max-h-[255px] overflow-y-auto outline-none">
+              {sheet ? (
+                // 시안 드래그 핸들 40×4. 색 `#b3b3b3` 은 토큰이 아니라 가장 가까운 `control`
+                <div aria-hidden className="flex justify-center p-4">
+                  <span className="bg-control h-1 w-10 rounded-full" />
+                </div>
+              ) : null}
+              <BaseSelect.List
+                className={cn(
+                  "overflow-y-auto outline-none",
+                  // 데스크톱은 옵션 다섯 줄(51 × 5), 모바일은 여덟 줄(60 × 8)까지 보이고 그 뒤는 스크롤
+                  sheet ? "max-h-[480px]" : "max-h-[255px]"
+                )}
+              >
                 {options.map((option) => (
                   <BaseSelect.Item
                     key={option.value}
                     value={option.value}
                     className={cn(
-                      "text-body text-ink flex h-[51px] cursor-pointer items-center py-3.5 pr-11 pl-4 outline-none select-none",
-                      "border-control border-b last:border-b-0",
-                      // 시안 — 가리킨 옵션은 2px focus 테두리. 자리가 밀리지 않게 안쪽 링
-                      "data-highlighted:ring-focus data-highlighted:rounded-[2px] data-highlighted:ring-2 data-highlighted:ring-inset"
+                      "text-body text-ink flex cursor-pointer items-center outline-none select-none",
+                      sheet
+                        ? cn(
+                            "h-15 rounded-md px-4 py-3.5",
+                            // 시안 *"현재 선택된 학과 focusing"* — 캔버스 바탕 + Label/Large 브랜드색
+                            "data-selected:bg-canvas data-selected:text-label-lg data-selected:text-brand",
+                            // 열 때 고른 항목이 가리켜진 채로 시작한다. 그 항목은 시안처럼 바탕만 두고 링은 뺀다
+                            "not-data-selected:data-highlighted:ring-focus not-data-selected:data-highlighted:ring-2 not-data-selected:data-highlighted:ring-inset"
+                          )
+                        : cn(
+                            "border-control h-[51px] border-b py-3.5 pr-4 pl-4 last:border-b-0",
+                            // 시안 — 가리킨 옵션은 2px focus 테두리. 자리가 밀리지 않게 안쪽 링
+                            "data-highlighted:ring-focus data-highlighted:rounded-[2px] data-highlighted:ring-2 data-highlighted:ring-inset"
+                          )
                     )}
                   >
                     <BaseSelect.ItemText className="truncate">{option.label}</BaseSelect.ItemText>

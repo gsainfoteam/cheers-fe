@@ -10,7 +10,8 @@ import { action } from "@/components/ui/action";
 import { ProfileIdentity } from "@/components/ui/profile-identity";
 import { ProfileRow } from "@/components/ui/profile-row";
 import { SHARED_CONTACT_NOTICE } from "@/features/profile/mentor-fields";
-import { studentContactEmailOf } from "@/features/profile/student-form";
+import { studentSharedEmailOf } from "@/features/profile/student-form";
+import { attachmentLabel } from "@/lib/attachments";
 import { formatPhone } from "@/lib/profile-form";
 import { useSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
@@ -121,7 +122,6 @@ function StudentMyPage() {
   if (!profile) return <MissingProfile />;
 
   const none = "등록하지 않음";
-  const attachment = profile.attachments[0];
   const contact = profile.contact;
   const channels = [
     contact?.email_enabled ? "이메일" : null,
@@ -158,17 +158,21 @@ function StudentMyPage() {
                 </>
               }
               value={
-                attachment ? (
-                  <a
-                    href={attachment.url}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="underline-offset-2 hover:underline"
-                  >
-                    {/* 시안은 스킴 없이 도메인부터 보인다. 파일이면 파일 이름 */}
-                    {attachment.file_name ??
-                      attachment.url.replace(/^https?:\/\//i, "").replace(/\/$/, "")}
-                  </a>
+                profile.attachments.length ? (
+                  // 첨부가 3개까지라 한 줄에 하나씩(가이드 2.6.4)
+                  <span className="flex flex-col gap-1">
+                    {profile.attachments.map((attachment) => (
+                      <a
+                        key={attachment.key ?? attachment.url}
+                        href={attachment.url}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="underline-offset-2 hover:underline"
+                      >
+                        {attachmentLabel(attachment)}
+                      </a>
+                    ))}
+                  </span>
                 ) : (
                   none
                 )
@@ -203,7 +207,7 @@ function StudentMyPage() {
             />
             <ProfileRow
               label="이메일"
-              value={contact?.email ?? studentContactEmailOf(me) ?? none}
+              value={studentSharedEmailOf(me) ?? none}
               size="comfortable"
               className="gap-3"
             />

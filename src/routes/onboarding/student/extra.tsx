@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   createFileRoute,
   redirect,
@@ -13,23 +14,25 @@ import { SignupProgressSlot } from "@/components/signup-progress";
 import { action } from "@/components/ui/action";
 import {
   StudentActivitiesField,
+  StudentAttachmentsField,
   StudentContactFields,
-  StudentPortfolioField,
 } from "@/features/profile/student-fields";
 import {
   activitiesOf,
-  attachmentsOf,
+  attachmentRequestsOf,
+  studentContactDefaults,
   studentContactEmailOf,
-  studentContactOf,
   studentExtraSchema,
   type StudentExtraValues,
 } from "@/features/profile/student-form";
-import { digitsOf } from "@/lib/profile-form";
+import { contactRequestFrom } from "@/lib/profile-form";
 import { hasBasics, useStudentSignupDraft } from "@/lib/student-signup-draft";
 import { cn } from "@/lib/utils";
 
 /**
- * 학생 추가 정보. 피그마 `Cheers / 학생 추가 정보`(335:7095 / 335:6954).
+ * 학생 추가 정보. 피그마 `Cheers / 학생 추가 정보`(335:7095 / 335:6954), 참여
+ * 활동 입력(875:30619 / 875:30665), 파일 첨부(923:44145 / 923:44552), 알림
+ * 설정(943:9742 / 943:9806). 동기화 가이드 02장 2.6.
  *
  * 가입의 마지막 화면이다. 앞 화면이 담아 둔 기본 정보와 여기서 받은 값이
  * 합쳐져 `POST /user/student/info` **한 번**으로 저장되고, 그 응답에 새
@@ -66,28 +69,22 @@ function RouteComponent() {
     resolver: zodResolver(studentExtraSchema),
     mode: "all",
     defaultValues: {
-      // 시안에 칸이 하나 그려져 있다 — 비어 있어도 한 줄은 보여준다
-      activities: draft.activities.length
-        ? draft.activities.map((value) => ({ value }))
-        : [{ value: "" }],
-      portfolioUrl: draft.portfolioUrl,
-      emailEnabled: draft.emailEnabled,
-      kakaoEnabled: draft.kakaoEnabled,
-      phone: draft.phone,
+      activities: draft.activities,
+      attachments: draft.attachments,
+      // 처음 들어오면 이메일 체크 + 인증한 학교 이메일(가이드 2.6.3)
+      contact: draft.contact ?? studentContactDefaults(null, studentContactEmailOf(me)),
     },
   });
 
-  /** 시안의 읽기 전용 이메일 칸. 인증을 마친 학교 이메일이 선다 */
-  const contactEmail = studentContactEmailOf(me);
+  /** 첨부를 올리는 중. 끝나기 전에 저장하면 그 파일이 빠진다 */
+  const [uploading, setUploading] = useState(false);
 
   /** `이전` 으로 돌아갈 때 쳐 둔 값을 보관함에 남긴다 — 검사는 하지 않는다 */
   const keep = (values: StudentExtraValues) =>
     patch({
-      activities: activitiesOf(values.activities),
-      portfolioUrl: values.portfolioUrl.trim(),
-      emailEnabled: values.emailEnabled,
-      kakaoEnabled: values.kakaoEnabled,
-      phone: digitsOf(values.phone),
+      activities: values.activities,
+      attachments: values.attachments,
+      contact: values.contact,
     });
 
   const back = () => {
@@ -103,12 +100,12 @@ function RouteComponent() {
         // 명세상 `name` 은 내 정보의 이름이 null 일 때만 받는다
         ...(me.name ? {} : { name: draft.name }),
         department_id: draft.departmentId,
+        // 고정 칩과 직접 넣은 `기타` 값이 한 배열이다(가이드 D2-3)
         interests: draft.interests,
         activities: activitiesOf(values.activities),
-        // 시안은 이력서와 포트폴리오를 **한 칸**으로 받는다. 링크 하나는
-        // `portfolio` 로 보낸다 — 파일로 올리는 이력서는 이 화면에 없다
-        attachments: attachmentsOf(values.portfolioUrl),
-        contact: studentContactOf(values, contactEmail),
+        attachments: attachmentRequestsOf(values.attachments),
+        // 끈 채널의 값은 보내지 않는다(`contactRequestFrom`)
+        contact: contactRequestFrom(values.contact),
       },
       {
         onSuccess: () => {
@@ -121,7 +118,7 @@ function RouteComponent() {
     );
   });
 
-  const canSubmit = form.formState.isValid && !submit.isPending;
+  const canSubmit = form.formState.isValid && !uploading && !submit.isPending;
 
   return (
     <PageContainer className="flex flex-col items-center pt-8 pb-12 lg:pt-16 lg:pb-18">
@@ -148,11 +145,8 @@ function RouteComponent() {
             onSubmit={finish}
           >
             <StudentActivitiesField />
-            <StudentPortfolioField hint="https://로 시작하는 링크를 입력해 주세요." />
-
-            <div className="bg-line h-px" />
-
-            <StudentContactFields contactEmail={contactEmail} />
+            <StudentAttachmentsField onBusyChange={setUploading} />
+            <StudentContactFields />
 
             {submit.error ? (
               <p role="alert" className="text-body-sm text-danger">
@@ -174,7 +168,7 @@ function RouteComponent() {
                 disabled={!canSubmit}
                 className={cn(action(), "flex-1 lg:w-60 lg:flex-none")}
               >
-                {submit.isPending ? "저장 중…" : "가입 완료"}
+                {submit.isPending ? "저장 중…" : uploading ? "파일 올리는 중…" : "가입 완료"}
               </button>
             </div>
           </form>

@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import type { StudentAttachmentValue } from "@/features/profile/student-form";
+import type { ContactChannels } from "@/lib/profile-form";
 
 /**
  * 학생 가입의 마지막 단계(기본 정보 → 추가 정보)가 나눠 쓰는 임시 보관함.
@@ -18,25 +20,26 @@ export type StudentSignupDraft = {
   /** 내 정보에 이름이 없을 때(첫 저장)만 쓴다 */
   name: string;
   departmentId: number | null;
+  /** 고정 칩 값과 학생이 직접 넣은 `기타` 값이 섞여 있다(가이드 D2-3) */
   interests: string[];
   activities: string[];
-  /** 이력서·포트폴리오 링크. 비어 있으면 첨부를 보내지 않는다 */
-  portfolioUrl: string;
-  emailEnabled: boolean;
-  kakaoEnabled: boolean;
-  phone: string;
+  /** 다 올라간 첨부만 담긴다. 올리는 중인 파일은 화면 안에만 있다 */
+  attachments: StudentAttachmentValue[];
+  /**
+   * 연락 설정. `null` 이면 아직 손대지 않은 것 — 폼이 처음 값(이메일 체크 +
+   * 인증한 메일, `studentContactDefaults`)으로 채운다. 보관함은 내 정보를
+   * 모르므로 여기서 채우지 않는다.
+   */
+  contact: ContactChannels | null;
 };
 
-/** 시안의 연락 설정은 `이메일` 이 켜진 채로 그려져 있다 */
 const EMPTY: StudentSignupDraft = {
   name: "",
   departmentId: null,
   interests: [],
   activities: [],
-  portfolioUrl: "",
-  emailEnabled: true,
-  kakaoEnabled: false,
-  phone: "",
+  attachments: [],
+  contact: null,
 };
 
 type Store = {

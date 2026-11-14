@@ -9,7 +9,8 @@ export type UploadPurpose = "business_card" | "attachment";
  * 용도별 발급 경로.
  *
  * 예전에는 경로 하나에 `purpose` 를 실어 보냈지만, 지금은 경로가 갈라져 있고
- * 권한도 다르다 — 명함은 현업자만, 첨부는 가입을 마친 재학생만 403 을 피한다.
+ * 권한도 다르다 — 명함은 현업자만, 첨부는 재학생만 403 을 피한다. 첨부는
+ * **가입 중(`next_step=profile`)에도** 발급된다(동기화 가이드 02장 D2-1).
  */
 const UPLOAD_URL_PATH = {
   business_card: "/api/v1/file/business-card/upload-url",
