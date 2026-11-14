@@ -60,7 +60,11 @@ export {
   useSubmitStudentInfo,
   useVerifyStudentCode,
 } from "./student";
-export { useSubmitGraduatedInfo, useVerifyBusinessCard } from "./graduated";
+export {
+  checkGraduatedNickname,
+  useSubmitGraduatedInfo,
+  useVerifyBusinessCard,
+} from "./graduated";
 export { companySearchQuery } from "./company";
 export {
   cheersListQuery,

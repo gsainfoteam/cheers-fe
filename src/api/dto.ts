@@ -83,13 +83,25 @@ export const GraduatedProfileSchema = z.object({
    */
   company_id: z.number(),
   company: z.string(),
-  /** 비공개 — 다른 회원에게 보이지 않는다 */
-  department: z.string(),
+  /**
+   * 비공개 — 다른 회원에게 보이지 않는다. 선택 입력이라 없으면 null
+   * (명세 2026-11-14 갱신, 이슈 #43)
+   */
+  department: z.string().nullable(),
   job: z.string(),
   hashtags: z.array(z.string()),
   links: z.array(z.string()),
   /** 아직 연락 설정을 저장하지 않았으면 null */
   contact: ContactSchema.nullable(),
+});
+
+/**
+ * 닉네임 중복 확인(`GET /user/graduated/nickname/check`). 대소문자 구분 없이
+ * 이미 쓰는 닉네임이면 false. 조회만 하고 예약하지 않는다 — 저장할 때 다른
+ * 사람이 먼저 가져갈 수 있다.
+ */
+export const NicknameCheckSchema = z.object({
+  available: z.boolean(),
 });
 
 export const GraduatedInfoSchema = z.object({

@@ -89,6 +89,32 @@ export function SignupProgress({ current }: { current: SignupStepIndex }) {
   );
 }
 
+/**
+ * 가입 화면의 단계 막대 자리. 가입 화면 7개(약관 · 학생 3 · 선배 3)가 같은
+ * 자리에 같은 모양으로 둔다.
+ *
+ * - 모바일은 제목 위, 데스크톱은 제목 아래(`order-first lg:order-last`)
+ * - **모바일에서는 스크롤해도 화면 위에 고정한다**(동기화 가이드 D2-7, 시안
+ *   주석 *"이 부분은 스크롤 영역에서 제외해도 괜찮을 거 같네요"*). 헤더는
+ *   고정이 아니라서 `top-0` 에 붙는다. 데스크톱은 고정하지 않는다.
+ *
+ * sticky 는 부모 상자 안에서만 붙는다. 그래서 쓰는 쪽은 이 자리를 감싼
+ * `Task introduction` 을 모바일에서 `max-lg:contents` 로 풀어, 이 자리가
+ * 본문 전체를 감싸는 `Task workspace` 의 직접 자식이 되게 해야 한다 — 안
+ * 그러면 제목이 화면 밖으로 나가는 순간 막대도 같이 올라간다.
+ *
+ * 바탕을 페이지 바탕색으로 칠하고 좌우는 페이지 여백(20)까지 넓혀 아래로
+ * 지나가는 내용이 비치지 않게 한다. 위아래 8 은 음수 margin 으로 상쇄해
+ * 고정되기 전 배치(제목과의 간격 28)는 시안 그대로 둔다.
+ */
+export function SignupProgressSlot({ current }: { current: SignupStepIndex }) {
+  return (
+    <div className="max-lg:bg-canvas order-first max-lg:sticky max-lg:top-0 max-lg:z-10 max-lg:-mx-5 max-lg:-my-2 max-lg:px-5 max-lg:py-2 lg:order-last">
+      <SignupProgress current={current} />
+    </div>
+  );
+}
+
 /** 피그마 `Cheers / Building blocks / Signup step` — 3상태 */
 function DesktopStep({
   label,

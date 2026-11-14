@@ -12,7 +12,8 @@ import {
 } from "@/api";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ProfileRow } from "@/components/ui/profile-row";
-import { myContactEmailOf } from "@/lib/mentor-contact";
+import { mySharedContactOf } from "@/lib/mentor-contact";
+import { formatPhone } from "@/lib/profile-form";
 
 /**
  * 연락처 공유 확인. 피그마 `Dialog / 연락처 공유 확인`(344:9450 / 344:9385).
@@ -22,6 +23,10 @@ import { myContactEmailOf } from "@/lib/mentor-contact";
  * 안 되고, 나중에 "어떤 연락처를 공유할지 선택" 이 붙어도 구조가 바뀌지 않는다.
  *
  * 받은 신청 내용 위에 또 뜬다(`$applicationId.tsx` 의 `<Outlet/>`).
+ *
+ * **입력한 연락처가 모두 간다**(동기화 가이드 D3-3, 2026-11-14) — 커피챗 참여
+ * 설정에서 켠 채널의 이메일 · 휴대전화번호. 학생에게 가지 않는 값은 목록에
+ * 두지 않는다.
  */
 export const Route = createFileRoute("/_app/applications/$applicationId/share")({
   // `_app` 가드가 세션을 실어 준다. 학생이 주소로 들어오면 상세로 되돌린다
@@ -55,6 +60,7 @@ function RouteComponent() {
   const { data: me } = useSuspenseQuery(userInfoQuery());
   const { data: request } = useSuspenseQuery(receivedRequestQuery(applicationId));
   const share = useShareContact();
+  const contact = mySharedContactOf(me);
 
   const back = () =>
     void navigate({
@@ -79,10 +85,8 @@ function RouteComponent() {
         if (!open && !share.isPending) back();
       }}
       title="연락처를 공유할까요?"
-      // ⚠️ 이슈 #26: 공유 응답에 `shared_phone` 이 실제로 실려 가면 이 라벨과
-      // 아래 `알림톡 수신 번호는 공유되지 않아요.` 가 둘 다 거짓이 된다.
-      // 스테이징에서 응답을 확인할 것(선배 가이드 §2.7)
-      confirmLabel="이름·이메일 공유"
+      // 무엇이 가는지는 아래 목록이 말한다 — 켠 채널에 따라 달라진다
+      confirmLabel="연락처 공유"
       onConfirm={confirm}
       busy={share.isPending}
       busyLabel="보내는 중…"
@@ -92,11 +96,13 @@ function RouteComponent() {
       </p>
       <dl>
         <ProfileRow label="이름" value={me.name ?? "—"} size="card" />
-        <ProfileRow label="이메일" value={myContactEmailOf(me) ?? "—"} size="card" />
+        {contact.email ? (
+          <ProfileRow label="이메일" value={contact.email} size="card" />
+        ) : null}
+        {contact.phone ? (
+          <ProfileRow label="휴대전화번호" value={formatPhone(contact.phone)} size="card" />
+        ) : null}
       </dl>
-      <p className="text-body-sm text-ink-soft">
-        알림톡 수신 번호는 공유되지 않아요.
-      </p>
 
       {share.error ? (
         <p role="alert" className="text-body-sm text-danger">

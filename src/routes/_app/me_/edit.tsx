@@ -41,7 +41,8 @@ import {
 } from "@/features/profile/student-form";
 import {
   companyRequestOf,
-  contactRequestOf,
+  contactRequestFrom,
+  departmentRequestOf,
   normalizeLink,
 } from "@/lib/profile-form";
 import { useSession } from "@/lib/session";
@@ -194,14 +195,14 @@ function MentorEditForm({
     submit.mutate(
       {
         ...companyRequestOf(values.company, values.company_id),
-        department: values.department,
+        ...departmentRequestOf(values.department),
         job: values.job,
         hashtags: values.hashtags,
         // 시안은 LinkedIn 칸 하나, 명세는 배열(최대 5)이다. 두 번째 링크부터는
         // 이 화면이 보여주지 않으므로 보내지 않는다 — 전체 교체라 지워진다
         links: values.linkedin ? [normalizeLink(values.linkedin)] : [],
-        // 임시: 이슈 #26 — 둘 다 필수, 둘 다 켠다(`contactRequestOf` 참고)
-        contact: contactRequestOf(values.email, values.phone),
+        // 끈 채널의 값은 보내지 않는다 — 공유에도 쓰이는 값이다(동기화 가이드 D3-3)
+        contact: contactRequestFrom(values.contact),
       },
       { onSuccess: () => void navigate({ to: "/me" }) }
     )

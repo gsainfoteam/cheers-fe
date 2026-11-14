@@ -9,7 +9,7 @@ import {
 } from "@/api";
 import imagePlusIcon from "@/assets/icons/media-image-plus.svg";
 import { PageContainer } from "@/components/layout/page-container";
-import { SignupProgress } from "@/components/signup-progress";
+import { SignupProgressSlot } from "@/components/signup-progress";
 import { action } from "@/components/ui/action";
 import { cn } from "@/lib/utils";
 
@@ -134,11 +134,10 @@ function RouteComponent() {
       {/* 피그마 `Task workspace` — 976 = 352 + 64 + 560 */}
       <div className="flex w-full flex-col gap-7 lg:w-244 lg:flex-row lg:items-start lg:gap-16">
         {/* 피그마 `Task introduction` */}
-        <div className="flex flex-col gap-7 lg:w-88 lg:shrink-0 lg:gap-10 lg:pt-4">
-          {/* 모바일은 제목 위, 데스크톱은 제목 아래 */}
-          <div className="order-first lg:order-last">
-            <SignupProgress current={1} />
-          </div>
+        {/* 모바일에서는 풀어서 단계 막대가 본문 전체를 기준으로 고정되게 한다 */}
+        <div className="flex flex-col gap-7 max-lg:contents lg:w-88 lg:shrink-0 lg:gap-10 lg:pt-4">
+          {/* 모바일은 제목 위에 고정, 데스크톱은 제목 아래 */}
+          <SignupProgressSlot current={1} />
           <div className="flex flex-col gap-3 lg:gap-5">
             <h1 className="text-task-title text-ink">명함 첨부</h1>
             <p className="text-body text-ink-soft">

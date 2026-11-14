@@ -7,6 +7,7 @@ import { SearchSelect } from "@/components/ui/search-select";
 import { TagInput } from "@/components/ui/tag-input";
 import { nicknameProblem } from "@/lib/nickname";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
+import { ContactChannelFields } from "./contact-channel-fields";
 import type { MentorFormValues } from "./mentor-form";
 
 /**
@@ -158,7 +159,8 @@ export function MentorWorkFields() {
       {/* 피그마 `Work fields` — 모바일은 세로, 데스크톱은 좌우 반반 */}
       <div className="flex flex-col gap-7 lg:flex-row lg:gap-6">
         <Field
-          label="부서 (비공개)"
+          // 선택 입력(시안 336:7011). 비공개라는 사실은 마이페이지 `비공개 정보` 에 있다
+          label="부서 (선택)"
           autoComplete="organization-title"
           maxLength={128}
           placeholder="부서를 입력하세요"
@@ -191,7 +193,7 @@ export function MentorExtraFields({
   hashtagHint,
   linkedinPlaceholder,
 }: {
-  hashtagHint?: string;
+  hashtagHint?: React.ReactNode;
   linkedinPlaceholder: string;
 }) {
   const { control } = useFormContext<Values>();
@@ -204,7 +206,7 @@ export function MentorExtraFields({
         render={({ field }) => (
           <TagInput
             label="해시태그 (선택)"
-            placeholder="예) 전기전자"
+            placeholder="#해시태그 입력"
             hint={hashtagHint}
             value={field.value}
             onChange={field.onChange}
@@ -234,81 +236,39 @@ export function MentorExtraFields({
   );
 }
 
-/* ───────────────── 연락처 묶음 (가입 · 수정) ───────────────── */
+/* ───────────────── 커피챗 참여 설정 (가입 · 수정) ───────────────── */
 
 /**
- * 선배 연락처 묶음 — `공유할 연락처` + 구분선 + `신청 알림`. 피그마
- * `Contact and notification settings`(선배 추가 정보 342:9076, 정보 수정 338:8984).
+ * 선배 커피챗 참여 설정 — 피그마 `커피챗 참여 설정 (선택)`(선배 추가 정보
+ * 1159:10067 / 1159:10229, 동기화 가이드 3.5.3). 가입 추가 정보와 정보 수정이
+ * 같은 묶음을 쓴다. 바깥 `id` 는 마이페이지의 `연락처·알림 번호 수정` 이 이
+ * 자리로 바로 오게 하는 닻이다(`#contact`).
  *
- * 가입 추가 정보와 정보 수정이 **글자 하나 다르지 않은** 묶음이다. 바깥 `id`
- * 는 마이페이지의 `연락처·알림 번호 수정` 이 이 자리로 바로 오게 하는 닻이다
- * (`#contact`).
- *
- * 형식 오류는 한 번 쳐 보고 칸을 떠난 뒤에만 띄운다. 빈 칸은 문구 없이 버튼만
- * 막는다.
+ * 입력한 연락처는 알림용이자 공유용이다 — 연락처를 공유하면 켠 채널의 값이
+ * 모두 학생에게 간다(가이드 D3-3). 시안 설명은 알림만 말해서, 공유된다는
+ * 사실을 임시 안내 한 줄로 더했다(가이드 D3-9, 디자이너 확인 필요).
  */
 export function MentorContactFields({ id }: { id?: string }) {
-  const { control } = useFormContext<Values>();
-
   return (
-    <div id={id} className="flex scroll-mt-24 flex-col gap-6">
-      {/* 피그마 `Shared contact` */}
-      <div className="flex flex-col gap-3">
-        <h2 className="text-card-title text-ink">공유할 연락처</h2>
-        <Controller
-          control={control}
-          name="email"
-          render={({ field, fieldState }) => (
-            <Field
-              {...field}
-              label="이메일"
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              maxLength={255}
-              placeholder="alumni@example.com"
-              hint="연락처 공유를 선택한 학생에게만 이름과 함께 전달돼요."
-              error={
-                fieldState.isTouched && field.value.trim()
-                  ? fieldState.error?.message
-                  : undefined
-              }
-            />
-          )}
-        />
-      </div>
-
-      <div className="bg-line h-px" />
-
-      {/* 피그마 `Private Alimtalk recipient` */}
-      <div className="flex flex-col gap-3">
-        <h2 className="text-card-title text-ink">신청 알림</h2>
-        <p className="text-body-sm text-ink-soft">
-          새 커피챗 신청을 카카오 알림톡으로 알려드려요.
-        </p>
-        <Controller
-          control={control}
-          name="phone"
-          render={({ field, fieldState }) => (
-            <Field
-              {...field}
-              // 임시: 이슈 #26 — 둘 다 필수. 시안 라벨의 `(선택)` 을 뗐다
-              label="알림 받을 휴대전화번호"
-              type="tel"
-              inputMode="numeric"
-              autoComplete="tel"
-              maxLength={13}
-              placeholder="010-0000-0000"
-              hint="등록한 번호로 신청 알림을 보내요. 학생에게 공유되지 않아요."
-              error={
-                fieldState.isTouched && field.value.trim()
-                  ? fieldState.error?.message
-                  : undefined
-              }
-            />
-          )}
-        />
-      </div>
-    </div>
+    <ContactChannelFields
+      id={id}
+      title="커피챗 참여 설정 (선택)"
+      description={
+        <>
+          커피챗 알림을 받을 연락처를 입력해주세요.
+          {/* 모바일 시안은 여기서 줄을 끊고, 데스크톱은 한 줄이다 */}
+          <br className="lg:hidden" />{" "}
+          입력하지 않으면 커피챗에 참여할 수 없어요.
+        </>
+      }
+      notice={SHARED_CONTACT_NOTICE}
+    />
   );
 }
+
+/**
+ * 임시 문구 — 시안에 없다(가이드 D3-9). 마이페이지 연락처 카드도 같은 말을
+ * 해야 해서 내보낸다.
+ */
+export const SHARED_CONTACT_NOTICE =
+  "연락처를 공유한 학생에게는 입력한 연락처가 이름과 함께 전달돼요.";

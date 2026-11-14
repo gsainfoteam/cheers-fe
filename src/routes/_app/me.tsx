@@ -9,6 +9,7 @@ import { PageContainer } from "@/components/layout/page-container";
 import { action } from "@/components/ui/action";
 import { ProfileIdentity } from "@/components/ui/profile-identity";
 import { ProfileRow } from "@/components/ui/profile-row";
+import { SHARED_CONTACT_NOTICE } from "@/features/profile/mentor-fields";
 import { studentContactEmailOf } from "@/features/profile/student-form";
 import { formatPhone } from "@/lib/profile-form";
 import { useSession } from "@/lib/session";
@@ -314,13 +315,15 @@ function ProfileCard({ me, profile }: { me: UserInfo; profile: Profile }) {
         </h2>
         {/* 시안이 두 폭 모두 이 자리에서 줄을 끊는다 */}
         <p className="text-body-sm text-ink-soft">
+          {/* 공유하면 이메일뿐 아니라 입력한 연락처가 모두 간다(동기화 가이드 D3-3) */}
           사원증에는 표시되지 않아요. 연락처를 공유한
           <br />
-          요청자에게만 이름과 이메일이 전달돼요.
+          요청자에게만 이름과 연락처가 전달돼요.
         </p>
         <dl>
           <ProfileRow label="이름" value={me.name ?? none} size="document" />
-          <ProfileRow label="부서" value={profile.department} size="document" />
+          {/* 부서는 선택 입력이라 null 일 수 있다(동기화 가이드 3.4.1) */}
+          <ProfileRow label="부서" value={profile.department || none} size="document" />
         </dl>
       </div>
     </section>
@@ -332,7 +335,14 @@ function ProfileCard({ me, profile }: { me: UserInfo; profile: Profile }) {
  * 모바일은 한 줄로 쌓이고 **모든 줄 사이가 16**(구분선 위아래 포함)이다.
  */
 function ContactCard({ profile }: { profile: Profile }) {
+  /*
+   * 커피챗 참여 설정에서 켠 채널만 보인다(동기화 가이드 3.6). 카드의 두 칸
+   * 구조(`공유할 연락처` / `신청 알림`)는 옛 시안 그대로다 — 새 모델에서는
+   * 둘 다 알림용이자 공유용이라, 카드 개편은 마이페이지 섹션에서 시안과
+   * 함께 한다.
+   */
   const contact = profile.contact;
+  const email = contact?.email_enabled && contact.email ? contact.email : null;
   const phone = contact?.kakao_enabled && contact.phone ? contact.phone : null;
 
   return (
@@ -341,7 +351,7 @@ function ContactCard({ profile }: { profile: Profile }) {
       <div className="flex flex-1 flex-col gap-4 lg:gap-3">
         <h2 className="text-card-title text-ink">공유할 연락처</h2>
         <p className="text-body text-ink break-all">
-          {contact?.email ?? "공유할 이메일을 등록하지 않았어요."}
+          {email ?? "이메일 알림을 받지 않아요."}
         </p>
         <p className="text-body-sm text-ink-soft">
           공유를 선택한 학생에게만 전달돼요.
@@ -354,18 +364,13 @@ function ContactCard({ profile }: { profile: Profile }) {
       <div className="flex flex-1 flex-col gap-4 lg:gap-3">
         <h2 className="text-card-title text-ink">신청 알림</h2>
         <p className="text-body-sm text-ink">
-          {/*
-           * 지금은 휴대폰이 필수라(이슈 #26 임시 결정) 비는 경우가 거의 없다.
-           * 그 전에 가입한 계정이나 #26 의 답으로 선택 칸이 되면 이 줄이
-           * 선다 — 시안에 빈 상태가 없다
-           */}
+          {/* 시안에 빈 상태가 없다 — 커피챗 참여 설정에서 카카오를 끈 경우다 */}
           {phone
             ? `카카오 알림톡 · ${formatPhone(phone)}`
-            : "알림 번호를 등록하지 않았어요."}
+            : "카카오 알림톡을 받지 않아요."}
         </p>
-        <p className="text-body-sm text-ink-soft">
-          알림 번호는 학생에게 공유되지 않아요.
-        </p>
+        {/* 옛 문구 `알림 번호는 학생에게 공유되지 않아요.` 는 D3-3 결정과 반대라 바꿨다 */}
+        <p className="text-body-sm text-ink-soft">{SHARED_CONTACT_NOTICE}</p>
         {/* 정보 수정 화면의 연락처 묶음으로 바로 간다 */}
         <Link
           to="/me/edit"

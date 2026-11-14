@@ -15,7 +15,8 @@ import { ProfileRow } from "@/components/ui/profile-row";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { formatDate } from "@/lib/date";
 import { studentProfileRowsOf } from "@/features/profile/student-profile-rows";
-import { myContactEmailOf } from "@/lib/mentor-contact";
+import { mySharedContactOf } from "@/lib/mentor-contact";
+import { formatPhone } from "@/lib/profile-form";
 import { useSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
@@ -257,7 +258,12 @@ function ContactMethods({
   request: ReceivedRequestDetail;
 }) {
   const { data: me } = useSuspenseQuery(userInfoQuery());
-  const myEmail = myContactEmailOf(me);
+  // 공유하면 켠 채널의 연락처가 모두 간다(동기화 가이드 D3-3). 공유 확인과 같은 값
+  const myContact = mySharedContactOf(me);
+  const myContactLines = [
+    myContact.email,
+    myContact.phone ? formatPhone(myContact.phone) : null,
+  ].filter((line): line is string => line !== null);
   const studentEmail = request.student.email;
 
   return (
@@ -295,8 +301,9 @@ function ContactMethods({
 
         <ContactChoice
           title="내 연락처 공유"
-          description="이름과 이메일을 보내 학생이 연락할 수 있게 해요."
-          value={myEmail ?? "—"}
+          // 임시 문구 — 휴대전화번호도 함께 간다(가이드 D3-9, 디자이너 확인 필요)
+          description="이름과 연락처를 보내 학생이 연락할 수 있게 해요."
+          value={myContactLines.length > 0 ? myContactLines.join("\n") : "—"}
         >
           {request.contact_shared_at ? (
             /*
@@ -307,7 +314,7 @@ function ContactMethods({
             <p className={CHOICE_STATUS}>
               {formatDate(request.contact_shared_at)}에 공유했어요.
             </p>
-          ) : myEmail ? (
+          ) : myContactLines.length > 0 ? (
             <Link
               to="/applications/$applicationId/share"
               params={{ applicationId }}
@@ -316,9 +323,9 @@ function ContactMethods({
               공유할 정보 확인
             </Link>
           ) : (
-            // 공유할 이메일이 없으면 서버가 409 로 막는다. 미리 알려준다
+            // 켠 채널이 없으면(커피챗 미참여) 서버가 409 로 막는다. 미리 알려준다
             <p className={CHOICE_STATUS}>
-              공유할 이메일이 없어요. 마이페이지에서 등록해 주세요.
+              공유할 연락처가 없어요. 마이페이지에서 등록해 주세요.
             </p>
           )}
         </ContactChoice>
@@ -355,7 +362,8 @@ function ContactChoice({
     <div className="bg-surface border-line shadow-work has-[:focus-visible]:shadow-none flex min-w-0 flex-1 flex-col gap-3 rounded-lg border p-6">
       <h4 className="text-card-title text-ink">{title}</h4>
       <p className="text-body-sm text-ink-soft min-h-10">{description}</p>
-      <p className="text-body text-ink min-h-6 break-all">{value}</p>
+      {/* 내 연락처는 이메일 · 휴대전화번호가 줄을 나눠 선다 */}
+      <p className="text-body text-ink min-h-6 break-all whitespace-pre-line">{value}</p>
       {children}
     </div>
   );

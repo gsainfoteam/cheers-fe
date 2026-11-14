@@ -16,6 +16,8 @@ import { cn } from "@/lib/utils";
  * `Selected=Disable`(943:10132)은 상자에 대각선이 그어진 그림이다. 어느
  * 화면에서 쓰는지는 아직 없다 — 쓰는 화면이 나오면 `disabled` 를 넘긴다.
  * 시안의 Disable 은 켜짐·꺼짐 구분이 없어서 `checked` 와 상관없이 같은 그림이다.
+ *
+ * 높이는 약관 줄이 48, 연락 설정 체크박스(1159:10123)가 44 다 — `compact`.
  */
 export function CheckRow({
   label,
@@ -23,15 +25,25 @@ export function CheckRow({
   onChange,
   onOpen,
   disabled = false,
+  compact = false,
+  className,
 }: {
   label: string;
   checked: boolean;
   onChange: () => void;
   onOpen?: () => void;
   disabled?: boolean;
+  compact?: boolean;
+  className?: string;
 }) {
   return (
-    <div className="flex h-12 w-full items-center justify-between py-2">
+    <div
+      className={cn(
+        "flex w-full items-center justify-between py-2",
+        compact ? "h-11" : "h-12",
+        className
+      )}
+    >
       <label
         className={cn(
           "flex items-center gap-3",

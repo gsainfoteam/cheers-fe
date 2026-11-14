@@ -23,7 +23,8 @@ export function TagInput({
   maxLength,
 }: {
   label: string;
-  hint?: string;
+  /** 줄을 폭마다 다르게 끊어야 할 때가 있어 노드도 받는다(선배 해시태그) */
+  hint?: React.ReactNode;
   placeholder?: string;
   value: string[];
   onChange: (tags: string[]) => void;
