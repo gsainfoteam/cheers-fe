@@ -2,11 +2,10 @@ import { useMemo, useState } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { consentListQuery, useSubmitConsent, type Consent } from "@/api";
-import chevronIcon from "@/assets/icons/chevron-right.svg";
-import checkInverse from "@/assets/icons/check-inverse.svg";
 import { PageContainer } from "@/components/layout/page-container";
 import { SignupProgress } from "@/components/signup-progress";
 import { action } from "@/components/ui/action";
+import { CheckRow } from "@/components/ui/check-row";
 import {
   DialogBodySkeleton,
   ResponsiveDialog,
@@ -29,20 +28,43 @@ export const Route = createFileRoute("/onboarding/terms")({
 });
 
 /**
- * 서버가 주는 `type` 은 자유 문자열이라 사람이 읽을 이름을 코드가 들고 있다.
+ * 서버가 주는 `type` 은 자유 문자열이라 사람이 읽을 이름과 본문 주소를
+ * 코드가 들고 있다.
  *
- * **실제 값은 아직 확인하지 못했다.** 시안 문구에 맞춰 둘을 적어 뒀고,
- * 모르는 값이 오면 `type` 을 그대로 보여준다 — 빈칸보다는 낫고, 개발 중
- * `/verify.html` 로 실제 응답을 보면 바로 드러난다.
- */ 
-const CONSENT_LABEL: Record<string, string> = {
-  terms_of_service: "서비스 이용약관",
-  privacy_policy: "개인정보 수집·이용 동의",
+ * 서버가 실제로 주는 값은 `tos` / `privacy` 다(`7a9596a` 에서 확인). 모르는
+ * 값이 오면 이름은 `type` 을, 본문은 서버가 준 `url` 을 그대로 쓴다 — 빈칸
+ * 보다는 낫고, 화면에서 바로 드러난다.
+ *
+ * - `label`: 체크 줄과 다이얼로그 제목. 피그마 시안 문구 그대로다(`828:8731`
+ *   / `828:8732`, `335:6380` / `335:6561`). 개인정보 항목이 처리방침 문서를
+ *   여는 것이 맞는지는 정책 확인 중이다(동기화 가이드 01장 D1-2).
+ * - `url`: terms.gistory.me 의 **`/embedded/` 경로**. 일반 경로는 약관 사이트
+ *   자체 헤더까지 그려져 다이얼로그 안에서 제목이 두 번 나온다. 약관이
+ *   개정되면 주소의 버전(`261101`)을 함께 올려야 한다. 푸터(`site-footer.tsx`)
+ *   는 새 탭으로 여는 **일반 경로**를 따로 들고 있으니 같이 올린다.
+ */
+const CONSENT_DOC: Record<string, { label: string; url: string }> = {
+  tos: {
+    label: "서비스 이용약관",
+    url: "https://terms.gistory.me/embedded/cheers/tos/261101/",
+  },
+  privacy: {
+    label: "개인정보 수집·이용 동의",
+    url: "https://terms.gistory.me/embedded/cheers/privacy/261101/",
+  },
 };
 
+function nameOf(consent: Consent): string {
+  return CONSENT_DOC[consent.type]?.label ?? consent.type;
+}
+
 function labelOf(consent: Consent): string {
-  const name = CONSENT_LABEL[consent.type] ?? consent.type;
+  const name = nameOf(consent);
   return consent.is_required ? `[필수] ${name}` : name;
+}
+
+function urlOf(consent: Consent): string {
+  return CONSENT_DOC[consent.type]?.url ?? consent.url;
 }
 
 function RouteComponent() {
@@ -147,78 +169,58 @@ function RouteComponent() {
         </div>
       </div>
 
-      {/*
-       * 약관 본문. 설계 5.3 대로 PC 는 모달, 모바일은 전체 화면이다.
-       *
-       * 본문은 서버가 준 `url` 에 있다. 여기서는 아직 받아오지 않고 뼈대만
-       * 보여준다 — 그 URL 이 HTML 인지 마크다운인지, 교차 출처인지에 따라
-       * 받는 방법이 갈려서 실제 응답을 한 번 봐야 한다.
-       */}
+      {/* 약관 본문. 설계 5.3 대로 PC 는 모달, 모바일은 전체 화면이다 */}
       <ResponsiveDialog
         open={opened !== null}
         onOpenChange={(next) => !next && setOpened(null)}
-        title={opened ? (CONSENT_LABEL[opened.type] ?? opened.type) : ""}
+        title={opened ? nameOf(opened) : ""}
+        bleed
       >
-        <DialogBodySkeleton />
+        {opened ? (
+          // 약관마다 새로 마운트해야 로딩 상태가 처음부터 다시 돈다
+          <TermsFrame
+            key={opened.type}
+            title={nameOf(opened)}
+            src={urlOf(opened)}
+          />
+        ) : null}
       </ResponsiveDialog>
     </PageContainer>
   );
 }
 
 /**
- * 피그마 `Cheers / Checkbox`(332:6136).
+ * 외부 약관 페이지(terms.gistory.me)를 그대로 끼워 보여준다.
  *
- * 네이티브 `<input type="checkbox">` 를 숨기고 그 위에 시안 모양을 그린다.
- * 라이브러리를 쓰지 않은 이유: 여기 필요한 건 켜짐/꺼짐뿐이고, 네이티브가
- * 레이블 연결·키보드·폼 제출을 이미 전부 해 준다.
+ * 본문을 받아와 다시 그리지 않고 iframe 을 쓰는 이유: 그 페이지는 완성된
+ * HTML 문서(자체 스타일·목차)라서, 가져와 파싱하면 약관 사이트가 바뀔
+ * 때마다 이쪽도 따라 고쳐야 한다. 그 서버는 `X-Frame-Options` /
+ * `frame-ancestors` 를 걸지 않아 임베딩이 막히지 않는다(2026-11-14 확인).
  *
- * 오른쪽 꺾쇠는 **본문을 여는 따로 떨어진 버튼**이다. 체크 영역 안에 두면
- * 약관을 읽으려다 동의가 토글된다.
+ * iframe 이 첫 화면을 그릴 때까지는 시안의 "불러오는 중" 화면
+ * (`335:6348` / `335:6313`, `Loading paragraph`)을 위에 덮어 둔다.
+ * `sandbox` 는 페이지가 쓰는 스크립트와 목차 앵커, 새 창 링크만 허용하고
+ * **최상위 창을 이동시키는 것은 막는다.**
  */
-function CheckRow({
-  label,
-  checked,
-  onChange,
-  onOpen,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: () => void;
-  onOpen?: () => void;
-}) {
-  return (
-    <div className="flex h-12 w-full items-center justify-between py-2">
-      <label className="flex cursor-pointer items-center gap-3">
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={onChange}
-          className="peer sr-only"
-        />
-        <span
-          className={cn(
-            "flex size-[22px] shrink-0 items-center justify-center rounded-sm border",
-            "peer-focus-visible:ring-focus/50 peer-focus-visible:ring-3",
-            checked ? "bg-ink-fill border-ink" : "bg-surface border-line-strong"
-          )}
-        >
-          {checked ? (
-            <img src={checkInverse} alt="" className="w-[13px]" />
-          ) : null}
-        </span>
-        <span className="text-body-sm text-ink">{label}</span>
-      </label>
+function TermsFrame({ title, src }: { title: string; src: string }) {
+  const [loaded, setLoaded] = useState(false);
 
-      {onOpen ? (
-        <button
-          type="button"
-          onClick={onOpen}
-          aria-label={`${label} 전문 보기`}
-          className="flex size-5 shrink-0 items-center justify-center"
-        >
-          <img src={chevronIcon} alt="" className="h-[13px]" />
-        </button>
-      ) : null}
-    </div>
+  return (
+    <>
+      <iframe
+        src={src}
+        title={`${title} 전문`}
+        onLoad={() => setLoaded(true)}
+        sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+        referrerPolicy="strict-origin-when-cross-origin"
+        className="absolute inset-0 size-full border-0"
+      />
+      {loaded ? null : (
+        // 기본 본문 영역과 같은 여백 — `bleed` 라서 여기서 직접 준다
+        <div className="bg-surface absolute inset-0 flex flex-col gap-6 px-5 py-6 lg:px-8">
+          <DialogBodySkeleton />
+        </div>
+      )}
+    </>
   );
 }

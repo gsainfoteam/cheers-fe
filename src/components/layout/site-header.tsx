@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useLogout } from "@/api";
-import catCheers from "@/assets/brand/cat-cheers.svg";
+import { BrandCat } from "@/components/brand-cat";
 import { forgetLocalAccount } from "@/lib/sign-out";
 import { cn } from "@/lib/utils";
 import { PageContainer } from "./page-container";
@@ -102,19 +102,21 @@ export function SiteHeader({ kind }: { kind: HeaderKind }) {
 /** 피그마 `Action / landing` — 고양이 마크 + 워드마크. 폭 120 고정이다. */
 const BRAND_CLASS = "flex w-30 shrink-0 items-center gap-2";
 
+/**
+ * 로고 마크는 3D 고양이(`BrandCat`, 디자인 시스템 가이드 0.3.13)다.
+ * 시안 크기는 모바일 32 / 데스크톱 40(0.3.7). 고양이는 꾸밈이라 대체
+ * 텍스트가 없고, 링크 이름은 옆의 워드마크 `취얼스` 가 된다.
+ */
 function BrandMark() {
   return (
     <>
-      <img
-        src={catCheers}
-        alt=""
-        width={32}
-        height={27.2941}
-        className="w-8 shrink-0"
+      <BrandCat
+        sizes="(min-width: 1024px) 40px, 32px"
+        className="w-8 shrink-0 lg:w-10"
       />
-      <span className="text-h3  text-ink whitespace-nowrap">취얼스</span>
+      <span className="text-h3 text-ink whitespace-nowrap">취얼스</span>
     </>
-  );p
+  );
 }
 
 function BrandLink({ signedIn }: { signedIn: boolean }) {
