@@ -108,7 +108,8 @@
      크기 대비) 인 것이 섞여 있고, 변수 목록에는 숫자만 나온다. 노드에 적용된
      px 값을 글자 크기로 나눠 단위를 가린다(동기화 가이드 0.2.2).
      - px 스타일: rem 으로 환산해 글자 크기와 같이 커지게 한다.
-     - % 스타일(H3, Label/Small): em 으로 적는다. -0.5% = -0.005em. */
+     - % 스타일(Screen, H2, H3, Label/Small): em 으로 적는다. -0.5% = -0.005em.
+     - 아직 단위를 확인하지 못한 것: H1, Display/Page. */
 
   --text-task-person: 1.75rem; /* Task/Person 28 */
   --text-task-person--line-height: 2.5rem; /* 40 */
@@ -117,7 +118,7 @@
 
   --text-screen: 1.75rem; /* Heading/Screen 28 */
   --text-screen--line-height: 2.375rem; /* 38 */
-  --text-screen--letter-spacing: -0.125rem; /* -2 */
+  --text-screen--letter-spacing: -0.02em; /* -2% → 28px 에서 -0.56px (동기화 01장 1.2) */
   --text-screen--font-weight: 700;
 
   --text-h1: 2rem; /* Heading/H1 32 */
@@ -127,7 +128,7 @@
 
   --text-h2: 1.5rem; /* Heading/H2 24 */
   --text-h2--line-height: 2.125rem; /* 34 */
-  --text-h2--letter-spacing: -0.05rem; /* -0.8 */
+  --text-h2--letter-spacing: -0.008em; /* -0.8% → 24px 에서 -0.192px (동기화 01장 1.2) */
   --text-h2--font-weight: 700;
 
   --text-h3: 1.25rem; /* Heading/H3 20 */

@@ -275,36 +275,45 @@ export const embedUrl = (k: keyof typeof LEGAL_DOCS) => `https://terms.gistory.m
 
 | # | 질문 | 결정 | 남은 일 |
 |---|---|---|---|
-| D1-1 | 이용 흐름 1단계 제목: `선배를 찾고`(Desktop) vs `선배를 만나고`(Mobile) | ⏳ 미정. 그동안 `만나고` 유지 | **디자이너 확인** |
-| D1-2 | `개인정보 수집·이용 동의` 항목이 `개인정보처리방침` 문서를 여는 것 | ⏳ 미정. 그동안 시안 라벨 유지 | **정책/법무 확인**, 필요하면 BE에 consent type 분리 요청 |
+| D1-1 | 이용 흐름 1단계 제목: `선배를 찾고`(Desktop) vs `선배를 만나고`(Mobile) | ✅ **`선배를 찾고`**. 시안 모바일도 고쳐짐(새 노드 `1259:9533`) | — |
+| D1-2 | `개인정보 수집·이용 동의` 항목이 `개인정보처리방침` 문서를 여는 것 | ✅ **해결됨(2026-11-14).** 시안 라벨 `개인정보 수집·이용 동의` 그대로 + 문서는 `embedded/cheers/privacy/261101/` | — |
 | D1-3 | 로그인 Kakao·Naver 다시 보이기(0.3.5) | ✅ **숨김 유지**(시안도 숨김) | — |
 
 ---
 
 ### 1.8 작업 체크리스트 (권장 순서)
 
+> **구현 기록 (2026-11-14).** 아래 체크한 항목은 `42-sync-figma-design-service-policy` 작업 트리에 반영했다(커밋 전). 구현하면서 정한 세부 사항:
+> - 회귀 대조 결과, `5a5795e`에서 되돌아간 파일은 `site-header.tsx`와 `terms.tsx` 둘뿐이었다. 0.7의 나머지 `[x]` 항목(토큰, `action.ts`, Hashtag, RequestItem, Select, Choice, ContactChoice, 사원증 CTA, shadcn 정리, `CheckRow`)은 HEAD에 들어 있다.
+> - Hero 그림은 고정 폭이 아니라 **시안 크기를 최대 폭**(`max-w-[238.4px] lg:max-w-[489.7px]`)으로 두었다. 1024~1440에서는 콘텐츠 폭이 1248보다 좁아서, 고정 폭이면 그림 칸이 넘친다. 1440에서는 시안과 같은 489.7×760이 된다. WebP는 477w 48KB / 884w 95KB다(예전 740w/1254w).
+> - 그림 칸은 `lg:w-167` 고정 대신 `lg:min-w-0 lg:flex-1` + `lg:gap-8`로 두었다. 1440에서 남는 폭이 정확히 668이다.
+> - 배경은 `SectionBackdrop`(`<picture>`) 하나로 Hero와 닫는 CTA에 같이 쓴다. 모바일 SVG는 시안과 같아서(내부 id만 다름) 그대로 두었다.
+> - 약관 주소는 `lib/legal.ts`(`pageUrl` / `embedUrl`, `VERSION` 하나)로 모았다. 서버 `type`(`tos`/`privacy`)을 키로 쓰고, 모르는 `type`은 서버가 준 `url`을 쓴다.
+> - `dev/tokens.tsx`의 Screen·H2 설명도 `%`로 고쳤다.
+
 **P0: 회귀 복구 (다른 섹션 작업보다 먼저)**
-- [ ] `site-header.tsx`: 117행 `p` 삭제, `cat-cheers.svg` import 제거 → `BrandCat` + `w-8 lg:w-10` (1.0.1, 0.3.7, 0.3.13)
-- [ ] `terms.tsx`: `7a9596a`의 `TermsFrame` / `CONSENT_DOC`(`tos`·`privacy`, `/embedded/` URL) / `bleed` 되살리기. 라벨은 시안 문구 (1.0.2)
-- [ ] `terms.tsx`: 파일 안 `CheckRow`를 지우고 `ui/check-row` 사용 (1.0.2, 0.3.4)
-- [ ] `5a5795e`에서 0.7의 `[x]` 항목이 실제로 들어갔는지 나머지 파일도 대조 (1.0.2 메모)
+- [x] `site-header.tsx`: 117행 `p` 삭제, `cat-cheers.svg` import 제거 → `BrandCat` + `w-8 lg:w-10` (1.0.1, 0.3.7, 0.3.13)
+- [x] `terms.tsx`: `TermsFrame` iframe(`/embedded/` URL), `tos`·`privacy` 매핑, `bleed` 되살리기. 라벨은 시안 문구 (1.0.2)
+- [x] `terms.tsx`: 파일 안 `CheckRow`를 지우고 `ui/check-row` 사용 (1.0.2, 0.3.4)
+- [x] `5a5795e`에서 0.7의 `[x]` 항목이 실제로 들어갔는지 나머지 파일도 대조 (1.0.2 메모) — 위 구현 기록 참고
 
 **P0: 토큰**
-- [ ] `tokens.css`: `--text-screen--letter-spacing: -0.02em`, `--text-h2--letter-spacing: -0.008em`, 머리 주석 고치기 (1.2)
+- [x] `tokens.css`: `--text-screen--letter-spacing: -0.02em`, `--text-h2--letter-spacing: -0.008em`, 머리 주석 고치기 (1.2)
 
 **P1**
-- [ ] Hero 3D 그림을 `1218:9067` 자산으로 교체: 477w/884w WebP, `width/height 884×1372`, `sizes`, 고정 폭, `lg:gap-8` + 그림 칸 668 (1.3.1)
-- [ ] Hero·닫는 CTA 데스크톱 배경 SVG 추가 + `<picture>` (1.3.2)
+- [x] Hero 3D 그림을 `1218:9067` 자산으로 교체: 477w/884w WebP, `width/height 884×1372`, `sizes`, 시안 크기 최대 폭, `lg:gap-8` (1.3.1)
+- [x] Hero·닫는 CTA 데스크톱 배경 SVG 추가 + `<picture>` (1.3.2)
 
 **P2**
-- [ ] `index.tsx` Hero 주석(`함께`/`한 잔`), 배경 이미지 주석 고치기 (1.3.3)
-- [ ] `lib/legal.ts`로 약관 URL 모으기, 푸터 정리 (1.6)
-- [ ] D1-1 답에 따라 `STEPS[0].title` (1.3.5)
-- [ ] D1-2 답에 따라 라벨/URL (1.5.3)
+- [x] `index.tsx` Hero 주석(`함께`/`한 잔`), 그림·배경 주석 고치기 (1.3.3)
+- [x] `lib/legal.ts`로 약관 URL 모으기, 푸터 정리 (1.6)
+- [x] D1-1: `STEPS[0].title` → `선배를 찾고` (1.3.5)
+- [x] D1-2: 라벨은 시안 그대로, 문서는 처리방침 embedded URL (1.5.3)
 
 **검증**
-- [ ] `tsc -b`, `bun run lint`, `bun run build` 통과(지금은 1.0.1 때문에 실패한다)
-- [ ] 393 / 1440에서 랜딩 스크린샷을 시안(`352:9465` / `352:9464`)과 나란히 비교. 특히 Hero 그림 크기·위치, 배경 빛 위치
-- [ ] 로그인 두 변형 393 / 1440 비교(로그인이 필요 없음)
-- [ ] 약관 동의: 가입 중 세션으로 들어가서 항목 이름이 `tos`/`privacy`가 아니라 시안 문구로 나오는지, 다이얼로그에서 뼈대가 보였다가 약관 본문으로 바뀌는지, 모바일에서 본문만 스크롤되는지 확인
-- [ ] 다이얼로그 제목 자간(Screen -0.56px / H2 -0.192px)을 개발자 도구 computed 값으로 확인
+- [x] `tsc -b`, `bun run lint`, `bun run build` 통과
+- [x] 393 / 1100 / 1440에서 랜딩 스크린샷을 시안과 비교. Hero 그림(1440에서 위아래 끝에 닿음, 1100에서 칸에 맞게 줄어듦), 데스크톱 배경 빛 위치(사원증 뒤), 1단계 제목, 푸터 링크 확인
+- [x] 두 embedded 약관 페이지가 같은 `sandbox` 속성의 iframe 안에서 그려지는 것 확인(임베딩을 막는 헤더 없음)
+- [ ] 로그인 두 변형 393 / 1440 비교 — 이번 작업으로 바뀐 것은 헤더뿐이라 랜딩 헤더로 갈음했다
+- [ ] 약관 동의 화면 실제 확인: 가입 중 세션이 필요해서 아직 못 봤다. 항목 이름이 시안 문구로 나오는지, 다이얼로그에서 뼈대 → 본문으로 바뀌는지, 모바일에서 본문만 스크롤되는지 볼 것
+- [x] 다이얼로그 제목 자간: 빌드된 CSS에서 `--text-screen--letter-spacing:-.02em`, `--text-h2--letter-spacing:-.008em` 확인. 화면에서 computed 값 확인은 위 약관 확인 때 같이 한다

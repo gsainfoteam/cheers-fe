@@ -66,8 +66,8 @@ const RESPONSIVE_TYPE: TypeSpec[] = [
 const FIXED_TYPE: TypeSpec[] = [
   { figma: "Heading/H1", cls: "text-h1", spec: "32/42/-1.2 · 700" },
   { figma: "Task/Person", cls: "text-task-person", spec: "28/40/-0.8 · 700" },
-  { figma: "Heading/Screen", cls: "text-screen", spec: "28/38/-2 · 700" },
-  { figma: "Heading/H2", cls: "text-h2", spec: "24/34/-0.8 · 700" },
+  { figma: "Heading/Screen", cls: "text-screen", spec: "28/38/-2% · 700" },
+  { figma: "Heading/H2", cls: "text-h2", spec: "24/34/-0.8% · 700" },
   { figma: "Heading/H3", cls: "text-h3", spec: "20/28/-0.5% · 700" },
   { figma: "Heading/Card", cls: "text-card-title", spec: "18/26/0 · 700" },
   { figma: "Body/Large", cls: "text-body-lg", spec: "18/28/0 · 400" },

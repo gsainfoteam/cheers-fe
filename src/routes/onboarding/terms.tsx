@@ -10,6 +10,7 @@ import {
   DialogBodySkeleton,
   ResponsiveDialog,
 } from "@/components/ui/responsive-dialog";
+import { embedUrl, isLegalDoc, type LegalDoc } from "@/lib/legal";
 import { cn } from "@/lib/utils";
 
 /**
@@ -28,34 +29,23 @@ export const Route = createFileRoute("/onboarding/terms")({
 });
 
 /**
- * 서버가 주는 `type` 은 자유 문자열이라 사람이 읽을 이름과 본문 주소를
- * 코드가 들고 있다.
+ * 서버가 주는 `type` 은 자유 문자열이라 사람이 읽을 이름을 코드가 들고 있다.
+ * 본문 주소는 `lib/legal.ts` 가 들고 있다(푸터와 같은 곳).
  *
  * 서버가 실제로 주는 값은 `tos` / `privacy` 다(`7a9596a` 에서 확인). 모르는
  * 값이 오면 이름은 `type` 을, 본문은 서버가 준 `url` 을 그대로 쓴다 — 빈칸
  * 보다는 낫고, 화면에서 바로 드러난다.
  *
- * - `label`: 체크 줄과 다이얼로그 제목. 피그마 시안 문구 그대로다(`828:8731`
- *   / `828:8732`, `335:6380` / `335:6561`). 개인정보 항목이 처리방침 문서를
- *   여는 것이 맞는지는 정책 확인 중이다(동기화 가이드 01장 D1-2).
- * - `url`: terms.gistory.me 의 **`/embedded/` 경로**. 일반 경로는 약관 사이트
- *   자체 헤더까지 그려져 다이얼로그 안에서 제목이 두 번 나온다. 약관이
- *   개정되면 주소의 버전(`261101`)을 함께 올려야 한다. 푸터(`site-footer.tsx`)
- *   는 새 탭으로 여는 **일반 경로**를 따로 들고 있으니 같이 올린다.
+ * 이름은 체크 줄과 다이얼로그 제목에 쓰고, 피그마 시안 문구 그대로다
+ * (`828:8731` / `828:8732`, `335:6380` / `335:6561`, 동기화 01장 D1-2).
  */
-const CONSENT_DOC: Record<string, { label: string; url: string }> = {
-  tos: {
-    label: "서비스 이용약관",
-    url: "https://terms.gistory.me/embedded/cheers/tos/261101/",
-  },
-  privacy: {
-    label: "개인정보 수집·이용 동의",
-    url: "https://terms.gistory.me/embedded/cheers/privacy/261101/",
-  },
+const CONSENT_LABEL: Record<LegalDoc, string> = {
+  tos: "서비스 이용약관",
+  privacy: "개인정보 수집·이용 동의",
 };
 
 function nameOf(consent: Consent): string {
-  return CONSENT_DOC[consent.type]?.label ?? consent.type;
+  return isLegalDoc(consent.type) ? CONSENT_LABEL[consent.type] : consent.type;
 }
 
 function labelOf(consent: Consent): string {
@@ -63,8 +53,9 @@ function labelOf(consent: Consent): string {
   return consent.is_required ? `[필수] ${name}` : name;
 }
 
+/** iframe 에 넣을 본문 주소. 약관 사이트 자체 헤더가 빠진 `/embedded/` 판이다 */
 function urlOf(consent: Consent): string {
-  return CONSENT_DOC[consent.type]?.url ?? consent.url;
+  return isLegalDoc(consent.type) ? embedUrl(consent.type) : consent.url;
 }
 
 function RouteComponent() {
