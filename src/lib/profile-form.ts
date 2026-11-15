@@ -37,6 +37,32 @@ export function normalizeLink(link: string): string {
   return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
 }
 
+/**
+ * **다른 회원이 넣은** 링크를 `href` 에 넣기 전에 거른다. `http(s)` 가
+ * 아니면 `null` — `javascript:` 같은 스킴을 막는다. 저장할 때 `normalizeLink`
+ * 가 스킴을 붙이지만 그 경로를 거치지 않은 값이 있을 수 있어 화면에서도 본다.
+ */
+export function httpUrlOrNull(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed && /^https?:\/\//i.test(trimmed) ? trimmed : null;
+}
+
+/**
+ * 링크를 화면에 적을 글자. LinkedIn 프로필이면 주소 끝(`/in/` 뒤)만,
+ * 아니면 스킴을 뗀 주소. 마이페이지 `LinkedIn` 줄의 시안 값이
+ * `sunbae-kim-a12345678` 이다(06장 6.2.2).
+ */
+export function linkLabelOf(link: string): string {
+  try {
+    const url = new URL(link);
+    const slug = /^\/in\/([^/]+)/.exec(url.pathname)?.[1];
+    if (url.hostname.endsWith("linkedin.com") && slug) return decodeURIComponent(slug);
+    return `${url.host}${url.pathname === "/" ? "" : url.pathname}`;
+  } catch {
+    return link;
+  }
+}
+
 export function isValidLink(link: string): boolean {
   try {
     const url = new URL(normalizeLink(link));
@@ -65,21 +91,78 @@ export function companyRequestOf(
     : { company_name: company.trim() };
 }
 
+/**
+ * 저장할 부서. 선택 입력이라 **비었으면 키를 보내지 않는다** — 명세
+ * `department`: *"선택 입력, 안 보내거나 빈 값이면 null 로 저장"*(이슈 #43).
+ * 저장이 전체 교체라 정보 수정에서 지우면 그대로 null 이 된다.
+ */
+export function departmentRequestOf(
+  department: string
+): Pick<GraduatedInfoRequest, "department"> {
+  const trimmed = department.trim();
+  return trimmed ? { department: trimmed } : {};
+}
+
 type ContactRequest = Body<"/api/v1/user/graduated/info", "post">["contact"];
+
+/**
+ * 연락 채널 폼 값 — 피그마 `커피챗 참여 설정`(1159:10067)의 체크박스 둘과
+ * 채널별 입력 칸. 체크박스가 곧 명세의 `kakao_enabled` · `email_enabled` 다
+ * (동기화 가이드 3.5.3).
+ *
+ * `email` 은 켜짐 여부(boolean)이고 주소는 `emailAddress` 다 — 명세의
+ * `email`(주소)과 이름이 겹쳐서 헷갈리지 않게 폼에서는 묶어서 다룬다.
+ */
+export type ContactChannels = {
+  kakao: boolean;
+  email: boolean;
+  /** 사용자가 친 그대로(하이픈 포함 가능). 보낼 때 숫자만 남긴다 */
+  phone: string;
+  emailAddress: string;
+};
+
+/**
+ * 연락 설정의 처음 값.
+ *
+ * - 저장된 설정이 있으면 그대로(정보 수정, 명함 재인증 선배)
+ * - 없으면 **두 채널 모두 켬** — 시안 주석 *"진입 시 기본적으로 check
+ *   되어있게 … 커피챗 참여 유도"*. 이메일은 계정 이메일로 미리 채운다
+ *   (동기화 가이드 D3-6)
+ */
+export function contactChannelsOf(
+  saved: {
+    kakao_enabled: boolean;
+    email_enabled: boolean;
+    phone: string | null;
+    email: string | null;
+  } | null,
+  fallbackEmail: string | null
+): ContactChannels {
+  if (!saved) {
+    return { kakao: true, email: true, phone: "", emailAddress: fallbackEmail ?? "" };
+  }
+  return {
+    kakao: saved.kakao_enabled,
+    email: saved.email_enabled,
+    phone: formatPhone(saved.phone ?? ""),
+    emailAddress: saved.email ?? fallbackEmail ?? "",
+  };
+}
 
 /**
  * 저장할 연락 설정.
  *
- * 임시: 이슈 #26 — 이메일·휴대폰 둘 다 필수, 둘 다 켠다. 시안의 "공유할
- * 이메일 / 알림 받을 휴대폰" 을 `email_enabled` · `kakao_enabled` 에 어떻게
- * 매핑할지 답이 오기 전까지의 결정이다. 답이 나오면 이 함수와 화면의
- * `(선택)` 을 함께 고친다.
+ * **끈 채널의 값은 보내지 않는다(`null`).** 선배가 입력한 연락처는 알림용이자
+ * 학생에게 공유하는 값이라(동기화 가이드 D3-3), 끈 채널의 값을 남겨 두면 쓰지
+ * 않겠다고 한 연락처가 공유될 수 있다. 빈 문자열은 400 이므로 보내지 않는다.
  */
-export function contactRequestOf(email: string, phone: string): ContactRequest {
+export function contactRequestFrom(channels: ContactChannels): ContactRequest {
+  const phone = digitsOf(channels.phone);
+  const email = channels.emailAddress.trim();
   return {
-    email_enabled: true,
-    kakao_enabled: true,
-    email: email.trim(),
-    phone: digitsOf(phone),
+    kakao_enabled: channels.kakao,
+    email_enabled: channels.email,
+    phone: channels.kakao && phone ? phone : null,
+    email: channels.email && email ? email : null,
   };
 }

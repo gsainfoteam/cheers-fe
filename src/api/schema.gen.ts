@@ -242,6 +242,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/user/graduated/nickname/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 닉네임 중복 확인 (가입 중에만. 조회만 하며 예약하지 않음) */
+        get: operations["GraduatedController_checkNickname"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/user/graduated/verify/business-card": {
         parameters: {
             query?: never;
@@ -514,6 +531,40 @@ export interface paths {
         head?: never;
         /** 어드민 권한 변경 (superadmin 전용, 자기 자신은 불가) */
         patch: operations["AdminAccountController_updateRole"];
+        trace?: never;
+    };
+    "/api/manager/v1/access-log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 개인정보 열람 · 개발용 회원 완전탈퇴 기록 목록 (최근 기록 순, superadmin 전용). 조회만 가능 */
+        get: operations["AdminAccessLogController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/manager/v1/audit-log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 어드민 감사 로그 목록 (최근 기록 순, superadmin 전용). 조회만 가능 */
+        get: operations["AdminAuditLogController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/manager/v1/interest": {
@@ -1072,7 +1123,8 @@ export interface components {
             /** @description 회사 검색 결과의 company_id */
             company_id: number;
             company: string;
-            department: string;
+            /** @description 선택 입력이라 없으면 null */
+            department: string | null;
             job: string;
             hashtags: string[];
             links: string[];
@@ -1223,6 +1275,10 @@ export interface components {
             /** @description 이번 호출로 가입이 완료됐을 때만 */
             refresh_token?: string;
         };
+        NicknameCheckResponseDto: {
+            /** @description 사용 가능하면 true. 대소문자 구분 없이 이미 쓰는 닉네임이면 false */
+            available: boolean;
+        };
         VerifyBusinessCardRequestDto: {
             /** @description POST /api/v1/file/business-card/upload-url 에서 받은 tmp key */
             key: string;
@@ -1239,8 +1295,8 @@ export interface components {
              *     이미 등록된 표기(대소문자 · 공백 무시)면 그 회사로 저장, 아니면 새 회사로 등록되어 어드민 확인을 기다림
              */
             company_name?: string;
-            /** @description 비공개 (다른 회원에게 보이지 않음) */
-            department: string;
+            /** @description 비공개 (다른 회원에게 보이지 않음). 선택 입력, 안 보내거나 빈 값이면 null 로 저장 */
+            department?: string;
             job: string;
             /** @description "#" 없이. 최대 5개, 각 1~20자, 중복 불가. 안 보내면 빈 배열로 교체 */
             hashtags?: string[];
@@ -1410,6 +1466,38 @@ export interface components {
         UpdateAdminAccountRoleRequestDto: {
             /** @enum {string} */
             role: "admin" | "superadmin";
+        };
+        AdminAccessLogDto: {
+            /** @enum {string} */
+            target_type: "business_card" | "dev_user_hard_delete";
+            pk: string;
+            /** @description 열람 시점의 어드민 이메일 */
+            admin_email: string;
+            /** @description business_card: graduated.pk, dev_user_hard_delete: 지운 users.pk */
+            target_id: string;
+            /** Format: date-time */
+            created_at: string;
+        };
+        AdminAuditLogDto: {
+            /** @enum {string} */
+            action: "admin_auth.login" | "admin_account.create" | "admin_account.role_update" | "admin_account.delete" | "interest.create" | "interest.rename" | "interest.delete" | "interest.reorder" | "school_department.create" | "school_department.update" | "school_email_domain.replace" | "company.create" | "company.update" | "company.delete" | "company.merge" | "company.logo_update" | "company.import" | "company_name.add" | "company_name.remove" | "consent.create" | "business_card.verification_cancel" | "notification_log.delivery_lookup" | "dev_user.hard_delete";
+            /** @enum {string} */
+            target_type: "admin_account" | "interest" | "school_department" | "school_email_domain" | "company" | "company_name" | "consent" | "business_card" | "notification_log" | "user";
+            /** @description 변경 전 값. 생성이면 null */
+            before: {
+                [key: string]: unknown;
+            } | null;
+            /** @description 변경 후 값. 삭제면 null */
+            after: {
+                [key: string]: unknown;
+            } | null;
+            pk: string;
+            /** @description 요청 시점의 어드민 이메일 */
+            admin_email: string;
+            /** @description 대상 엔티티 pk. 일괄 작업은 null */
+            target_id: string | null;
+            /** Format: date-time */
+            created_at: string;
         };
         AdminInterestDto: {
             pk: number;
@@ -2054,7 +2142,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
-            /** @description 가입을 마치지 않음, 재학생이 아님 */
+            /** @description 재학생이 아님 */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -2421,6 +2509,55 @@ export interface operations {
             };
             /** @description 인증한 이메일이 없음 */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    GraduatedController_checkNickname: {
+        parameters: {
+            query: {
+                /** @description 확인할 닉네임. POST /graduated/info 의 nickname 규칙과 동일 */
+                nickname: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NicknameCheckResponseDto"];
+                };
+            };
+            /** @description nickname 형식 오류 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 현업자가 아님, 가입 중인데 next_step이 profile이 아님 */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3323,6 +3460,127 @@ export interface operations {
             };
             /** @description 없는 계정 */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminAccessLogController_list: {
+        parameters: {
+            query?: {
+                /** @description 1부터 시작 */
+                page?: number;
+                size?: number;
+                /** @description 어드민 이메일 (부분 일치, 대소문자 무시) */
+                admin_email?: string;
+                target_type?: "business_card" | "dev_user_hard_delete";
+                /** @description 이 시각부터 (포함). UTC 오프셋이 있는 ISO 8601 */
+                created_from?: string;
+                /** @description 이 시각 전까지 (미포함). UTC 오프셋이 있는 ISO 8601 */
+                created_to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageResponseDto"] & {
+                        items?: components["schemas"]["AdminAccessLogDto"][];
+                    };
+                };
+            };
+            /** @description query 형식 오류, created_from이 created_to보다 늦음 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description superadmin이 아님 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AdminAuditLogController_list: {
+        parameters: {
+            query?: {
+                /** @description 1부터 시작 */
+                page?: number;
+                size?: number;
+                /** @description 어드민 이메일 (부분 일치, 대소문자 무시) */
+                admin_email?: string;
+                action?: "admin_auth.login" | "admin_account.create" | "admin_account.role_update" | "admin_account.delete" | "interest.create" | "interest.rename" | "interest.delete" | "interest.reorder" | "school_department.create" | "school_department.update" | "school_email_domain.replace" | "company.create" | "company.update" | "company.delete" | "company.merge" | "company.logo_update" | "company.import" | "company_name.add" | "company_name.remove" | "consent.create" | "business_card.verification_cancel" | "notification_log.delivery_lookup" | "dev_user.hard_delete";
+                target_type?: "admin_account" | "interest" | "school_department" | "school_email_domain" | "company" | "company_name" | "consent" | "business_card" | "notification_log" | "user";
+                /** @description 대상 엔티티 pk (정확히 일치) */
+                target_id?: string;
+                /** @description 이 시각부터 (포함). UTC 오프셋이 있는 ISO 8601 */
+                created_from?: string;
+                /** @description 이 시각 전까지 (미포함). UTC 오프셋이 있는 ISO 8601 */
+                created_to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageResponseDto"] & {
+                        items?: components["schemas"]["AdminAuditLogDto"][];
+                    };
+                };
+            };
+            /** @description query 형식 오류, created_from이 created_to보다 늦음 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description superadmin이 아님 */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

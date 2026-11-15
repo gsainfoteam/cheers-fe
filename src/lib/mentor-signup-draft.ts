@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { GraduatedProfile } from "@/api";
+import { contactChannelsOf, type ContactChannels } from "@/lib/profile-form";
 
 /**
  * 선배 가입의 마지막 단계(기본 정보 → 추가 정보)가 나눠 쓰는 임시 보관함.
@@ -19,15 +20,18 @@ export type MentorSignupDraft = {
   company: string;
   /** 검색 결과에서 고른 회사. 목록에 없어 직접 친 이름이면 null */
   company_id: number | null;
-  /** 비공개. 다른 회원에게 보이지 않는다 */
+  /** 비공개. 다른 회원에게 보이지 않는다. 선택 입력이라 비어 있을 수 있다 */
   department: string;
   job: string;
   /** `#` 없이 담는다 — 명세 패턴 `^[^#]+$` */
   hashtags: string[];
   /** 사용자가 친 그대로. 보낼 때 스킴을 붙인다 */
   linkedin: string;
-  email: string;
-  phone: string;
+  /**
+   * 커피챗 참여 설정. 아직 추가 정보 화면에 가지 않았으면 null — 그 화면이
+   * 처음 값(두 채널 켬, 계정 이메일)을 세운다
+   */
+  contact: ContactChannels | null;
   /**
    * 저장 응답이 "이미 쓰는 닉네임" 이라고 돌려준 값. 기본 정보로 되돌아가
    * 그 칸에 문구를 띄우는 데만 쓴다. 다른 값으로 고치면 문구가 사라진다.
@@ -44,8 +48,7 @@ const EMPTY: MentorSignupDraft = {
   job: "",
   hashtags: [],
   linkedin: "",
-  email: "",
-  phone: "",
+  contact: null,
   takenNickname: "",
 };
 
@@ -62,16 +65,16 @@ export const useMentorSignupDraft = create<Store>((set) => ({
 }));
 
 /**
- * 기본 정보가 채워졌는지. 명세가 필수로 받는 셋(회사·`department`·
- * `job`)과 첫 저장에 필수인 `nickname`, 그리고 내 정보에 이름이 없으면
- * `name` 까지가 기준이다.
+ * 기본 정보가 채워졌는지. 회사·`job` 과 첫 저장에 필수인 `nickname`,
+ * 그리고 내 정보에 이름이 없으면 `name` 까지가 기준이다. 부서는 선택
+ * 입력이라 보지 않는다(동기화 가이드 3.4.1).
  */
 export function hasBasics(
   draft: MentorSignupDraft,
   nameRequired: boolean
 ): boolean {
   return (
-    Boolean(draft.company && draft.department && draft.job && draft.nickname) &&
+    Boolean(draft.company && draft.job && draft.nickname) &&
     (!nameRequired || Boolean(draft.name))
   );
 }
@@ -90,11 +93,11 @@ export function draftFromProfile(
     nickname: profile.nickname,
     company: profile.company,
     company_id: profile.company_id,
-    department: profile.department,
+    department: profile.department ?? "",
     job: profile.job,
     hashtags: profile.hashtags,
     linkedin: profile.links[0] ?? "",
-    email: profile.contact?.email ?? "",
-    phone: profile.contact?.phone ?? "",
+    // 저장된 설정이 없는 옛 계정은 null — 추가 정보 화면이 처음 값을 세운다
+    contact: profile.contact ? contactChannelsOf(profile.contact, null) : null,
   };
 }

@@ -1,6 +1,10 @@
-import { StrictMode } from "react";
+import { Fragment, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "@/index.css";
+import { action } from "@/components/ui/action";
+import { CheckRow } from "@/components/ui/check-row";
+import { Field, Select } from "@/components/ui/field";
+import { Hashtag, HashtagList } from "@/components/ui/hashtag";
 
 /**
  * 개발용 토큰 확인 페이지 (`/tokens.html`).
@@ -62,16 +66,16 @@ const RESPONSIVE_TYPE: TypeSpec[] = [
 const FIXED_TYPE: TypeSpec[] = [
   { figma: "Heading/H1", cls: "text-h1", spec: "32/42/-1.2 · 700" },
   { figma: "Task/Person", cls: "text-task-person", spec: "28/40/-0.8 · 700" },
-  { figma: "Heading/Screen", cls: "text-screen", spec: "28/38/-2 · 700" },
-  { figma: "Heading/H2", cls: "text-h2", spec: "24/34/-0.8 · 700" },
-  { figma: "Heading/H3", cls: "text-h3", spec: "20/28/-0.5 · 700" },
+  { figma: "Heading/Screen", cls: "text-screen", spec: "28/38/-2% · 700" },
+  { figma: "Heading/H2", cls: "text-h2", spec: "24/34/-0.8% · 700" },
+  { figma: "Heading/H3", cls: "text-h3", spec: "20/28/-0.5% · 700" },
   { figma: "Heading/Card", cls: "text-card-title", spec: "18/26/0 · 700" },
   { figma: "Body/Large", cls: "text-body-lg", spec: "18/28/0 · 400" },
   { figma: "Body/Medium", cls: "text-body", spec: "16/24/0 · 400" },
   { figma: "Body/Small", cls: "text-body-sm", spec: "14/20/0 · 400" },
   { figma: "Label/Large", cls: "text-label-lg", spec: "16/24/0 · 500" },
   { figma: "Label/Medium", cls: "text-label", spec: "14/20/0 · 500" },
-  { figma: "Label/Small", cls: "text-label-sm", spec: "12/16/+0.2 · 500" },
+  { figma: "Label/Small", cls: "text-label-sm", spec: "12/16/+0.2% · 500" },
   { figma: "Label/Micro", cls: "text-label-xs", spec: "11/16/0 · 500" },
   { figma: "Web/Button", cls: "text-button", spec: "16/24/0 · 500" },
 ];
@@ -214,22 +218,63 @@ export function TokensPage() {
       </Section>
 
       <Section
-        title="shadcn 다리"
-        note="단계 0에서 색을 잃은 shadcn 5종이 Cheers 토큰 위에서 다시 보이는지. 단계 5에서 없어질 수 있는 임시 블록이다."
+        title="버튼 — Cheers / Button"
+        note="3종 × Default · Disabled. Hover(=Pressed)는 마우스를 올려서, Focus 는 Tab 으로 확인한다 — 클릭으로는 포커스 링이 뜨지 않아야 한다."
+      >
+        <div className="grid max-w-3xl grid-cols-2 gap-3">
+          {(["primary", "secondary", "ghost"] as const).map((variant) => (
+            <Fragment key={variant}>
+              <button type="button" className={action({ variant })}>
+                {variant}
+              </button>
+              <button type="button" disabled className={action({ variant })}>
+                {variant} · disabled
+              </button>
+            </Fragment>
+          ))}
+        </div>
+      </Section>
+
+      <Section
+        title="입력 — Cheers / Field · Select"
+        note="빈 Select 는 흰 바탕(Empty)이어야 하고, 캔버스색은 ReadOnly 칸에만 나와야 한다."
+      >
+        <div className="grid max-w-3xl grid-cols-1 gap-6 lg:grid-cols-2">
+          <Select
+            label="학과"
+            placeholder="학과를 선택해 주세요"
+            options={[
+              { value: "1", label: "전기전자컴퓨터공학부" },
+              { value: "2", label: "신소재공학부" },
+            ]}
+            value={null}
+            onValueChange={() => {}}
+          />
+          <Field label="이름" value="예시 학생" readOnly hint="도움말" />
+        </div>
+      </Section>
+
+      <Section title="체크박스 — Cheers / Checkbox" note="Off · On · Disable.">
+        <div className="max-w-sm">
+          <CheckRow label="동의 항목" checked={false} onChange={() => {}} onOpen={() => {}} />
+          <CheckRow label="동의 항목" checked onChange={() => {}} />
+          <CheckRow label="동의 항목" checked={false} onChange={() => {}} disabled />
+        </div>
+      </Section>
+
+      <Section
+        title="해시태그 — Cheers / Hastag"
+        note="Complete · Focused · Candidate. Processing 은 TagInput 의 입력 칸이라 여기 없다."
       >
         <div className="flex flex-wrap items-center gap-3">
-          <button className="bg-primary text-primary-foreground rounded-md px-4 py-2 text-sm font-medium">
-            bg-primary
-          </button>
-          <button className="bg-secondary text-secondary-foreground rounded-md px-4 py-2 text-sm font-medium">
-            bg-secondary
-          </button>
-          <span className="bg-accent text-accent-foreground rounded-md px-4 py-2 text-sm">bg-accent</span>
-          <span className="text-destructive text-sm">text-destructive</span>
-          <input
-            className="border-input bg-background text-foreground focus-visible:ring-ring rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
-            placeholder="border-input / ring-ring"
-          />
+          <Hashtag value="연구인턴" />
+          <Hashtag value="연구인턴" onRemove={() => {}} />
+          <Hashtag value="연구인턴" variant="focused" onRemove={() => {}} />
+          <Hashtag value="연구인턴" variant="candidate" />
+        </div>
+        {/* 모바일 신청 카드 안쪽 폭(393 - 여백 40 - 카드 패딩 48)에서 학생 참여 활동 최대 길이(50자) */}
+        <div className="border-line mt-4 w-[305px] border">
+          <HashtagList values={["지스트인포팀웹서비스개발및운영프로젝트반도체공정엔지니어링리서치인턴십프로그램참여", "SAP"]} />
         </div>
       </Section>
     </main>

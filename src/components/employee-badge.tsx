@@ -1,7 +1,8 @@
-import type { CSSProperties } from "react";
-import brandSeal from "@/assets/landing/brand-seal.svg";
+import { useState, type CSSProperties } from "react";
+import catCheers from "@/assets/brand/cat-cheers.svg";
 import signatureRibbon from "@/assets/landing/signature-ribbon.svg";
 import { cn } from "@/lib/utils";
+import { BrandCat } from "./brand-cat";
 
 /**
  * 사원증 카드. 피그마 `Cheers / Employee badge`(354:9525).
@@ -44,8 +45,19 @@ import { cn } from "@/lib/utils";
 const BASE_WIDTH = 170.5;
 
 export type EmployeeBadgeData = {
-  /** 회사 로고 이미지 URL. 없으면 회사명만 보인다 */
-  companyLogo?: string;
+  /**
+   * 회사 로고 이미지 URL.
+   *
+   * - `null` — 로고가 **없다고 확인된** 회사. 같은 칸에 2D 고양이를 둔다
+   *   (동기화 가이드 04장 D4-1). 로고 목록은 재학생 취업 목록을 받아 손으로
+   *   채우므로 목록에 없는 회사(예: Google)가 여기에 온다. 주소가 있는데
+   *   이미지를 못 받아도 고양이로 바꾼다.
+   * - `undefined` — 로고를 **모르는** 자리. 칸을 그리지 않고 회사명만 선다.
+   *   마이페이지 · 공개 사원증 미리보기가 그렇다(`GraduatedProfileDto` 에 로고
+   *   필드가 없다) — 고양이를 그리면 실제 목록에서는 로고가 보이는 선배에게
+   *   틀린 미리보기를 보여 주게 된다.
+   */
+  companyLogo?: string | null;
   company: string;
   /** 본명이 아니라 닉네임이다 */
   nickname: string;
@@ -69,6 +81,14 @@ export function EmployeeBadge({
    */
   logoLoading?: "eager" | "lazy";
 }) {
+  const [logoFailed, setLogoFailed] = useState(false);
+  const logo =
+    data.companyLogo === undefined
+      ? undefined
+      : logoFailed
+        ? null
+        : data.companyLogo;
+
   return (
     /*
      * 바깥 한 겹이 있는 이유. `100cqw` 는 **조상** 컨테이너를 보고 풀린다 —
@@ -91,15 +111,25 @@ export function EmployeeBadge({
       >
         {/* 피그마 `Company identity` */}
         <div className="flex flex-col items-start px-[calc(16*var(--u))] pt-[calc(26*var(--u))] gap-[calc(6*var(--u))]">
-          {data.companyLogo ? (
+          {logo === undefined ? null : (
+            /*
+             * 고양이도 로고와 **같은 칸**(69.858×24.865)에 `object-contain` 으로
+             * 넣는다 — 높이에 맞춰 줄어든다. 크기는 눈으로 보고 다시 정한다
+             * (D4-1 후속)
+             */
             <img
-              src={data.companyLogo}
+              src={logo ?? catCheers}
               alt=""
               loading={logoLoading}
               decoding="async"
-              className="h-[calc(24.865*var(--u))] w-[calc(69.858*var(--u))] object-contain"
+              onError={logo ? () => setLogoFailed(true) : undefined}
+              className={cn(
+                "h-[calc(24.865*var(--u))] w-[calc(69.858*var(--u))] object-contain",
+                // 회사 로고 위치는 그대로 두고, 고양이만 회사명과 같은 왼쪽 선에 붙인다
+                !logo && "object-left"
+              )}
             />
-          ) : null}
+          )}
           {/* Badge/Company mobile 12/18/-0.3 → 큰 카드 13/20 */}
           <p className="text-ink-soft text-[12px] leading-[18px] tracking-[-0.3px] @min-[220px]:text-[13px] @min-[220px]:leading-[20px] @min-[220px]:tracking-normal">
             {data.company}
@@ -144,11 +174,14 @@ export function EmployeeBadge({
           >
             GIST ALUMNI
           </p>
-          <img
-            src={brandSeal}
-            alt=""
-            aria-hidden
-            className="absolute top-[calc(13.62*var(--u))] left-[calc(137.35*var(--u))] h-[calc(16.158*var(--u))] w-[calc(18.944*var(--u))]"
+          {/*
+           * 피그마 `Cheers brand seal` — 건배하는 고양이 인스턴스. 띠 세로
+           * 가운데, 왼쪽 127.12, 폭 31.83(높이는 비율로 27.15). 표시 폭은
+           * 모바일 카드 약 32px, 데스크톱 카드 약 54px 다.
+           */}
+          <BrandCat
+            sizes="54px"
+            className="absolute top-1/2 left-[calc(127.12*var(--u))] w-[calc(31.827*var(--u))] -translate-y-1/2"
           />
         </div>
 

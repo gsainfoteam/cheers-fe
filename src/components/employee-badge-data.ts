@@ -12,8 +12,8 @@ import type { EmployeeBadgeData } from "./employee-badge";
 type BadgeSource = {
   company: string;
   /**
-   * `CheersCardDto` 에만 있다. `GraduatedProfileDto` 에는 로고가 없어
-   * 마이페이지 · 미리보기 사원증은 회사 이름만 선다
+   * `CheersCardDto` 에만 있다(`null` = 로고 없음 → 고양이). `GraduatedProfileDto`
+   * 에는 필드가 없어(`undefined`) 마이페이지 · 미리보기 사원증은 회사 이름만 선다
    */
   company_logo_url?: string | null;
   nickname: string;
@@ -23,7 +23,8 @@ type BadgeSource = {
 
 export function badgeDataOf(source: BadgeSource): EmployeeBadgeData {
   return {
-    companyLogo: source.company_logo_url ?? undefined,
+    // null(없음)과 undefined(모름)를 그대로 넘긴다 — 사원증이 둘을 다르게 그린다
+    companyLogo: source.company_logo_url,
     company: source.company,
     nickname: source.nickname,
     role: source.job,

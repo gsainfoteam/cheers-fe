@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 import {
@@ -26,22 +27,21 @@ import {
 } from "@/features/profile/mentor-form";
 import {
   StudentActivitiesField,
+  StudentAttachmentsField,
   StudentContactFields,
   StudentIdentityFields,
   StudentInterestsField,
-  StudentPortfolioField,
 } from "@/features/profile/student-fields";
 import {
   activitiesOf,
-  attachmentsOf,
-  studentContactEmailOf,
-  studentContactOf,
+  attachmentRequestsOf,
   studentEditDefaults,
   studentEditSchema,
 } from "@/features/profile/student-form";
 import {
   companyRequestOf,
-  contactRequestOf,
+  contactRequestFrom,
+  departmentRequestOf,
   normalizeLink,
 } from "@/lib/profile-form";
 import { useSession } from "@/lib/session";
@@ -115,10 +115,22 @@ const FORM_CARD =
 
 function StudentEditForm({ me }: { me: UserInfo }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: departments } = useSuspenseQuery(studentDepartmentsQuery());
   const { data: interests } = useSuspenseQuery(studentInterestsQuery());
   const submit = useSubmitStudentInfo();
-  const contactEmail = studentContactEmailOf(me);
+  /** 첨부를 올리는 중. 끝나기 전에 저장하면 그 파일이 빠진다 */
+  const [uploading, setUploading] = useState(false);
+
+  /** 저장된 파일의 presigned URL 이 만료됐을 수 있어 누를 때 내 정보를 다시 받는다 */
+  const refreshAttachments = async () =>
+    (
+      await queryClient.fetchQuery({
+        ...userInfoQuery(),
+        // presigned URL 의 수명을 모르므로 1분이 지났으면 새로 받는다
+        staleTime: 60_000,
+      })
+    ).student?.profile?.attachments ?? [];
 
   const form = useForm({
     resolver: zodResolver(studentEditSchema),
@@ -132,13 +144,10 @@ function StudentEditForm({ me }: { me: UserInfo }) {
         department_id: values.departmentId,
         interests: values.interests,
         activities: activitiesOf(values.activities),
-        // 화면에 칸이 없는 파일 첨부도 그대로 돌려보낸다 — 전체 교체라 안
-        // 보내면 지워진다(`attachmentsOf` 참고)
-        attachments: attachmentsOf(
-          values.portfolioUrl,
-          me.student?.profile?.attachments
-        ),
-        contact: studentContactOf(values, contactEmail),
+        // 전체 교체다. 화면의 목록(예전 링크 첨부 포함)이 곧 저장될 목록이다
+        attachments: attachmentRequestsOf(values.attachments),
+        // 끈 채널의 값은 보내지 않는다(`contactRequestFrom`)
+        contact: contactRequestFrom(values.contact),
       },
       // 가입 완료가 아니라 응답에 토큰이 없다. `keys.user` 무효화는 훅이 한다
       { onSuccess: () => void navigate({ to: "/me" }) }
@@ -149,24 +158,37 @@ function StudentEditForm({ me }: { me: UserInfo }) {
     <FormProvider {...form}>
       <form noValidate className={FORM_CARD} onSubmit={save}>
         {/*
-         * 시안은 이름을 고칠 수 있는 칸처럼 그렸지만 명세상 첫 저장 뒤로 바뀌지
-         * 않는다(보내도 무시). 선배 정보 수정처럼 읽기 전용으로 세운다
+         * 이름은 첫 저장 뒤로 바뀌지 않는다(명세: 보내도 무시). 시안도 ReadOnly
+         * 칸 + 도움말이다(동기화 가이드 05장 5.3.1). 가입 화면 문구(`가입 후
+         * 변경할 수 없어요.`)와 조금 다른데, 각 시안대로 둔다(D5-9)
          */}
-        <StudentIdentityFields nameLocked departments={departments} />
-        {/* 시안은 라벨과 칩 사이도 28 이다 — 가입 화면에 있는 설명 줄이 없다 */}
-        <StudentInterestsField options={interests} className="gap-7" />
+        <StudentIdentityFields
+          nameLocked
+          nameHint="가입 후에는 변경할 수 없어요."
+          departments={departments}
+        />
 
+        {/* 시안의 첫 구분선은 이름 · 학과 아래다. 관심 분야 ~ 첨부 사이에는 없다 */}
         <div className="bg-line h-px" />
 
+        {/*
+         * 시안 주석 "수정 가능한 요소들 수정 ui는 가입 단계에서와 동일" — 설명
+         * 줄과 간격(12)이 가입 화면과 같고, 연필은 학생이 넣은 칩에만 붙는다
+         * (05장 5.3.2, D5-7)
+         */}
+        <StudentInterestsField options={interests} description="하나 이상 선택해 주세요." />
         <StudentActivitiesField />
-        <StudentPortfolioField />
+        <StudentAttachmentsField onBusyChange={setUploading} refresh={refreshAttachments} />
 
         <div className="bg-line h-px" />
 
-        <StudentContactFields contactEmail={contactEmail} />
+        <StudentContactFields />
 
         <SaveError error={submit.error} />
-        <SaveActions busy={submit.isPending} disabled={!form.formState.isValid} />
+        <SaveActions
+          busy={submit.isPending}
+          disabled={!form.formState.isValid || uploading}
+        />
       </form>
     </FormProvider>
   );
@@ -194,14 +216,14 @@ function MentorEditForm({
     submit.mutate(
       {
         ...companyRequestOf(values.company, values.company_id),
-        department: values.department,
+        ...departmentRequestOf(values.department),
         job: values.job,
         hashtags: values.hashtags,
         // 시안은 LinkedIn 칸 하나, 명세는 배열(최대 5)이다. 두 번째 링크부터는
         // 이 화면이 보여주지 않으므로 보내지 않는다 — 전체 교체라 지워진다
         links: values.linkedin ? [normalizeLink(values.linkedin)] : [],
-        // 임시: 이슈 #26 — 둘 다 필수, 둘 다 켠다(`contactRequestOf` 참고)
-        contact: contactRequestOf(values.email, values.phone),
+        // 끈 채널의 값은 보내지 않는다 — 공유에도 쓰이는 값이다(동기화 가이드 D3-3)
+        contact: contactRequestFrom(values.contact),
       },
       { onSuccess: () => void navigate({ to: "/me" }) }
     )
@@ -236,8 +258,7 @@ function MentorEditForm({
 
         <div className="bg-line h-px" />
 
-        {/* 마이페이지의 `연락처·알림 번호 수정` 이 여기로 온다(`#contact`) */}
-        <MentorContactFields id="contact" />
+        <MentorContactFields variant="edit" />
 
         <SaveError error={submit.error} />
         <SaveActions busy={submit.isPending} disabled={!form.formState.isValid} />
@@ -254,7 +275,7 @@ function SaveActions({ busy, disabled }: { busy: boolean; disabled: boolean }) {
     <div className="flex justify-end gap-3 pt-2">
       <Link
         to="/me"
-        className={cn(action({ variant: "secondary" }), "text-button w-26.25 lg:w-30")}
+        className={cn(action({ variant: "secondary" }), "w-26.25 lg:w-30")}
       >
         취소
       </Link>

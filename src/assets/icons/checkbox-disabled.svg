@@ -1,0 +1,17 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Checkbox control">
+<g clip-path="url(#clip0_0_6)">
+<mask id="path-1-inside-1_0_6" fill="white">
+<path d="M0 4C0 1.79086 1.79086 0 4 0H18C20.2091 0 22 1.79086 22 4V18C22 20.2091 20.2091 22 18 22H4C1.79086 22 0 20.2091 0 18V4Z"/>
+</mask>
+<path d="M0 4C0 1.79086 1.79086 0 4 0H18C20.2091 0 22 1.79086 22 4V18C22 20.2091 20.2091 22 18 22H4C1.79086 22 0 20.2091 0 18V4Z" fill="white"/>
+<path id="Vector 3" d="M0 22L22 0" stroke="#685E52"/>
+</g>
+<path d="M4 0V1H18V0V-1H4V0ZM22 4H21V18H22H23V4H22ZM18 22V21H4V22V23H18V22ZM0 18H1V4H0H-1V18H0ZM4 22V21C2.34315 21 1 19.6569 1 18H0H-1C-1 20.7614 1.23858 23 4 23V22ZM22 18H21C21 19.6569 19.6569 21 18 21V22V23C20.7614 23 23 20.7614 23 18H22ZM18 0V1C19.6569 1 21 2.34315 21 4H22H23C23 1.23858 20.7614 -1 18 -1V0ZM4 0V-1C1.23858 -1 -1 1.23858 -1 4H0H1C1 2.34315 2.34315 1 4 1V0Z" fill="#685E52" mask="url(#path-1-inside-1_0_6)"/>
+</g>
+<defs>
+<clipPath id="clip0_0_6">
+<path d="M0 4C0 1.79086 1.79086 0 4 0H18C20.2091 0 22 1.79086 22 4V18C22 20.2091 20.2091 22 18 22H4C1.79086 22 0 20.2091 0 18V4Z" fill="white"/>
+</clipPath>
+</defs>
+</svg>

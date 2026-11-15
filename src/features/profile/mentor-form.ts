@@ -1,12 +1,13 @@
 import { z } from "zod";
 import type { GraduatedProfile, UserInfo } from "@/api";
 import { describeNicknameProblem, nicknameProblem } from "@/lib/nickname";
-import { EMAIL, PHONE, digitsOf, formatPhone, isValidLink } from "@/lib/profile-form";
+import { contactChannelsOf, isValidLink } from "@/lib/profile-form";
+import { contactChannelsSchema } from "./contact-channel-form";
 
 /**
  * 선배 프로필 폼 — 가입 기본 정보 · 추가 정보와 정보 수정이 같은 스키마를
  * 나눠 쓴다(이슈 #10). 근거는 명세 `GraduatedInfoRequestDto` 와 선배 가이드
- * §2.4 · §2.6 · §2.7.
+ * §2.4 · §2.6, 동기화 가이드 3장(부서 선택 입력, 커피챗 참여 설정).
  */
 
 /* ───────────────── 회사 · 부서 · 직무 (가입 · 수정 공통) ───────────────── */
@@ -19,7 +20,11 @@ const workShape = {
    * 보낼 때 `company_id` / `company_name` 을 가르는 값이다(`companyRequestOf`).
    */
   company_id: z.number().nullable(),
-  department: z.string().trim().min(1, "부서를 입력해 주세요.").max(128),
+  /**
+   * 선택 입력이다 — 시안 `부서 (선택)`, 주석 336:7011, 명세(이슈 #43).
+   * 비었으면 보내지 않는다(`departmentRequestOf`)
+   */
+  department: z.string().trim().max(128),
   job: z.string().trim().min(1, "직무를 입력해 주세요.").max(128),
 };
 
@@ -73,11 +78,11 @@ const extraShape = {
     .trim()
     .max(2048)
     .refine((link) => link === "" || isValidLink(link), "링크 주소를 확인해 주세요."),
-  email: z.string().trim().max(255).regex(EMAIL, "이메일 형식을 확인해 주세요."),
-  // 임시: 이슈 #26 — 이메일 · 휴대폰 둘 다 필수(선배 가이드 §2.7)
-  phone: z
-    .string()
-    .refine((phone) => PHONE.test(digitsOf(phone)), "휴대전화번호 형식을 확인해 주세요."),
+  /**
+   * 커피챗 참여 설정 — 켠 채널만 검사한다. 둘 다 끄면 커피챗 미참여다
+   * (`can_request=false`). 동기화 가이드 3.5.3
+   */
+  contact: contactChannelsSchema,
 };
 
 export const mentorExtraSchema = z.object(extraShape);
@@ -102,13 +107,12 @@ export function mentorEditDefaults(
   return {
     company: profile.company,
     company_id: profile.company_id,
-    department: profile.department,
+    department: profile.department ?? "",
     job: profile.job,
     hashtags: profile.hashtags,
     linkedin: profile.links[0] ?? "",
-    email: profile.contact?.email ?? me.email ?? "",
-    // 서버는 숫자만 준다. 시안처럼 `010-0000-0000` 으로 보여주고, 보낼 때 다시 숫자만 남긴다
-    phone: formatPhone(profile.contact?.phone ?? ""),
+    // 저장된 설정이 없는 옛 계정은 가입 처음 값(두 채널 켬)으로 선다
+    contact: contactChannelsOf(profile.contact, me.email),
   };
 }
 

@@ -12,16 +12,31 @@ import {
 } from "@/api";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ProfileRow } from "@/components/ui/profile-row";
-import { myContactEmailOf } from "@/lib/mentor-contact";
+import { mySharedContactOf } from "@/lib/mentor-contact";
+import { formatPhone } from "@/lib/profile-form";
 
 /**
- * 연락처 공유 확인. 피그마 `Dialog / 연락처 공유 확인`(344:9450 / 344:9385).
+ * 내 연락처 공유 확인. 피그마 `내 연락처 공유 모달`(1245:16975) — 받은 신청
+ * 내용의 `내 연락처 공유하기` 주석: *"내 연락처 공유 모달로 한 번 더 확인"*.
+ * 동기화 가이드 06장 6.5.5.
  *
  * 선배 → 학생 단방향이고, **한번 보내면 되돌릴 수 없다.** 확인 단계에 URL 을
  * 주는 이유: 되돌릴 수 없는 작업일수록 새로고침이나 뒤로가기로 사고가 나면
  * 안 되고, 나중에 "어떤 연락처를 공유할지 선택" 이 붙어도 구조가 바뀌지 않는다.
  *
- * 받은 신청 내용 위에 또 뜬다(`$applicationId.tsx` 의 `<Outlet/>`).
+ * 받은 신청 내용 화면 위에 뜬다(`$applicationId.tsx` 의 `<Outlet/>`). 보내면
+ * 그 화면으로 돌아가고, `내 연락처` 카드 버튼이 `내 연락처 공유 완료` 로
+ * 바뀐다. 옛 `연락처 공유 완료` 한 장(`applications_/$applicationId/shared`)은
+ * 시안에서 없어져 지웠다.
+ *
+ * **입력한 연락처가 모두 간다**(동기화 가이드 D3-3) — 커피챗 참여 설정에서 켠
+ * 채널의 이메일 · 휴대전화번호. 시안은 이메일 · 전화번호 두 줄을 늘 그리고 빈
+ * 값은 `등록하지 않음` 이다. 이름도 함께 가지만 시안에 줄이 없다(D6-6).
+ *
+ * **지금 서버에 가는 유일한 단계다**(06장 D6-1). `커피챗 수락하기` 는 수락
+ * API 가 없어 이 브라우저에만 기록하고, 이 상자의 `네` 가 `share-contact` 를
+ * 부른다. TODO(#47): 수락 API 가 생기면 "수락한 신청에서만 공유" 를 서버가
+ * 막는지 확인하고 오류 매핑을 맞춘다.
  */
 export const Route = createFileRoute("/_app/applications/$applicationId/share")({
   // `_app` 가드가 세션을 실어 준다. 학생이 주소로 들어오면 상세로 되돌린다
@@ -41,7 +56,7 @@ export const Route = createFileRoute("/_app/applications/$applicationId/share")(
     // 사고는 아니지만, "보낼까요?" 를 다시 묻는 건 거짓말이 된다
     if (request.contact_shared_at) {
       throw redirect({
-        to: "/applications/$applicationId/shared",
+        to: "/applications/$applicationId",
         params: { applicationId: params.applicationId },
       });
     }
@@ -53,8 +68,8 @@ function RouteComponent() {
   const { applicationId } = Route.useParams();
   const navigate = useNavigate();
   const { data: me } = useSuspenseQuery(userInfoQuery());
-  const { data: request } = useSuspenseQuery(receivedRequestQuery(applicationId));
   const share = useShareContact();
+  const contact = mySharedContactOf(me);
 
   const back = () =>
     void navigate({
@@ -62,41 +77,28 @@ function RouteComponent() {
       params: { applicationId },
     });
 
-  const confirm = () =>
-    share.mutate(applicationId, {
-      onSuccess: () =>
-        void navigate({
-          to: "/applications/$applicationId/shared",
-          params: { applicationId },
-        }),
-    });
-
   return (
     <ConfirmDialog
+      layout="choice"
       open
       onOpenChange={(open) => {
         // 보내는 중에는 닫히지 않게 한다 — 결과를 못 본 채 떠나면 보냈는지 모른다
         if (!open && !share.isPending) back();
       }}
-      title="연락처를 공유할까요?"
-      // ⚠️ 이슈 #26: 공유 응답에 `shared_phone` 이 실제로 실려 가면 이 라벨과
-      // 아래 `알림톡 수신 번호는 공유되지 않아요.` 가 둘 다 거짓이 된다.
-      // 스테이징에서 응답을 확인할 것(선배 가이드 §2.7)
-      confirmLabel="이름·이메일 공유"
-      onConfirm={confirm}
+      title="내 연락처를 공유할까요?"
+      cancelLabel="아니오"
+      confirmLabel="네"
+      onConfirm={() => share.mutate(applicationId, { onSuccess: back })}
       busy={share.isPending}
       busyLabel="보내는 중…"
     >
-      <p className="text-body text-ink">
-        {request.student.name}님께 아래 정보를 보냅니다.
-      </p>
       <dl>
-        <ProfileRow label="이름" value={me.name ?? "—"} size="card" />
-        <ProfileRow label="이메일" value={myContactEmailOf(me) ?? "—"} size="card" />
+        <ProfileRow label="이메일" value={contact.email} />
+        <ProfileRow
+          label="전화번호"
+          value={contact.phone ? formatPhone(contact.phone) : null}
+        />
       </dl>
-      <p className="text-body-sm text-ink-soft">
-        알림톡 수신 번호는 공유되지 않아요.
-      </p>
 
       {share.error ? (
         <p role="alert" className="text-body-sm text-danger">
@@ -112,7 +114,7 @@ function describeShareError(error: unknown): string {
 
   // 내 연락 설정이 "희망하지 않음" 이라 공유할 연락처가 없음
   if (error.status === 409)
-    return "공유할 연락처가 없어요. 마이페이지에서 연락처를 등록해 주세요.";
+    return "공유할 연락처가 없어요. 정보 수정에서 커피챗 참여 설정을 등록해 주세요.";
   if (error.status === 410) return "학생이 탈퇴해 연락처를 보낼 수 없어요.";
   if (error.status === 404) return "신청을 찾을 수 없어요. 목록에서 다시 확인해 주세요.";
   if (error.status === 403) return "이 계정에서는 연락처를 공유할 수 없어요.";

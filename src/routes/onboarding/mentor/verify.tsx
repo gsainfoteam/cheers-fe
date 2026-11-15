@@ -9,8 +9,9 @@ import {
 } from "@/api";
 import imagePlusIcon from "@/assets/icons/media-image-plus.svg";
 import { PageContainer } from "@/components/layout/page-container";
-import { SignupProgress } from "@/components/signup-progress";
+import { SignupProgressSlot } from "@/components/signup-progress";
 import { action } from "@/components/ui/action";
+import { FilePickButton, useFileDrop } from "@/components/ui/file-drop";
 import { cn } from "@/lib/utils";
 
 /**
@@ -43,7 +44,6 @@ function RouteComponent() {
   const verify = useVerifyBusinessCard();
 
   const [upload, setUpload] = useState<Upload>({ status: "empty" });
-  const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   /** 진행 중인 업로드. 파일을 바꾸면 끊는다 */
   const inFlight = useRef<AbortController | null>(null);
@@ -102,6 +102,7 @@ function RouteComponent() {
   };
 
   const openPicker = () => inputRef.current?.click();
+  const { dragging, dropProps } = useFileDrop((files) => choose(files[0]));
 
   const submit = () => {
     if (upload.status !== "uploaded") return;
@@ -134,11 +135,10 @@ function RouteComponent() {
       {/* 피그마 `Task workspace` — 976 = 352 + 64 + 560 */}
       <div className="flex w-full flex-col gap-7 lg:w-244 lg:flex-row lg:items-start lg:gap-16">
         {/* 피그마 `Task introduction` */}
-        <div className="flex flex-col gap-7 lg:w-88 lg:shrink-0 lg:gap-10 lg:pt-4">
-          {/* 모바일은 제목 위, 데스크톱은 제목 아래 */}
-          <div className="order-first lg:order-last">
-            <SignupProgress current={1} />
-          </div>
+        {/* 모바일에서는 풀어서 단계 막대가 본문 전체를 기준으로 고정되게 한다 */}
+        <div className="flex flex-col gap-7 max-lg:contents lg:w-88 lg:shrink-0 lg:gap-10 lg:pt-4">
+          {/* 모바일은 제목 위에 고정, 데스크톱은 제목 아래 */}
+          <SignupProgressSlot current={1} />
           <div className="flex flex-col gap-3 lg:gap-5">
             <h1 className="text-task-title text-ink">명함 첨부</h1>
             <p className="text-body text-ink-soft">
@@ -184,28 +184,7 @@ function RouteComponent() {
            * 문구가 없는 건 손가락으로 끌 일이 없어서지 기능을 막으라는 뜻이
            * 아니다(태블릿 + 마우스).
            */}
-          <div
-            onDragEnter={(e) => {
-              e.preventDefault();
-              setDragging(true);
-            }}
-            onDragOver={(e) => {
-              e.preventDefault();
-              e.dataTransfer.dropEffect = "copy";
-            }}
-            onDragLeave={(e) => {
-              // 상자 안의 자식으로 옮겨 갈 때도 leave 가 온다. 상자 밖으로
-              // 나갈 때만 끈다
-              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
-                setDragging(false);
-              }
-            }}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDragging(false);
-              choose(e.dataTransfer.files[0]);
-            }}
-          >
+          <div {...dropProps}>
             {upload.status === "uploading" || upload.status === "uploaded" ? (
               <Preview
                 src={upload.preview}
@@ -292,7 +271,9 @@ function Dropzone({
           </p>
         )}
       </div>
-      <PickButton onClick={onPick}>파일 선택</PickButton>
+      <FilePickButton icon={imagePlusIcon} onClick={onPick}>
+        파일 선택
+      </FilePickButton>
     </div>
   );
 }
@@ -346,31 +327,10 @@ function Preview({
           명함을 올리는 중이에요…
         </p>
       ) : null}
-      <PickButton onClick={onReplace}>다른 이미지 선택</PickButton>
+      <FilePickButton icon={imagePlusIcon} onClick={onReplace}>
+        다른 이미지 선택
+      </FilePickButton>
     </div>
-  );
-}
-
-/**
- * 피그마 `Action / uploaded`. Secondary 와 같은 껍데기지만 글자가
- * Label/Medium(14)이 아니라 Web/Button(16)이고 아이콘이 붙는다.
- */
-function PickButton({
-  onClick,
-  children,
-}: {
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(action({ variant: "secondary" }), "text-button")}
-    >
-      <img src={imagePlusIcon} alt="" />
-      {children}
-    </button>
   );
 }
 

@@ -2,15 +2,15 @@ import { useMemo, useState } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { consentListQuery, useSubmitConsent, type Consent } from "@/api";
-import chevronIcon from "@/assets/icons/chevron-right.svg";
-import checkInverse from "@/assets/icons/check-inverse.svg";
 import { PageContainer } from "@/components/layout/page-container";
-import { SignupProgress } from "@/components/signup-progress";
+import { SignupProgressSlot } from "@/components/signup-progress";
 import { action } from "@/components/ui/action";
+import { CheckRow } from "@/components/ui/check-row";
 import {
   DialogBodySkeleton,
   ResponsiveDialog,
 } from "@/components/ui/responsive-dialog";
+import { embedUrl, isLegalDoc, type LegalDoc } from "@/lib/legal";
 import { cn } from "@/lib/utils";
 
 /**
@@ -30,28 +30,22 @@ export const Route = createFileRoute("/onboarding/terms")({
 
 /**
  * 서버가 주는 `type` 은 자유 문자열이라 사람이 읽을 이름을 코드가 들고 있다.
+ * 본문 주소는 `lib/legal.ts` 가 들고 있다(푸터와 같은 곳).
  *
- * 서버가 실제로 주는 값은 `tos` / `privacy` 다. 모르는 값이 오면 `type` 을
- * 그대로 보여준다 — 빈칸보다는 낫고, 화면에서 바로 드러난다.
+ * 서버가 실제로 주는 값은 `tos` / `privacy` 다(`7a9596a` 에서 확인). 모르는
+ * 값이 오면 이름은 `type` 을, 본문은 서버가 준 `url` 을 그대로 쓴다 — 빈칸
+ * 보다는 낫고, 화면에서 바로 드러난다.
  *
- * `url` 은 본문 페이지. terms.gistory.me 의 **`/embedded/` 경로**를 쓴다 —
- * 일반 경로는 약관 사이트 자체 헤더까지 같이 그려져 다이얼로그 안에서
- * 제목이 두 번 나온다. 모르는 항목만 서버가 준 `url` 로 떨어진다. 약관이
- * 개정되면 주소의 버전(`261101`)을 함께 올려야 한다.
+ * 이름은 체크 줄과 다이얼로그 제목에 쓰고, 피그마 시안 문구 그대로다
+ * (`828:8731` / `828:8732`, `335:6380` / `335:6561`, 동기화 01장 D1-2).
  */
-const CONSENT_DOC: Record<string, { label: string; url: string }> = {
-  tos: {
-    label: "서비스 이용약관",
-    url: "https://terms.gistory.me/embedded/cheers/tos/261101/",
-  },
-  privacy: {
-    label: "개인정보처리방침",
-    url: "https://terms.gistory.me/embedded/cheers/privacy/261101/",
-  },
+const CONSENT_LABEL: Record<LegalDoc, string> = {
+  tos: "서비스 이용약관",
+  privacy: "개인정보 수집·이용 동의",
 };
 
 function nameOf(consent: Consent): string {
-  return CONSENT_DOC[consent.type]?.label ?? consent.type;
+  return isLegalDoc(consent.type) ? CONSENT_LABEL[consent.type] : consent.type;
 }
 
 function labelOf(consent: Consent): string {
@@ -59,8 +53,9 @@ function labelOf(consent: Consent): string {
   return consent.is_required ? `[필수] ${name}` : name;
 }
 
+/** iframe 에 넣을 본문 주소. 약관 사이트 자체 헤더가 빠진 `/embedded/` 판이다 */
 function urlOf(consent: Consent): string {
-  return CONSENT_DOC[consent.type]?.url ?? consent.url;
+  return isLegalDoc(consent.type) ? embedUrl(consent.type) : consent.url;
 }
 
 function RouteComponent() {
@@ -106,11 +101,10 @@ function RouteComponent() {
       {/* 피그마 `Task workspace` */}
       <div className="flex w-full flex-col gap-7 lg:w-244 lg:flex-row lg:items-start lg:gap-16">
         {/* 피그마 `Task introduction` */}
-        <div className="flex flex-col gap-7 lg:w-88 lg:shrink-0 lg:gap-10 lg:pt-4">
-          {/* 모바일은 제목 위, 데스크톱은 제목 아래 */}
-          <div className="order-first lg:order-last">
-            <SignupProgress current={0} />
-          </div>
+        {/* 모바일에서는 풀어서 단계 막대가 본문 전체를 기준으로 고정되게 한다 */}
+        <div className="flex flex-col gap-7 max-lg:contents lg:w-88 lg:shrink-0 lg:gap-10 lg:pt-4">
+          {/* 모바일은 제목 위에 고정, 데스크톱은 제목 아래 */}
+          <SignupProgressSlot current={0} />
           <div className="flex flex-col gap-3 lg:gap-5">
             <h1 className="text-task-title text-ink">약관 동의</h1>
             <p className="text-body text-ink-soft">
@@ -191,11 +185,12 @@ function RouteComponent() {
  * 본문을 받아와 다시 그리지 않고 iframe 을 쓰는 이유: 그 페이지는 완성된
  * HTML 문서(자체 스타일·목차)라서, 가져와 파싱하면 약관 사이트가 바뀔
  * 때마다 이쪽도 따라 고쳐야 한다. 그 서버는 `X-Frame-Options` /
- * `frame-ancestors` 를 걸지 않아 임베딩이 막히지 않는다.
+ * `frame-ancestors` 를 걸지 않아 임베딩이 막히지 않는다(2026-11-14 확인).
  *
- * iframe 이 첫 화면을 그릴 때까지는 시안의 `Loading paragraph` 뼈대를
- * 위에 덮어 둔다. `sandbox` 는 페이지가 쓰는 스크립트(tailwind CDN)와
- * 목차 앵커만 허용하고, **최상위 창을 이동시키는 것은 막는다.**
+ * iframe 이 첫 화면을 그릴 때까지는 시안의 "불러오는 중" 화면
+ * (`335:6348` / `335:6313`, `Loading paragraph`)을 위에 덮어 둔다.
+ * `sandbox` 는 페이지가 쓰는 스크립트와 목차 앵커, 새 창 링크만 허용하고
+ * **최상위 창을 이동시키는 것은 막는다.**
  */
 function TermsFrame({ title, src }: { title: string; src: string }) {
   const [loaded, setLoaded] = useState(false);
@@ -211,68 +206,11 @@ function TermsFrame({ title, src }: { title: string; src: string }) {
         className="absolute inset-0 size-full border-0"
       />
       {loaded ? null : (
+        // 기본 본문 영역과 같은 여백 — `bleed` 라서 여기서 직접 준다
         <div className="bg-surface absolute inset-0 flex flex-col gap-6 px-5 py-6 lg:px-8">
           <DialogBodySkeleton />
         </div>
       )}
     </>
-  );
-}
-
-/**
- * 피그마 `Cheers / Checkbox`(332:6136).
- *
- * 네이티브 `<input type="checkbox">` 를 숨기고 그 위에 시안 모양을 그린다.
- * 라이브러리를 쓰지 않은 이유: 여기 필요한 건 켜짐/꺼짐뿐이고, 네이티브가
- * 레이블 연결·키보드·폼 제출을 이미 전부 해 준다.
- *
- * 오른쪽 꺾쇠는 **본문을 여는 따로 떨어진 버튼**이다. 체크 영역 안에 두면
- * 약관을 읽으려다 동의가 토글된다.
- */
-function CheckRow({
-  label,
-  checked,
-  onChange,
-  onOpen,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: () => void;
-  onOpen?: () => void;
-}) {
-  return (
-    <div className="flex h-12 w-full items-center justify-between py-2">
-      <label className="flex cursor-pointer items-center gap-3">
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={onChange}
-          className="peer sr-only"
-        />
-        <span
-          className={cn(
-            "flex size-[22px] shrink-0 items-center justify-center rounded-sm border",
-            "peer-focus-visible:ring-focus/50 peer-focus-visible:ring-3",
-            checked ? "bg-ink-fill border-ink" : "bg-surface border-line-strong"
-          )}
-        >
-          {checked ? (
-            <img src={checkInverse} alt="" className="w-[13px]" />
-          ) : null}
-        </span>
-        <span className="text-body-sm text-ink">{label}</span>
-      </label>
-
-      {onOpen ? (
-        <button
-          type="button"
-          onClick={onOpen}
-          aria-label={`${label} 전문 보기`}
-          className="flex size-5 shrink-0 items-center justify-center"
-        >
-          <img src={chevronIcon} alt="" className="h-[13px]" />
-        </button>
-      ) : null}
-    </div>
   );
 }

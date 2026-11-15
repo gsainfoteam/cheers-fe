@@ -8,7 +8,7 @@ import {
   userInfoQuery,
 } from "@/api";
 import { PageContainer } from "@/components/layout/page-container";
-import { SignupProgress } from "@/components/signup-progress";
+import { SignupProgressSlot } from "@/components/signup-progress";
 import { action } from "@/components/ui/action";
 import {
   StudentIdentityFields,
@@ -19,7 +19,10 @@ import { useStudentSignupDraft } from "@/lib/student-signup-draft";
 import { cn } from "@/lib/utils";
 
 /**
- * 학생 기본 정보. 피그마 `Cheers / 학생 기본 정보`(335:6814 / 335:6675).
+ * 학생 기본 정보. 피그마 `Cheers / 학생 기본 정보`(911:34663 / 911:34691),
+ * 학과 선택(828:8063 / 911:35966), 관심 분야(828:8301 / 828:8329), 기타 관심
+ * 분야 추가·완료·수정(911:36201 · 920:40858 / 911:36234 · 920:40900 · 920:41288).
+ * 동기화 가이드 02장 2.5.
  *
  * 앞의 세 화면과 같은 2열 뼈대지만 **카드가 넓다** — 이름·학과가 데스크톱에서
  * 좌우로 서야 해서 시안이 560 이 아니라 800 을 썼다(작업 영역 976 → 1216).
@@ -79,11 +82,10 @@ function RouteComponent() {
       {/* 피그마 `Task workspace` — 1216 = 352 + 64 + 800 */}
       <div className="flex w-full flex-col gap-7 lg:w-304 lg:flex-row lg:items-start lg:gap-16">
         {/* 피그마 `Task introduction` */}
-        <div className="flex flex-col gap-7 lg:w-88 lg:shrink-0 lg:gap-10 lg:pt-4">
-          {/* 모바일은 제목 위, 데스크톱은 제목 아래 */}
-          <div className="order-first lg:order-last">
-            <SignupProgress current={2} />
-          </div>
+        {/* 모바일에서는 풀어서 단계 막대가 본문 전체를 기준으로 고정되게 한다 */}
+        <div className="flex flex-col gap-7 max-lg:contents lg:w-88 lg:shrink-0 lg:gap-10 lg:pt-4">
+          {/* 모바일은 제목 위에 고정, 데스크톱은 제목 아래 */}
+          <SignupProgressSlot current={2} />
           <div className="flex flex-col gap-3 lg:gap-5">
             <h1 className="text-task-title text-ink">기본 정보</h1>
             <p className="text-body text-ink-soft">
@@ -122,7 +124,7 @@ function RouteComponent() {
                 disabled={!form.formState.isValid}
                 className={cn(action(), "flex-1 lg:w-60 lg:flex-none")}
               >
-                추가 정보 입력
+                다음
               </button>
             </div>
           </form>

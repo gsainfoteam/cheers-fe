@@ -35,6 +35,7 @@ const MAP = {
   StudentInfoDto: "StudentInfoSchema",
   GraduatedProfileDto: "GraduatedProfileSchema",
   GraduatedInfoDto: "GraduatedInfoSchema",
+  NicknameCheckResponseDto: "NicknameCheckSchema",
   UserInfoDto: "UserInfoSchema",
   LoginResponseDto: "TokenPairSchema",
   RefreshResponseDto: "AccessTokenSchema",

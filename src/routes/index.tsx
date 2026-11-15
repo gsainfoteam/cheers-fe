@@ -1,13 +1,21 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 /*
- * 원본 PNG 는 1254² RGBA 1.5MB 다. 표시 폭이 모바일 370 / 데스크톱 690 이라
- * 2배 밀도까지만 내보낸다 — 740(모바일 2x)과 원본 폭 1254(데스크톱 2x 상한).
- * `src` 는 srcset 을 모르는 환경용이고 740 과 같은 파일로 합쳐진다.
+ * 피그마 `Cheers / Landing art / 3D employee badges`(1218:9067 / 1218:9071).
+ * 원본 PNG 는 884×1372 세로형이다. 표시 폭이 모바일 238.4 / 데스크톱 489.7
+ * 이라 2배 밀도까지만 내보낸다 — 477(모바일 2x)과 원본 폭 884(데스크톱 2x
+ * 는 980 이지만 원본보다 키우지 않는다). `src` 는 srcset 을 모르는 환경용이고
+ * 477 과 같은 파일로 합쳐진다.
  */
-import badgeSceneSrcset from "@/assets/landing/badge-scene.png?w=740;1254&format=webp&as=srcset";
-import badgeSceneSrc from "@/assets/landing/badge-scene.png?w=740&format=webp";
+import badgeSceneSrcset from "@/assets/landing/badge-scene.png?w=477;884&format=webp&as=srcset";
+import badgeSceneSrc from "@/assets/landing/badge-scene.png?w=477&format=webp";
+/*
+ * 배경 그림은 시안이 폭마다 따로 그렸다 — 데스크톱은 빛이 오른쪽 사원증
+ * 뒤에 있다. 모바일 그림을 늘려 쓰면 빛이 엉뚱한 곳에 번진다(동기화 01장 1.3.2).
+ */
 import champagneGrain from "@/assets/landing/champagne-grain.svg";
+import champagneGrainDesktop from "@/assets/landing/champagne-grain-desktop.svg";
 import closingGlow from "@/assets/landing/closing-glow.svg";
+import closingGlowDesktop from "@/assets/landing/closing-glow-desktop.svg";
 /*
  * 로고 상자는 카드 안에서 최대 약 118×42(데스크톱 카드)다. 2배 밀도인
  * 240×84 상자 안에 비율을 지켜 줄인다. 원본은 600~1000px 폭이었다.
@@ -108,27 +116,42 @@ function GhostAction({
   );
 }
 
+/* ───────────────────────────── 배경 ───────────────────────────── */
+
+/**
+ * 섹션 바닥에 까는 장식 그림. 폭마다 다른 그림을 `<picture>` 로 하나만
+ * 받는다(두 장을 다 받아 하나를 숨기지 않는다). 경계는 `lg`(1024)다.
+ */
+function SectionBackdrop({ mobile, desktop }: { mobile: string; desktop: string }) {
+  return (
+    <picture>
+      <source media="(min-width: 1024px)" srcSet={desktop} />
+      <img
+        src={mobile}
+        alt=""
+        aria-hidden
+        className="pointer-events-none absolute inset-0 size-full object-cover"
+      />
+    </picture>
+  );
+}
+
 /* ───────────────────────────── Hero ───────────────────────────── */
 
 function Hero() {
   return (
     <section className="bg-canvas relative overflow-clip">
-      {/* 피그마 `Cheers / Landing / Champagne light & grain` */}
-      <img
-        src={champagneGrain}
-        alt=""
-        aria-hidden
-        className="pointer-events-none absolute inset-0 size-full object-cover"
-      />
+      {/* 피그마 `Cheers / Landing / Champagne light & grain`(426:5434 / 426:5427) */}
+      <SectionBackdrop mobile={champagneGrain} desktop={champagneGrainDesktop} />
 
       <PageContainer
         className={cn(
           "relative flex flex-col items-center gap-8 pt-12 pb-8",
           // 데스크톱은 2열이고, 왼쪽 글 묶음이 세로 가운데에 선다.
-          // 760 은 시안 Hero 프레임 높이 — 위아래 156씩이 여기서 나온다.
-          // 열 너비를 반반으로 나누지 않는 이유: 시안의 그림이 548짜리 글
-          // 묶음보다 넓어서(690), 반씩 자르면 그림이 줄어든다
-          "lg:min-h-190 lg:flex-row lg:items-center lg:gap-0 lg:py-0"
+          // 760 은 시안 Hero 프레임 높이이자 그림 높이 — 그림이 위아래 끝에
+          // 닿고, 글 묶음 위아래 156씩이 여기서 나온다. 열 간격 32 + 그림 칸
+          // 668 이 1440 에서 남는 폭과 같아서 그림 칸은 `flex-1` 로 둔다
+          "lg:min-h-190 lg:flex-row lg:items-center lg:gap-8 lg:py-0"
         )}
       >
         {/* 피그마 `Intro and role selection` */}
@@ -138,8 +161,6 @@ function Hero() {
           <h1 className="text-hero text-ink">
             취업의 다음 장,
             <br />
-            {/* 시안은 모바일 "선배와 한 잔." / 데스크톱 "선배와 함께." 로 적혀
-                있다. 같은 문장이어야 할 자리로 보여 모바일 쪽을 따랐다 */}
             선배와 한 잔.
           </h1>
 
@@ -167,24 +188,25 @@ function Hero() {
         </div>
 
         {/* 피그마 `Cheers / Landing / 3D badge scene` */}
-        <div className="flex w-full justify-center lg:flex-1">
+        <div className="flex w-full justify-center lg:min-w-0 lg:flex-1">
           {/*
            * 랜딩의 LCP 요소다. 그래서 lazy 를 걸지 않고 우선순위를 올린다.
-           * width/height 는 원본 비율(1:1)을 미리 알려 자리를 잡아 두는 용도다 —
-           * 없으면 이미지가 도착할 때 아래 섹션이 통째로 밀린다(CLS).
-           * 실제 크기는 클래스가 정하고 `h-auto` 가 비율을 지킨다.
-           * `sizes` 는 위 max-w 두 값과 같아야 한다.
+           * width/height 는 원본 비율(884×1372)을 미리 알려 자리를 잡아 두는
+           * 용도다 — 없으면 이미지가 도착할 때 아래 섹션이 통째로 밀린다(CLS).
+           * 실제 크기는 클래스가 정하고 `h-auto` 가 비율을 지킨다. 시안 크기
+           * (238.4×370 / 489.7×760)를 최대 폭으로 두어 1024~1440 처럼 칸이
+           * 좁을 때는 같이 줄어든다. `sizes` 는 위 max-w 두 값과 같아야 한다.
            */}
           <img
             src={badgeSceneSrc}
             srcSet={badgeSceneSrcset}
-            sizes="(min-width: 1024px) 690px, 370px"
-            width={1254}
-            height={1254}
+            sizes="(min-width: 1024px) 490px, 239px"
+            width={884}
+            height={1372}
             fetchPriority="high"
             decoding="async"
             alt="취얼스 사원증 두 장이 걸린 그림"
-            className="h-auto w-full max-w-[370px] lg:max-w-[690px]"
+            className="h-auto w-full max-w-[238.4px] lg:max-w-[489.7px]"
           />
         </div>
       </PageContainer>
@@ -275,7 +297,8 @@ function MeetAlumniPreview() {
 const STEPS = [
   {
     no: "01",
-    title: "선배를 만나고",
+    // 두 폭 모두 `선배를 찾고`(398:5993 / 1259:9541, 동기화 01장 D1-1)
+    title: "선배를 찾고",
     copy: "관심 있는 회사와 직무의 선배를 찾아보세요.",
   },
   {
@@ -328,13 +351,8 @@ function HowItWorks() {
 function ClosingInvitation() {
   return (
     <section className="bg-canvas relative overflow-clip">
-      {/* 피그마 `Cheers / Landing / Closing champagne glow` */}
-      <img
-        src={closingGlow}
-        alt=""
-        aria-hidden
-        className="pointer-events-none absolute inset-0 size-full object-cover"
-      />
+      {/* 피그마 `Cheers / Landing / Closing champagne glow`(426:5443 / 426:5441) */}
+      <SectionBackdrop mobile={closingGlow} desktop={closingGlowDesktop} />
 
       <PageContainer className="relative flex flex-col items-center gap-8 py-12 lg:py-18">
         <h2 className="text-statement text-ink text-center">

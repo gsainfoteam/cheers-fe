@@ -369,7 +369,7 @@
             }
           },
           "403": {
-            "description": "가입을 마치지 않음, 재학생이 아님",
+            "description": "재학생이 아님",
             "content": {
               "application/json": {
                 "schema": {
@@ -856,6 +856,74 @@
         "summary": "재학생 추가 정보 저장 (가입 후에는 수정)",
         "tags": [
           "재학생"
+        ]
+      }
+    },
+    "/api/v1/user/graduated/nickname/check": {
+      "get": {
+        "operationId": "GraduatedController_checkNickname",
+        "parameters": [
+          {
+            "name": "nickname",
+            "required": true,
+            "in": "query",
+            "description": "확인할 닉네임. POST /graduated/info 의 nickname 규칙과 동일",
+            "schema": {
+              "pattern": "^[가-힣A-Za-z0-9_]{2,10}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NicknameCheckResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "nickname 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "현업자가 아님, 가입 중인데 next_step이 profile이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "닉네임 중복 확인 (가입 중에만. 조회만 하며 예약하지 않음)",
+        "tags": [
+          "현업자"
         ]
       }
     },
@@ -2130,6 +2198,325 @@
         "summary": "어드민 계정 삭제 (superadmin 전용, 자기 자신 · superadmin은 불가)",
         "tags": [
           "어드민 계정"
+        ]
+      }
+    },
+    "/api/manager/v1/access-log": {
+      "get": {
+        "operationId": "AdminAccessLogController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1부터 시작",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "size",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "admin_email",
+            "required": false,
+            "in": "query",
+            "description": "어드민 이메일 (부분 일치, 대소문자 무시)",
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "name": "target_type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "business_card",
+                "dev_user_hard_delete"
+              ]
+            }
+          },
+          {
+            "name": "created_from",
+            "required": false,
+            "in": "query",
+            "description": "이 시각부터 (포함). UTC 오프셋이 있는 ISO 8601",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "created_to",
+            "required": false,
+            "in": "query",
+            "description": "이 시각 전까지 (미포함). UTC 오프셋이 있는 ISO 8601",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PageResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/AdminAccessLogDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "query 형식 오류, created_from이 created_to보다 늦음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "superadmin이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "개인정보 열람 · 개발용 회원 완전탈퇴 기록 목록 (최근 기록 순, superadmin 전용). 조회만 가능",
+        "tags": [
+          "어드민 접근 로그"
+        ]
+      }
+    },
+    "/api/manager/v1/audit-log": {
+      "get": {
+        "operationId": "AdminAuditLogController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1부터 시작",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "size",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "admin_email",
+            "required": false,
+            "in": "query",
+            "description": "어드민 이메일 (부분 일치, 대소문자 무시)",
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "admin_auth.login",
+                "admin_account.create",
+                "admin_account.role_update",
+                "admin_account.delete",
+                "interest.create",
+                "interest.rename",
+                "interest.delete",
+                "interest.reorder",
+                "school_department.create",
+                "school_department.update",
+                "school_email_domain.replace",
+                "company.create",
+                "company.update",
+                "company.delete",
+                "company.merge",
+                "company.logo_update",
+                "company.import",
+                "company_name.add",
+                "company_name.remove",
+                "consent.create",
+                "business_card.verification_cancel",
+                "notification_log.delivery_lookup",
+                "dev_user.hard_delete"
+              ]
+            }
+          },
+          {
+            "name": "target_type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "admin_account",
+                "interest",
+                "school_department",
+                "school_email_domain",
+                "company",
+                "company_name",
+                "consent",
+                "business_card",
+                "notification_log",
+                "user"
+              ]
+            }
+          },
+          {
+            "name": "target_id",
+            "required": false,
+            "in": "query",
+            "description": "대상 엔티티 pk (정확히 일치)",
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "name": "created_from",
+            "required": false,
+            "in": "query",
+            "description": "이 시각부터 (포함). UTC 오프셋이 있는 ISO 8601",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "created_to",
+            "required": false,
+            "in": "query",
+            "description": "이 시각 전까지 (미포함). UTC 오프셋이 있는 ISO 8601",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PageResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/AdminAuditLogDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "query 형식 오류, created_from이 created_to보다 늦음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "superadmin이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "어드민 감사 로그 목록 (최근 기록 순, superadmin 전용). 조회만 가능",
+        "tags": [
+          "어드민 감사 로그"
         ]
       }
     },
@@ -5099,7 +5486,9 @@
             "type": "string"
           },
           "department": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "선택 입력이라 없으면 null"
           },
           "job": {
             "type": "string"
@@ -5645,6 +6034,18 @@
           "result"
         ]
       },
+      "NicknameCheckResponseDto": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "description": "사용 가능하면 true. 대소문자 구분 없이 이미 쓰는 닉네임이면 false"
+          }
+        },
+        "required": [
+          "available"
+        ]
+      },
       "VerifyBusinessCardRequestDto": {
         "type": "object",
         "properties": {
@@ -5684,7 +6085,7 @@
           },
           "department": {
             "type": "string",
-            "description": "비공개 (다른 회원에게 보이지 않음)",
+            "description": "비공개 (다른 회원에게 보이지 않음). 선택 입력, 안 보내거나 빈 값이면 null 로 저장",
             "maxLength": 128
           },
           "job": {
@@ -5716,7 +6117,6 @@
           }
         },
         "required": [
-          "department",
           "job",
           "contact"
         ]
@@ -6292,6 +6692,126 @@
         },
         "required": [
           "role"
+        ]
+      },
+      "AdminAccessLogDto": {
+        "type": "object",
+        "properties": {
+          "target_type": {
+            "enum": [
+              "business_card",
+              "dev_user_hard_delete"
+            ],
+            "type": "string"
+          },
+          "pk": {
+            "type": "string"
+          },
+          "admin_email": {
+            "type": "string",
+            "description": "열람 시점의 어드민 이메일"
+          },
+          "target_id": {
+            "type": "string",
+            "description": "business_card: graduated.pk, dev_user_hard_delete: 지운 users.pk"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "target_type",
+          "pk",
+          "admin_email",
+          "target_id",
+          "created_at"
+        ]
+      },
+      "AdminAuditLogDto": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "enum": [
+              "admin_auth.login",
+              "admin_account.create",
+              "admin_account.role_update",
+              "admin_account.delete",
+              "interest.create",
+              "interest.rename",
+              "interest.delete",
+              "interest.reorder",
+              "school_department.create",
+              "school_department.update",
+              "school_email_domain.replace",
+              "company.create",
+              "company.update",
+              "company.delete",
+              "company.merge",
+              "company.logo_update",
+              "company.import",
+              "company_name.add",
+              "company_name.remove",
+              "consent.create",
+              "business_card.verification_cancel",
+              "notification_log.delivery_lookup",
+              "dev_user.hard_delete"
+            ],
+            "type": "string"
+          },
+          "target_type": {
+            "enum": [
+              "admin_account",
+              "interest",
+              "school_department",
+              "school_email_domain",
+              "company",
+              "company_name",
+              "consent",
+              "business_card",
+              "notification_log",
+              "user"
+            ],
+            "type": "string"
+          },
+          "before": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "변경 전 값. 생성이면 null"
+          },
+          "after": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "변경 후 값. 삭제면 null"
+          },
+          "pk": {
+            "type": "string"
+          },
+          "admin_email": {
+            "type": "string",
+            "description": "요청 시점의 어드민 이메일"
+          },
+          "target_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "대상 엔티티 pk. 일괄 작업은 null"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "target_type",
+          "before",
+          "after",
+          "pk",
+          "admin_email",
+          "target_id",
+          "created_at"
         ]
       },
       "AdminInterestDto": {

@@ -9,7 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 import { isApiError, useSubmitGraduatedInfo, userInfoQuery } from "@/api";
 import { PageContainer } from "@/components/layout/page-container";
-import { SignupProgress } from "@/components/signup-progress";
+import { SignupProgressSlot } from "@/components/signup-progress";
 import { action } from "@/components/ui/action";
 import {
   MentorContactFields,
@@ -22,15 +22,18 @@ import {
 import { hasBasics, useMentorSignupDraft } from "@/lib/mentor-signup-draft";
 import {
   companyRequestOf,
-  contactRequestOf,
-  digitsOf,
+  contactChannelsOf,
+  contactRequestFrom,
+  departmentRequestOf,
   normalizeLink,
 } from "@/lib/profile-form";
 import { cn } from "@/lib/utils";
 
 /**
  * 선배 추가 정보. 피그마 `Cheers / 선배 추가 정보`(336:7282 / 336:7141),
- * 알림 번호 형식 오류(346:9610 / 346:9521).
+ * 모두 입력한 상태(346:9610 / 346:9521). 동기화 가이드 3.5.
+ *
+ * 해시태그 → LinkedIn → 커피챗 참여 설정 → 버튼이 구분선 없이 이어진다.
  *
  * 가입의 마지막 화면이다. 기본 정보 화면이 담아 둔 값과 합쳐
  * `POST /user/graduated/info` **한 번**으로 저장하고, 응답의 새 토큰은
@@ -68,11 +71,11 @@ function RouteComponent() {
       hashtags: draft.hashtags,
       linkedin: draft.linkedin,
       /**
-       * 기본값은 구글 계정 이메일이다. 시안 예시(`alumni@example.com`)로는
-       * 판단할 수 없지만, 학생 화면도 학교 이메일을 기본값으로 세웠다(§2.6).
+       * 처음이면 두 채널 모두 켜고 이메일은 구글 계정 주소로 채운다(시안 주석
+       * "진입 시 기본적으로 check", 동기화 가이드 D3-6). `이전` 으로 갔다
+       * 오거나 재인증 선배면 담아 둔 값이 먼저다.
        */
-      email: draft.email || me.email || "",
-      phone: draft.phone,
+      contact: draft.contact ?? contactChannelsOf(null, me.email),
     },
   });
 
@@ -80,8 +83,7 @@ function RouteComponent() {
   const keep = (values: MentorExtraValues) => ({
     hashtags: values.hashtags,
     linkedin: values.linkedin.trim(),
-    email: values.email.trim(),
-    phone: digitsOf(values.phone),
+    contact: values.contact,
   });
 
   const back = () => {
@@ -96,13 +98,13 @@ function RouteComponent() {
         ...(me.name ? {} : { name: draft.name }),
         nickname: draft.nickname,
         ...companyRequestOf(draft.company, draft.company_id),
-        department: draft.department,
+        ...departmentRequestOf(draft.department),
         job: draft.job,
         hashtags: values.hashtags,
         // 시안은 LinkedIn 칸 하나, 명세는 배열(최대 5)이다
         links: values.linkedin ? [normalizeLink(values.linkedin)] : [],
-        // 임시: 이슈 #26 — 둘 다 필수, 둘 다 켠다(`contactRequestOf` 참고)
-        contact: contactRequestOf(values.email, values.phone),
+        // 끈 채널의 값은 보내지 않는다 — 공유에도 쓰이는 값이다(가이드 D3-3)
+        contact: contactRequestFrom(values.contact),
       },
       {
         onSuccess: () => {
@@ -112,7 +114,8 @@ function RouteComponent() {
         },
         onError: (error) => {
           // 닉네임 중복은 명세에 없지만, 서버가 409 로 알려 오면 그 칸이 있는
-          // 기본 정보로 되돌아가 보여준다(선배 가이드 §2.4, §7 #3)
+          // 기본 정보로 되돌아가 보여준다(선배 가이드 §2.4). 시안은 기본 정보의
+          // `다음` 에서 확인하길 원하지만 확인 API 가 없다(이슈 #43)
           if (isApiError(error) && error.status === 409) {
             patch({ ...keep(values), takenNickname: draft.nickname });
             void navigate({ to: "/onboarding/mentor/profile" });
@@ -129,11 +132,10 @@ function RouteComponent() {
       {/* 피그마 `Task workspace` — 1216 = 352 + 64 + 800 */}
       <div className="flex w-full flex-col gap-7 lg:w-304 lg:flex-row lg:items-start lg:gap-16">
         {/* 피그마 `Task introduction` */}
-        <div className="flex flex-col gap-7 lg:w-88 lg:shrink-0 lg:gap-10 lg:pt-4">
-          {/* 모바일은 제목 위, 데스크톱은 제목 아래 */}
-          <div className="order-first lg:order-last">
-            <SignupProgress current={3} />
-          </div>
+        {/* 모바일에서는 풀어서 단계 막대가 본문 전체를 기준으로 고정되게 한다 */}
+        <div className="flex flex-col gap-7 max-lg:contents lg:w-88 lg:shrink-0 lg:gap-10 lg:pt-4">
+          {/* 모바일은 제목 위에 고정, 데스크톱은 제목 아래 */}
+          <SignupProgressSlot current={3} />
           <div className="flex flex-col gap-3 lg:gap-5">
             <h1 className="text-task-title text-ink">추가 정보</h1>
             <p className="text-body text-ink-soft">
@@ -150,18 +152,23 @@ function RouteComponent() {
             onSubmit={finish}
           >
             <MentorExtraFields
-              hashtagHint="직무, 연차 등 나를 설명하는 키워드를 최대 5개 알려주세요."
+              hashtagHint={
+                <>
+                  직무, 연차 등 나를 설명하는 키워드를 최대 5개 알려주세요.
+                  {/*
+                   * 태그 안에 띄어쓰기가 들어갈 수 있어 스페이스로는 나누지 않는다 —
+                   * 확정 키를 알려 준다(시안에 없는 문장, 동기화 가이드 3.5.1).
+                   * 모바일은 한 줄에 다 들어가지 않아 줄을 바꾼다
+                   */}
+                  <br className="lg:hidden" />{" "}
+                  Enter를 누르면 다음 태그로 넘어가요.
+                </>
+              }
               linkedinPlaceholder="linkedin.com/in/…"
             />
 
-            <div className="bg-line h-px" />
-
-            {/* 피그마 `Contact and notification settings` — 정보 수정과 같은 묶음 */}
+            {/* 피그마 `Field / 연락 설정` — 정보 수정과 같은 묶음 */}
             <MentorContactFields />
-
-            <p className="text-body-sm text-ink-soft">
-              연락처와 연락 설정은 사원증에 공개되지 않아요.
-            </p>
 
             {submit.error && !isNicknameTaken(submit.error) ? (
               <p role="alert" className="text-body-sm text-danger">
