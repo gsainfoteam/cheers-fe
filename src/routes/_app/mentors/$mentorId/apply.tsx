@@ -44,10 +44,10 @@ const MAX_MESSAGE = 200;
 /**
  * 시안 `자주하는 질문 확인하기` 가 여는 주소.
  *
- * FAQ 페이지는 아직 없다(#24). 생기면 이 한 줄만 바꾼다 — 라우트가
- * 생기면 `<Link>` 로, 외부 문서라면 그 URL 로.
+ * FAQ 는 앱 안 페이지가 아니라 외부 노션 문서로 둔다(#24). 주소가 바뀌면
+ * 이 한 줄만 바꾼다.
  */
-const FAQ_URL = "/faq";
+const FAQ_URL = "https://infoteam-rulrudino.notion.site/cheers-faq";
 
 function RouteComponent() {
   const { mentorId } = Route.useParams();
