@@ -570,7 +570,7 @@ function SentDetail({ applicationId }: { applicationId: string }) {
         ) : (
           <>
             <MentorSummaryCard
-              // 수락하면 실명이 함께 보인다. 시안 표기가 폭마다 달라 공백 있는 쪽(D5-16)
+              // 연락처를 공유하면 실명이 함께 보인다. 시안 표기가 폭마다 달라 공백 있는 쪽(D5-16)
               name={
                 shared
                   ? `${graduated.nickname}(${shared.name}) 선배`
@@ -615,9 +615,10 @@ function SentDetail({ applicationId }: { applicationId: string }) {
  * 1251:15680). 공유 전에는 안내 상자, 공유 뒤에는 이메일 · 전화번호 줄.
  * 이름 줄은 없다 — 실명은 선배 카드 제목으로 간다.
  *
- * 안내 문구는 시안 그대로 "수락하면" 이지만, 실제로는 선배가 수락한 뒤
- * **연락처를 공유해야** 열린다(#46). 수락만 하고 선배가 먼저 연락하면 이
- * 상자는 계속 안내로 남는다. 문구를 고칠지는 디자이너 확인이 필요하다.
+ * 안내 문구는 시안의 "수락하면" 대신 **"공유하면"** 이다(D6-10, 2026-11-15
+ * 사용자 결정). 학생에게는 수락이 보이지 않고 선배가 연락처를 공유해야
+ * 열리기 때문이다(#46). 수락만 하고 선배가 먼저 연락하면 이 상자는 계속
+ * 안내로 남는다.
  */
 function MentorContact({ contact }: { contact: SharedContact | null }) {
   return (
@@ -636,9 +637,9 @@ function MentorContact({ contact }: { contact: SharedContact | null }) {
         </dl>
       ) : (
         <p className="border-line text-label-sm text-ink-soft flex h-20 items-center justify-center border-b py-2.5 text-center">
-          선배가 커피챗을 수락하면
+          선배가 연락처를 공유하면
           <br />
-          연락처가 공개돼요
+          여기에 공개돼요
         </p>
       )}
     </section>

@@ -90,8 +90,9 @@ export const GraduatedProfileSchema = z.object({
    */
   company_logo_url: z.string().nullable(),
   /**
-   * 비공개 — 다른 회원에게 보이지 않는다. 선택 입력이라 없으면 null
-   * (명세 2026-11-14 갱신, 이슈 #43)
+   * 선택 입력이라 없으면 null (명세 2026-11-14 갱신, 이슈 #43). 06장 시안에서
+   * `공개 사원증 정보` 로 옮겨 와 사원증 부서 줄에 찍힌다 — 다른 회원에게도
+   * `CheersCardDto.department` 로 보인다(#46)
    */
   department: z.string().nullable(),
   job: z.string(),

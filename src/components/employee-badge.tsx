@@ -59,6 +59,11 @@ export type EmployeeBadgeData = {
    */
   companyLogo?: string | null;
   company: string;
+  /**
+   * 회사 아래 부서 줄(피그마 `Company and Department`, 04장 4.2.2). 선택 입력이라
+   * 없으면(`null` · 빈 값) 줄을 그리지 않는다 — 시안 칩메이커 카드가 그렇다
+   */
+  department?: string | null;
   /** 본명이 아니라 닉네임이다 */
   nickname: string;
   /** 직무. 시안은 두 줄까지 자리를 비워 둔다 */
@@ -109,8 +114,13 @@ export function EmployeeBadge({
           } as CSSProperties
         }
       >
-        {/* 피그마 `Company identity` */}
-        <div className="flex flex-col items-start px-[calc(16*var(--u))] pt-[calc(26*var(--u))] gap-[calc(6*var(--u))]">
+        {/*
+         * 피그마 `Company identity`. 시안은 높이가 93.538(데스크톱 158, 같은
+         * 비율)로 고정이라 부서 줄이 있든 없든 닉네임이 같은 높이에 선다 — 한
+         * 줄에 놓인 카드끼리 이름 선이 맞는다. 회사명이 길어 두 줄이 되면 겹치지
+         * 않게 늘어나도록 최소 높이로 둔다
+         */}
+        <div className="flex min-h-[calc(93.538*var(--u))] flex-col items-start px-[calc(16*var(--u))] pt-[calc(26*var(--u))] gap-[calc(6*var(--u))]">
           {logo === undefined ? null : (
             /*
              * 고양이도 로고와 **같은 칸**(69.858×24.865)에 `object-contain` 으로
@@ -130,10 +140,20 @@ export function EmployeeBadge({
               )}
             />
           )}
-          {/* Badge/Company mobile 12/18/-0.3 → 큰 카드 13/20 */}
-          <p className="text-ink-soft text-[12px] leading-[18px] tracking-[-0.3px] @min-[220px]:text-[13px] @min-[220px]:leading-[20px] @min-[220px]:tracking-normal">
-            {data.company}
-          </p>
+          {/*
+           * 피그마 `Company and Department`. 사이 간격은 작은 카드 0 · 큰 카드 4.
+           * 줄 높이 · 자간은 회사와 같은 값을 물려받는다
+           */}
+          <div className="text-ink-soft flex flex-col items-start leading-[18px] tracking-[-0.3px] @min-[220px]:gap-1 @min-[220px]:leading-[20px] @min-[220px]:tracking-normal">
+            {/* Badge/Company mobile 12/18/-0.3 Medium → 큰 카드 13/20 Medium */}
+            <p className="text-[12px] font-medium @min-[220px]:text-[13px]">{data.company}</p>
+            {/* 작은 카드 10/18 DemiLight(350) → 큰 카드 13/20 Regular */}
+            {data.department ? (
+              <p className="text-[10px] font-[350] @min-[220px]:text-[13px] @min-[220px]:font-normal">
+                {data.department}
+              </p>
+            ) : null}
+          </div>
         </div>
 
         {/* 피그마 `Identity` */}

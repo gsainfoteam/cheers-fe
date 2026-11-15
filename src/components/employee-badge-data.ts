@@ -17,6 +17,8 @@ type BadgeSource = {
    * 둘러보기와 같은 로고를 그린다
    */
   company_logo_url: string | null;
+  /** 선택 입력이라 없으면 null — 사원증 부서 줄을 그리지 않는다 */
+  department: string | null;
   nickname: string;
   job: string;
   hashtags: string[];
@@ -26,6 +28,7 @@ export function badgeDataOf(source: BadgeSource): EmployeeBadgeData {
   return {
     companyLogo: source.company_logo_url,
     company: source.company,
+    department: source.department,
     nickname: source.nickname,
     role: source.job,
     // 사원증 안에서는 꼬리표 사이를 두 칸 띄운다(시안 `#전기전자  #3년차`)

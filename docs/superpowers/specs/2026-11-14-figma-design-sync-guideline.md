@@ -475,7 +475,7 @@ Off(22px, `rounded-sm`, 1px `border-line-strong`, `bg-surface`)와 On(`bg-ink-fi
 - [x] `site-footer.tsx`의 오래된 주석 고치기 (0.3.8)
 
 **P2**
-- [ ] 사원증 `department?` 줄 (0.3.9-2) — **보류.** D0-5와 함께 BE 답을 기다린다
+- [x] 사원증 `department?` 줄 (0.3.9-2) — 2026-11-15 반영(D0-5 해결, 04장 4.2.2)
 - [x] `CheckRow` Disable 상태 + 공통화, 포커스 링 통일 (0.3.4)
 - [x] Profile row 이름표 칸 96 ↔ 112: 화면 장마다 확인 → 모두 96, `card` 삭제 (0.3.10, 06장 6.6)
 
