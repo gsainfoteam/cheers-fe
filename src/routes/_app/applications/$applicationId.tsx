@@ -6,16 +6,15 @@ import {
   receivedRequestQuery,
   sentRequestQuery,
   userInfoQuery,
-  type Attachment,
   type ReceivedRequestDetail,
 } from "@/api";
 import { AccessMessage } from "@/components/access-message";
 import { action } from "@/components/ui/action";
+import { AttachmentLink } from "@/components/ui/attachment-link";
 import { ProfileRow } from "@/components/ui/profile-row";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { formatDate } from "@/lib/date";
 import { studentProfileRowsOf } from "@/features/profile/student-profile-rows";
-import { attachmentLabel } from "@/lib/attachments";
 import { mySharedContactOf } from "@/lib/mentor-contact";
 import { formatPhone } from "@/lib/profile-form";
 import { useSession } from "@/lib/session";
@@ -150,6 +149,7 @@ function StudentProfileCard({
   applicationId: string;
   request: ReceivedRequestDetail;
 }) {
+  const queryClient = useQueryClient();
   const { student } = request;
   const none = "등록하지 않음";
 
@@ -178,8 +178,17 @@ function StudentProfileCard({
                 {student.attachments.map((attachment) => (
                   <AttachmentLink
                     key={`${attachment.source}:${attachment.file_name ?? attachment.url}`}
-                    applicationId={applicationId}
                     attachment={attachment}
+                    refresh={async () =>
+                      (
+                        await queryClient.fetchQuery({
+                          ...receivedRequestQuery(applicationId),
+                          // presigned URL 의 수명을 모르므로 1분이 지났으면 새로 받는다
+                          staleTime: 60_000,
+                        })
+                      ).student.attachments
+                    }
+                    className="text-ink underline-offset-2 hover:underline"
                   />
                 ))}
               </span>
@@ -197,57 +206,6 @@ function StudentProfileCard({
        */}
       <p className="text-body-sm text-ink-soft pt-3">신청 당시의 프로필이에요.</p>
     </section>
-  );
-}
-
-/**
- * 첨부 링크. 링크 첨부는 시안처럼 스킴 없이 도메인부터 보이고, 파일 첨부는
- * 파일 이름이 보인다.
- *
- * **파일의 `url` 은 presigned URL 이라 만료된다.** 받아 둔 지 오래됐으면
- * 누르는 순간 상세를 다시 받아 새 URL 로 연다. 창은 클릭과 같은 틱에 먼저
- * 열어 둔다 — 응답을 기다린 뒤에 열면 팝업 차단에 걸린다.
- */
-function AttachmentLink({
-  applicationId,
-  attachment,
-}: {
-  applicationId: string;
-  attachment: Attachment;
-}) {
-  const queryClient = useQueryClient();
-  const label = attachmentLabel(attachment);
-
-  const openFresh = async (e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (attachment.source !== "file") return;
-    e.preventDefault();
-    const tab = window.open("about:blank", "_blank");
-    const fresh = await queryClient.fetchQuery({
-      ...receivedRequestQuery(applicationId),
-      // presigned URL 의 수명을 모르므로 1분이 지났으면 새로 받는다
-      staleTime: 60_000,
-    });
-    const url =
-      fresh.student.attachments.find((a) => a.file_name === attachment.file_name)
-        ?.url ?? attachment.url;
-    if (tab) {
-      tab.opener = null;
-      tab.location.href = url;
-    } else {
-      window.location.href = url;
-    }
-  };
-
-  return (
-    <a
-      href={attachment.url}
-      target="_blank"
-      rel="noreferrer noopener"
-      onClick={openFresh}
-      className="text-ink underline-offset-2 hover:underline"
-    >
-      {label}
-    </a>
   );
 }
 

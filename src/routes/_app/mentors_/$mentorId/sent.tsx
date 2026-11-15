@@ -37,20 +37,22 @@ function RouteComponent() {
       <CompletionCard
         title="커피챗 요청을 보냈어요."
         description={`${mentor ? `${mentor.nickname} 선배에게 ` : ""}질문과 프로필을 전달했어요.`}
+        secondaryAction={
+          /*
+           * 시안의 Ghost 는 이 자리에서 **흰 바탕**이다(카드 위라 테두리 없이도
+           * 버튼으로 읽힌다). 랜딩의 Ghost 는 배경 없이 글자만이라 토큰 쪽을
+           * 건드리지 않고 여기서만 바탕을 얹었다.
+           */
+          <Link
+            to="/mentors"
+            className={cn(action({ variant: "ghost" }), "bg-surface")}
+          >
+            선배 둘러보기
+          </Link>
+        }
       >
         <Link to="/applications" className={action()}>
           보낸 신청 보기
-        </Link>
-        {/*
-         * 시안의 Ghost 는 이 자리에서 **흰 바탕**이다(카드 위라 테두리 없이도
-         * 버튼으로 읽힌다). 랜딩의 Ghost 는 배경 없이 글자만이라 토큰 쪽을
-         * 건드리지 않고 여기서만 바탕을 얹었다.
-         */}
-        <Link
-          to="/mentors"
-          className={cn(action({ variant: "ghost" }), "bg-surface")}
-        >
-          선배 둘러보기
         </Link>
       </CompletionCard>
     </PageContainer>

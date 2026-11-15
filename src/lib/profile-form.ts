@@ -37,6 +37,16 @@ export function normalizeLink(link: string): string {
   return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
 }
 
+/**
+ * **다른 회원이 넣은** 링크를 `href` 에 넣기 전에 거른다. `http(s)` 가
+ * 아니면 `null` — `javascript:` 같은 스킴을 막는다. 저장할 때 `normalizeLink`
+ * 가 스킴을 붙이지만 그 경로를 거치지 않은 값이 있을 수 있어 화면에서도 본다.
+ */
+export function httpUrlOrNull(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed && /^https?:\/\//i.test(trimmed) ? trimmed : null;
+}
+
 export function isValidLink(link: string): boolean {
   try {
     const url = new URL(normalizeLink(link));

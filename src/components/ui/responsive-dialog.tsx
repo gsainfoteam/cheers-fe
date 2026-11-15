@@ -33,14 +33,26 @@ export function ResponsiveDialog({
   open,
   onOpenChange,
   title,
+  description,
   className,
   actions,
+  actionsDivider = "always",
   bleed = false,
   children,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
+  /**
+   * 제목에 딸린 안내 문구. 커피챗 신청(동기화 가이드 04장 4.3.1)이 쓴다.
+   *
+   * 시안이 폭마다 자리를 다르게 둔다 — **데스크톱은 머리의 제목 아래, 모바일은
+   * 스크롤 본문 맨 위.** 그래서 DOM 에 두 번 그리고 폭으로 하나만 보인다.
+   * `Dialog.Description`(= `aria-describedby`)은 데스크톱 쪽 하나만이다.
+   * `display:none` 이어도 `aria-describedby` 로 가리킨 글자는 읽히므로 화면
+   * 읽기는 폭과 상관없이 설명을 한 번 읽고, 모바일 쪽은 `aria-hidden` 이다.
+   */
+  description?: React.ReactNode;
   /** 데스크톱 상자 크기를 바꿀 때. 모바일은 늘 전체 화면이다 */
   className?: string;
   /**
@@ -50,6 +62,11 @@ export function ResponsiveDialog({
    * 안에 있는 오버레이(받은 신청 내용)가 그 모양이다.
    */
   actions?: React.ReactNode | false;
+  /**
+   * 버튼 줄 위 구분선을 어느 폭에서 그릴지. 커피챗 신청 데스크톱 시안은
+   * 구분선 없이 본문에서 버튼으로 바로 이어진다(04장 4.3.1) — `"mobile"`.
+   */
+  actionsDivider?: "always" | "mobile";
   /**
    * 본문 영역을 여백·스크롤 없이 통째로 넘긴다. 외부 약관 페이지처럼
    * **스스로 스크롤하는 내용**(iframe)을 꽉 채울 때 쓴다 — 기본 본문에
@@ -77,9 +94,16 @@ export function ResponsiveDialog({
         >
           {/* 피그마 `Dialog header` */}
           <div className="flex shrink-0 items-center gap-4 px-5 py-4 lg:px-8 lg:py-5">
-            <Dialog.Title className="text-h2 text-ink lg:text-screen flex-1">
-              {title}
-            </Dialog.Title>
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <Dialog.Title className="text-h2 text-ink lg:text-screen">
+                {title}
+              </Dialog.Title>
+              {description ? (
+                <Dialog.Description className="text-body-sm text-ink-soft hidden lg:block">
+                  {description}
+                </Dialog.Description>
+              ) : null}
+            </div>
             <Dialog.Close
               aria-label="닫기"
               className="flex size-11 shrink-0 items-center justify-center p-2.5"
@@ -96,6 +120,11 @@ export function ResponsiveDialog({
           ) : (
             <div className="min-h-0 flex-1 overflow-y-auto">
               <div className="flex flex-col gap-6 px-5 py-6 lg:px-8">
+                {description ? (
+                  <div aria-hidden className="text-body-sm text-ink-soft lg:hidden">
+                    {description}
+                  </div>
+                ) : null}
                 {children}
               </div>
             </div>
@@ -103,7 +132,12 @@ export function ResponsiveDialog({
 
           {actions === false ? null : (
             <>
-              <div className="bg-line h-px shrink-0" />
+              <div
+                className={cn(
+                  "bg-line h-px shrink-0",
+                  actionsDivider === "mobile" && "lg:hidden"
+                )}
+              />
 
               {/* 피그마 `Dialog actions` */}
               <div className="flex shrink-0 justify-end gap-3 px-5 pt-4 pb-5 lg:px-8">
