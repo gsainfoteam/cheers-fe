@@ -1606,6 +1606,92 @@
         ]
       }
     },
+    "/api/v1/cheers/received/{id}/accept": {
+      "post": {
+        "operationId": "CheersGraduatedController_accept",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "id가 UUID 형식이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "가입을 마치지 않음, 현업자가 아님, 명함 인증이 취소됨",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "요청이 없거나 내가 받은 요청이 아님",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "재학생이 탈퇴했거나 탈퇴 유예기간 중",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "커피챗 수락. 수락하면 재학생 연락처를 볼 수 있음 (알림 없음)",
+        "tags": [
+          "커피챗 · 현업자"
+        ]
+      }
+    },
     "/api/v1/cheers/received/{id}/share-contact": {
       "post": {
         "operationId": "CheersGraduatedController_shareContact",
@@ -1671,7 +1757,7 @@
             }
           },
           "409": {
-            "description": "내 연락 설정이 희망하지 않음이라 공유할 연락처가 없음",
+            "description": "수락하지 않은 요청이거나, 내 연락 설정이 희망하지 않음이라 공유할 연락처가 없음",
             "content": {
               "application/json": {
                 "schema": {
@@ -2400,6 +2486,7 @@
                 "consent.create",
                 "business_card.verification_cancel",
                 "notification_log.delivery_lookup",
+                "alimtalk_template.update",
                 "dev_user.hard_delete"
               ]
             }
@@ -2420,6 +2507,7 @@
                 "consent",
                 "business_card",
                 "notification_log",
+                "alimtalk_template",
                 "user"
               ]
             }
@@ -3289,6 +3377,170 @@
           }
         ],
         "summary": "알림톡의 카카오 최종 결과를 지금 알리고에서 조회 (CRB-77). 결과가 나왔으면 저장",
+        "tags": [
+          "어드민 커피챗"
+        ]
+      }
+    },
+    "/api/manager/v1/coffee-chat/aligo-status": {
+      "get": {
+        "operationId": "ManagerCoffeeChatController_getAligoStatus",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AligoStatusDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "알리고 잔액 조회 실패",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "알리고 현황: 잔여 충전금액 · 건수와 이번 달 발송량 (CRB-78)",
+        "tags": [
+          "어드민 커피챗"
+        ]
+      }
+    },
+    "/api/manager/v1/coffee-chat/alimtalk-template": {
+      "get": {
+        "operationId": "ManagerCoffeeChatController_listAlimtalkTemplates",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlimtalkTemplateListDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "알림톡 템플릿 목록 (CRB-78)",
+        "tags": [
+          "어드민 커피챗"
+        ]
+      }
+    },
+    "/api/manager/v1/coffee-chat/alimtalk-template/{event}": {
+      "patch": {
+        "operationId": "ManagerCoffeeChatController_updateAlimtalkTemplate",
+        "parameters": [
+          {
+            "name": "event",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "coffee_chat_requested",
+                "contact_shared"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAlimtalkTemplateRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlimtalkTemplateDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "event · 본문 형식 오류, 보낸 필드가 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "없는 템플릿",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "알림톡 템플릿 수정. 알리고에 등록한 템플릿과 글자 하나까지 같아야 전송됨 (CRB-78)",
         "tags": [
           "어드민 커피챗"
         ]
@@ -5485,6 +5737,11 @@
           "company": {
             "type": "string"
           },
+          "company_logo_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "회사 로고 presigned GET URL. 로고가 없으면 null"
+          },
           "department": {
             "type": "string",
             "nullable": true,
@@ -5519,6 +5776,7 @@
           "nickname",
           "company_id",
           "company",
+          "company_logo_url",
           "department",
           "job",
           "hashtags",
@@ -5585,6 +5843,11 @@
             "type": "string",
             "nullable": true
           },
+          "picture_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "구글 로그인 때 받은 프로필 이미지 URL. 없으면 null"
+          },
           "consent_required": {
             "type": "boolean"
           },
@@ -5614,6 +5877,7 @@
           "status",
           "name",
           "email",
+          "picture_url",
           "consent_required",
           "student",
           "graduated"
@@ -6164,6 +6428,11 @@
             "nullable": true,
             "description": "회사 로고 presigned GET URL. 로고가 없으면 null"
           },
+          "department": {
+            "type": "string",
+            "nullable": true,
+            "description": "선택 입력이라 없으면 null"
+          },
           "job": {
             "type": "string"
           },
@@ -6192,6 +6461,7 @@
           "nickname",
           "company",
           "company_logo_url",
+          "department",
           "job",
           "hashtags",
           "links",
@@ -6244,15 +6514,29 @@
           "company": {
             "type": "string"
           },
+          "department": {
+            "type": "string",
+            "nullable": true,
+            "description": "선택 입력이라 없으면 null. 선배가 탈퇴했거나 유예기간 중이면 null"
+          },
           "job": {
             "type": "string"
+          },
+          "hashtags": {
+            "description": "선배가 탈퇴했거나 유예기간 중이면 []",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
           "graduated_id",
           "nickname",
           "company",
-          "job"
+          "department",
+          "job",
+          "hashtags"
         ]
       },
       "SentRequestDto": {
@@ -6380,6 +6664,20 @@
             "type": "string",
             "description": "요청 당시 학과"
           },
+          "interests": {
+            "description": "요청 당시 관심 분야",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "activities": {
+            "description": "요청 당시 활동. 없으면 []",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "student_withdrawn": {
             "type": "boolean",
             "description": "true면 상세를 열람할 수 없음 (프론트는 목록 클릭을 막음)"
@@ -6389,7 +6687,8 @@
             "enum": [
               "contact_shared",
               "requested",
-              "viewed"
+              "viewed",
+              "accepted"
             ]
           },
           "created_at": {
@@ -6400,6 +6699,8 @@
           "id",
           "student_name",
           "department",
+          "interests",
+          "activities",
           "student_withdrawn",
           "status",
           "created_at"
@@ -6468,7 +6769,7 @@
           "email": {
             "type": "string",
             "nullable": true,
-            "description": "재학생의 현재 연락 설정에서 고른 값. 고르지 않았으면 null"
+            "description": "재학생의 현재 연락 설정에서 고른 값. 수락 전이거나 고르지 않았으면 null"
           },
           "phone": {
             "type": "string",
@@ -6499,11 +6800,17 @@
             "enum": [
               "contact_shared",
               "requested",
-              "viewed"
+              "viewed",
+              "accepted"
             ]
           },
           "created_at": {
             "type": "string"
+          },
+          "accepted_at": {
+            "type": "string",
+            "nullable": true,
+            "description": "수락한 시각. 수락 전이면 null"
           },
           "contact_shared_at": {
             "type": "string",
@@ -6518,7 +6825,24 @@
           "message",
           "status",
           "created_at",
+          "accepted_at",
           "contact_shared_at",
+          "student"
+        ]
+      },
+      "AcceptResponseDto": {
+        "type": "object",
+        "properties": {
+          "accepted_at": {
+            "type": "string"
+          },
+          "student": {
+            "type": "object",
+            "description": "재학생의 현재 연락 설정에서 고른 값. 고르지 않았으면 null"
+          }
+        },
+        "required": [
+          "accepted_at",
           "student"
         ]
       },
@@ -6755,6 +7079,7 @@
               "consent.create",
               "business_card.verification_cancel",
               "notification_log.delivery_lookup",
+              "alimtalk_template.update",
               "dev_user.hard_delete"
             ],
             "type": "string"
@@ -6770,6 +7095,7 @@
               "consent",
               "business_card",
               "notification_log",
+              "alimtalk_template",
               "user"
             ],
             "type": "string"
@@ -7255,6 +7581,171 @@
           "lookup",
           "log"
         ]
+      },
+      "AligoBalanceDto": {
+        "type": "object",
+        "properties": {
+          "counts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            },
+            "description": "유형별 잔여 건수. 키는 알리고 응답의 필드명(소문자)"
+          },
+          "amount": {
+            "type": "number",
+            "nullable": true,
+            "description": "잔여 충전금액. 알리고 응답에서 찾지 못하면 null"
+          }
+        },
+        "required": [
+          "counts",
+          "amount"
+        ]
+      },
+      "AligoMonthDto": {
+        "type": "object",
+        "properties": {
+          "since": {
+            "format": "date-time",
+            "type": "string",
+            "description": "집계 시작 시각 (이번 달 1일 00:00 KST)"
+          },
+          "accepted": {
+            "type": "number",
+            "description": "이번 달 알리고에 접수된 알림톡 수 (재시도로 다시 접수된 건도 각각)"
+          },
+          "delivered": {
+            "type": "number"
+          },
+          "failed": {
+            "type": "number"
+          },
+          "pending": {
+            "type": "number"
+          },
+          "unknown": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "since",
+          "accepted",
+          "delivered",
+          "failed",
+          "pending",
+          "unknown"
+        ]
+      },
+      "AligoStatusDto": {
+        "type": "object",
+        "properties": {
+          "configured": {
+            "type": "boolean",
+            "description": "알리고 키가 설정되어 있는지. false면 balance는 null"
+          },
+          "balance": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AligoBalanceDto"
+              }
+            ]
+          },
+          "month": {
+            "$ref": "#/components/schemas/AligoMonthDto"
+          },
+          "low_balance_threshold": {
+            "type": "number",
+            "nullable": true,
+            "description": "잔여량 부족 Slack 알림 기준값. 설정되지 않았으면 null (알림 꺼짐)"
+          },
+          "fetched_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "configured",
+          "balance",
+          "month",
+          "low_balance_threshold",
+          "fetched_at"
+        ]
+      },
+      "AlimtalkTemplateDto": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "enum": [
+              "coffee_chat_requested",
+              "contact_shared"
+            ],
+            "type": "string"
+          },
+          "tpl_code": {
+            "type": "string",
+            "description": "알리고 템플릿 코드. 비어 있으면 그 이벤트의 알림톡은 보내지 않음"
+          },
+          "title": {
+            "type": "string",
+            "description": "강조표기형 타이틀"
+          },
+          "message": {
+            "type": "string"
+          },
+          "button_name": {
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event",
+          "tpl_code",
+          "title",
+          "message",
+          "button_name",
+          "updated_at"
+        ]
+      },
+      "AlimtalkTemplateListDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlimtalkTemplateDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "UpdateAlimtalkTemplateRequestDto": {
+        "type": "object",
+        "properties": {
+          "tpl_code": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "button_name": {
+            "type": "string",
+            "maxLength": 14
+          }
+        }
       },
       "ConsentVersionListItemDto": {
         "type": "object",

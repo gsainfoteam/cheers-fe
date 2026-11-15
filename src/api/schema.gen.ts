@@ -395,6 +395,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/cheers/received/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** 커피챗 수락. 수락하면 재학생 연락처를 볼 수 있음 (알림 없음) */
+        post: operations["CheersGraduatedController_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/cheers/received/{id}/share-contact": {
         parameters: {
             query?: never;
@@ -686,6 +703,57 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/manager/v1/coffee-chat/aligo-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 알리고 현황: 잔여 충전금액 · 건수와 이번 달 발송량 (CRB-78) */
+        get: operations["ManagerCoffeeChatController_getAligoStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/manager/v1/coffee-chat/alimtalk-template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 알림톡 템플릿 목록 (CRB-78) */
+        get: operations["ManagerCoffeeChatController_listAlimtalkTemplates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/manager/v1/coffee-chat/alimtalk-template/{event}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** 알림톡 템플릿 수정. 알리고에 등록한 템플릿과 글자 하나까지 같아야 전송됨 (CRB-78) */
+        patch: operations["ManagerCoffeeChatController_updateAlimtalkTemplate"];
         trace?: never;
     };
     "/api/manager/v1/consent": {
@@ -1123,6 +1191,8 @@ export interface components {
             /** @description 회사 검색 결과의 company_id */
             company_id: number;
             company: string;
+            /** @description 회사 로고 presigned GET URL. 로고가 없으면 null */
+            company_logo_url: string | null;
             /** @description 선택 입력이라 없으면 null */
             department: string | null;
             job: string;
@@ -1147,6 +1217,8 @@ export interface components {
             status: "pending" | "active";
             name: string | null;
             email: string | null;
+            /** @description 구글 로그인 때 받은 프로필 이미지 URL. 없으면 null */
+            picture_url: string | null;
             consent_required: boolean;
             student: components["schemas"]["StudentInfoDto"] | null;
             graduated: components["schemas"]["GraduatedInfoDto"] | null;
@@ -1315,6 +1387,8 @@ export interface components {
             company: string;
             /** @description 회사 로고 presigned GET URL. 로고가 없으면 null */
             company_logo_url: string | null;
+            /** @description 선택 입력이라 없으면 null */
+            department: string | null;
             job: string;
             hashtags: string[];
             links: string[];
@@ -1336,7 +1410,11 @@ export interface components {
             graduated_id: string;
             nickname: string;
             company: string;
+            /** @description 선택 입력이라 없으면 null. 선배가 탈퇴했거나 유예기간 중이면 null */
+            department: string | null;
             job: string;
+            /** @description 선배가 탈퇴했거나 유예기간 중이면 [] */
+            hashtags: string[];
         };
         SentRequestDto: {
             id: string;
@@ -1373,10 +1451,14 @@ export interface components {
             student_name: string;
             /** @description 요청 당시 학과 */
             department: string;
+            /** @description 요청 당시 관심 분야 */
+            interests: string[];
+            /** @description 요청 당시 활동. 없으면 [] */
+            activities: string[];
             /** @description true면 상세를 열람할 수 없음 (프론트는 목록 클릭을 막음) */
             student_withdrawn: boolean;
             /** @enum {string} */
-            status: "contact_shared" | "requested" | "viewed";
+            status: "contact_shared" | "requested" | "viewed" | "accepted";
             created_at: string;
         };
         AttachmentDto: {
@@ -1394,7 +1476,7 @@ export interface components {
             interests: string[];
             activities: string[];
             attachments: components["schemas"]["AttachmentDto"][];
-            /** @description 재학생의 현재 연락 설정에서 고른 값. 고르지 않았으면 null */
+            /** @description 재학생의 현재 연락 설정에서 고른 값. 수락 전이거나 고르지 않았으면 null */
             email: string | null;
             phone: string | null;
         };
@@ -1402,10 +1484,17 @@ export interface components {
             id: string;
             message: string;
             /** @enum {string} */
-            status: "contact_shared" | "requested" | "viewed";
+            status: "contact_shared" | "requested" | "viewed" | "accepted";
             created_at: string;
+            /** @description 수락한 시각. 수락 전이면 null */
+            accepted_at: string | null;
             contact_shared_at: string | null;
             student: components["schemas"]["RequestStudentDto"];
+        };
+        AcceptResponseDto: {
+            accepted_at: string;
+            /** @description 재학생의 현재 연락 설정에서 고른 값. 고르지 않았으면 null */
+            student: Record<string, never>;
         };
         ShareContactResponseDto: {
             contact_shared_at: string;
@@ -1480,9 +1569,9 @@ export interface components {
         };
         AdminAuditLogDto: {
             /** @enum {string} */
-            action: "admin_auth.login" | "admin_account.create" | "admin_account.role_update" | "admin_account.delete" | "interest.create" | "interest.rename" | "interest.delete" | "interest.reorder" | "school_department.create" | "school_department.update" | "school_email_domain.replace" | "company.create" | "company.update" | "company.delete" | "company.merge" | "company.logo_update" | "company.import" | "company_name.add" | "company_name.remove" | "consent.create" | "business_card.verification_cancel" | "notification_log.delivery_lookup" | "dev_user.hard_delete";
+            action: "admin_auth.login" | "admin_account.create" | "admin_account.role_update" | "admin_account.delete" | "interest.create" | "interest.rename" | "interest.delete" | "interest.reorder" | "school_department.create" | "school_department.update" | "school_email_domain.replace" | "company.create" | "company.update" | "company.delete" | "company.merge" | "company.logo_update" | "company.import" | "company_name.add" | "company_name.remove" | "consent.create" | "business_card.verification_cancel" | "notification_log.delivery_lookup" | "alimtalk_template.update" | "dev_user.hard_delete";
             /** @enum {string} */
-            target_type: "admin_account" | "interest" | "school_department" | "school_email_domain" | "company" | "company_name" | "consent" | "business_card" | "notification_log" | "user";
+            target_type: "admin_account" | "interest" | "school_department" | "school_email_domain" | "company" | "company_name" | "consent" | "business_card" | "notification_log" | "alimtalk_template" | "user";
             /** @description 변경 전 값. 생성이면 null */
             before: {
                 [key: string]: unknown;
@@ -1661,6 +1750,58 @@ export interface components {
             lookup: "delivered" | "failed" | "pending";
             /** @description 조회 뒤의 로그 */
             log: components["schemas"]["NotificationLogItemDto"];
+        };
+        AligoBalanceDto: {
+            /** @description 유형별 잔여 건수. 키는 알리고 응답의 필드명(소문자) */
+            counts: {
+                [key: string]: number;
+            };
+            /** @description 잔여 충전금액. 알리고 응답에서 찾지 못하면 null */
+            amount: number | null;
+        };
+        AligoMonthDto: {
+            /**
+             * Format: date-time
+             * @description 집계 시작 시각 (이번 달 1일 00:00 KST)
+             */
+            since: string;
+            /** @description 이번 달 알리고에 접수된 알림톡 수 (재시도로 다시 접수된 건도 각각) */
+            accepted: number;
+            delivered: number;
+            failed: number;
+            pending: number;
+            unknown: number;
+        };
+        AligoStatusDto: {
+            /** @description 알리고 키가 설정되어 있는지. false면 balance는 null */
+            configured: boolean;
+            balance: components["schemas"]["AligoBalanceDto"] | null;
+            month: components["schemas"]["AligoMonthDto"];
+            /** @description 잔여량 부족 Slack 알림 기준값. 설정되지 않았으면 null (알림 꺼짐) */
+            low_balance_threshold: number | null;
+            /** Format: date-time */
+            fetched_at: string;
+        };
+        AlimtalkTemplateDto: {
+            /** @enum {string} */
+            event: "coffee_chat_requested" | "contact_shared";
+            /** @description 알리고 템플릿 코드. 비어 있으면 그 이벤트의 알림톡은 보내지 않음 */
+            tpl_code: string;
+            /** @description 강조표기형 타이틀 */
+            title: string;
+            message: string;
+            button_name: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        AlimtalkTemplateListDto: {
+            items: components["schemas"]["AlimtalkTemplateDto"][];
+        };
+        UpdateAlimtalkTemplateRequestDto: {
+            tpl_code?: string;
+            title?: string;
+            message?: string;
+            button_name?: string;
         };
         ConsentVersionListItemDto: {
             /** @description 이 종류의 최신 버전 (사용자에게 보여 주는 버전) */
@@ -3015,6 +3156,72 @@ export interface operations {
             };
         };
     };
+    CheersGraduatedController_accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcceptResponseDto"];
+                };
+            };
+            /** @description id가 UUID 형식이 아님 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 가입을 마치지 않음, 현업자가 아님, 명함 인증이 취소됨 */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 요청이 없거나 내가 받은 요청이 아님 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 재학생이 탈퇴했거나 탈퇴 유예기간 중 */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
     CheersGraduatedController_shareContact: {
         parameters: {
             query?: never;
@@ -3070,7 +3277,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
-            /** @description 내 연락 설정이 희망하지 않음이라 공유할 연락처가 없음 */
+            /** @description 수락하지 않은 요청이거나, 내 연락 설정이 희망하지 않음이라 공유할 연락처가 없음 */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -3536,8 +3743,8 @@ export interface operations {
                 size?: number;
                 /** @description 어드민 이메일 (부분 일치, 대소문자 무시) */
                 admin_email?: string;
-                action?: "admin_auth.login" | "admin_account.create" | "admin_account.role_update" | "admin_account.delete" | "interest.create" | "interest.rename" | "interest.delete" | "interest.reorder" | "school_department.create" | "school_department.update" | "school_email_domain.replace" | "company.create" | "company.update" | "company.delete" | "company.merge" | "company.logo_update" | "company.import" | "company_name.add" | "company_name.remove" | "consent.create" | "business_card.verification_cancel" | "notification_log.delivery_lookup" | "dev_user.hard_delete";
-                target_type?: "admin_account" | "interest" | "school_department" | "school_email_domain" | "company" | "company_name" | "consent" | "business_card" | "notification_log" | "user";
+                action?: "admin_auth.login" | "admin_account.create" | "admin_account.role_update" | "admin_account.delete" | "interest.create" | "interest.rename" | "interest.delete" | "interest.reorder" | "school_department.create" | "school_department.update" | "school_email_domain.replace" | "company.create" | "company.update" | "company.delete" | "company.merge" | "company.logo_update" | "company.import" | "company_name.add" | "company_name.remove" | "consent.create" | "business_card.verification_cancel" | "notification_log.delivery_lookup" | "alimtalk_template.update" | "dev_user.hard_delete";
+                target_type?: "admin_account" | "interest" | "school_department" | "school_email_domain" | "company" | "company_name" | "consent" | "business_card" | "notification_log" | "alimtalk_template" | "user";
                 /** @description 대상 엔티티 pk (정확히 일치) */
                 target_id?: string;
                 /** @description 이 시각부터 (포함). UTC 오프셋이 있는 ISO 8601 */
@@ -4030,6 +4237,123 @@ export interface operations {
             };
             /** @description 알리고 조회 실패 */
             502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    ManagerCoffeeChatController_getAligoStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AligoStatusDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 알리고 잔액 조회 실패 */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    ManagerCoffeeChatController_listAlimtalkTemplates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlimtalkTemplateListDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    ManagerCoffeeChatController_updateAlimtalkTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event: "coffee_chat_requested" | "contact_shared";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAlimtalkTemplateRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlimtalkTemplateDto"];
+                };
+            };
+            /** @description event · 본문 형식 오류, 보낸 필드가 없음 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 없는 템플릿 */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

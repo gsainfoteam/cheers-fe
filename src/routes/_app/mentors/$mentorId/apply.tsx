@@ -15,7 +15,6 @@ import { AttachmentGroup } from "@/components/ui/attachment-group";
 import { ProfileRow } from "@/components/ui/profile-row";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { studentProfileRowsOf } from "@/features/profile/student-profile-rows";
-import { withPendingCardFields } from "@/lib/pending-be-fields";
 import { useSession } from "@/lib/session";
 import { useAutosize } from "@/lib/use-autosize";
 import { BELOW_LG, useMediaQuery } from "@/lib/use-media-query";
@@ -295,14 +294,13 @@ function RouteComponent() {
   );
 }
 
-/** 목록 카드(`CheersCardDto`)를 요약 카드에 옮긴다. 부서는 #46 전까지 없음 */
+/** 목록 카드(`CheersCardDto`)를 요약 카드에 옮긴다. 부서가 없으면(null) 줄을 그리지 않는다 */
 function SelectedMentor({ card }: { card: CheersCard }) {
-  const { department } = withPendingCardFields(card);
   return (
     <MentorSummaryCard
       name={`${card.nickname} 선배`}
       company={card.company}
-      department={department}
+      department={card.department}
       job={card.job}
       logoUrl={card.company_logo_url}
       linkedinUrl={card.links[0]}

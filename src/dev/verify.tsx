@@ -832,14 +832,42 @@ export function App() {
       record([result]);
     });
 
-  /* ── 현업자 C: 연락처 공유 ──────────────────────────────────────────────
+  /* ── 현업자 C: 수락 → 연락처 공유 ───────────────────────────────────────
    *
+   * 공유는 수락한 요청에서만 된다(아니면 409 `Coffee chat is not accepted`).
+   * 수락은 멱등이라 먼저 부르고, 수락 뒤 상세에 학생 연락처가 채워졌는지 본다.
    * ShareContactResult 를 받은 뒤 상세를 다시 불러 반영됐는지까지 본다.
    * 재학생 쪽 shared_contact 는 계정을 바꿔 재학생 C 에서 확인한다.
    */
   const shareContact = () =>
     withBusy("share", async () => {
       const path = { params: { path: { id: receivedId } } };
+      record([
+        await check(
+          "POST /api/v1/cheers/received/{id}/accept",
+          () => api.POST("/api/v1/cheers/received/{id}/accept", path),
+          schemas.AcceptResultSchema
+        ),
+      ]);
+
+      const accepted = await check(
+        "GET /api/v1/cheers/received/{id} (수락 후)",
+        () => api.GET("/api/v1/cheers/received/{id}", path),
+        schemas.ReceivedRequestDetailSchema
+      );
+      if (accepted.schema === "pass") {
+        const body = accepted.body as {
+          accepted_at?: string | null;
+          student?: { email?: string | null; phone?: string | null };
+        };
+        accepted.issues.push(
+          body.accepted_at && (body.student?.email || body.student?.phone)
+            ? "accepted_at · 학생 연락처 채워짐 ✅"
+            : `수락이 반영되지 않았습니다 ⚠️ (accepted_at=${body.accepted_at}, email=${body.student?.email}, phone=${body.student?.phone})`
+        );
+      }
+      record([accepted]);
+
       record([
         await check(
           "POST /api/v1/cheers/received/{id}/share-contact",
@@ -1215,16 +1243,17 @@ export function App() {
                   me?.status !== "active" || !receivedId || busy !== null
                 }
               >
-                <legend>C. 연락처 공유</legend>
+                <legend>C. 수락 → 연락처 공유</legend>
                 <p style={S.warn}>
                   ⚠️ 재학생에게 <b>실제 알림과 내 연락처가 전달됩니다.</b>{" "}
                   되돌릴 수 없습니다.
                 </p>
                 <p style={S.note}>
-                  ShareContactResult 를 보고, 상세를 다시 불러 반영됐는지
+                  수락(AcceptResult) 뒤 상세에 학생 연락처가 채워졌는지 보고,
+                  ShareContactResult 를 받은 뒤 상세를 다시 불러 반영됐는지
                   확인합니다. 같은 요청에 다시 눌러도 알림은 다시 가지 않습니다.
                 </p>
-                <button onClick={() => void shareContact()}>연락처 공유</button>
+                <button onClick={() => void shareContact()}>수락 후 연락처 공유</button>
               </fieldset>
             </section>
           ) : (

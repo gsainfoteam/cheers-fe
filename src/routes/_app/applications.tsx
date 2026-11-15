@@ -13,10 +13,6 @@ import { action } from "@/components/ui/action";
 import { NoticeDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { RequestItem } from "@/components/ui/request-item";
-import {
-  withPendingGraduatedFields,
-  withPendingReceivedFields,
-} from "@/lib/pending-be-fields";
 import { useSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
@@ -127,8 +123,8 @@ function SentList() {
 /**
  * 피그마 `Cheers / Sent Requests`(1237:11072 / 1248:17998). 동기화 가이드
  * 05장 5.4 — 보낸 신청 행은 **상대 선배의 정보**다(D0-7): `회사`(`{회사} ·
- * {부서}`) / `직무` 정의 행 + 선배 해시태그 칩. 부서 · 해시태그는 명세에
- * 아직 없어 임시값(없음)이다(#46).
+ * {부서}`) / `직무` 정의 행 + 선배 해시태그 칩. 부서가 없으면 `{회사}` 만,
+ * 해시태그가 없으면 칩 줄이 없다(명세 2026-11-15 갱신, #46).
  *
  * - 이름 뒤 `선배` 는 시안(닉네임만)과 달리 유지한다(D5-11)
  * - 시안의 상태 아이콘(안 읽음 / 읽음 / 수락함)은 수락 흐름이 정해질 때까지
@@ -154,7 +150,7 @@ function SentRow({ request }: { request: SentRequest }) {
     );
   }
 
-  const graduated = withPendingGraduatedFields(request.graduated);
+  const { graduated } = request;
   return (
     <RequestItem
       applicationId={request.id}
@@ -209,13 +205,12 @@ function ReceivedList() {
 /**
  * 피그마 `Cheers / Received Requests`(1237:10977), 학생 탈퇴 시(1248:18431).
  *
- * 시안에는 학과 · 관심 분야 · 참여 활동이 있지만 목록 명세
- * (`ReceivedRequestDto`)에는 학과만 있다. 상세를 부르면 읽음 처리가 되므로
- * 목록에서 채울 수 없다(가이드 §7 #13). 관심 분야 · 참여 활동은 명세에 생길
- * 때까지 임시값(빈 목록)이라 그 줄이 그려지지 않는다(D0-6, #46).
+ * 학과 · 관심 분야 · 참여 활동은 목록 명세(`ReceivedRequestDto`)로 그린다
+ * (관심 분야 · 활동은 명세 2026-11-15 갱신, D0-6, #46). 상세를 부르면 읽음
+ * 처리가 되므로 목록에서 상세를 불러 채우면 안 된다(가이드 §7 #13).
+ * 빈 목록이면 그 줄을 그리지 않는다.
  */
-function ReceivedRow({ request: raw }: { request: ReceivedRequest }) {
-  const request = withPendingReceivedFields(raw);
+function ReceivedRow({ request }: { request: ReceivedRequest }) {
   const [notice, setNotice] = useState(false);
 
   /*

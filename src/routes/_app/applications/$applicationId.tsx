@@ -7,8 +7,10 @@ import {
   isApiError,
   receivedRequestQuery,
   sentRequestQuery,
+  useAcceptRequest,
   userInfoQuery,
   type ReceivedRequestDetail,
+  type ReceivedStatus,
   type SharedContact,
 } from "@/api";
 import coffeeCupIcon from "@/assets/icons/coffee-cup.svg";
@@ -23,12 +25,7 @@ import { ProfileRow } from "@/components/ui/profile-row";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { studentProfileRowsOf } from "@/features/profile/student-profile-rows";
 import { mySharedContactOf } from "@/lib/mentor-contact";
-import {
-  isAccepted,
-  isLocallyAccepted,
-  markLocallyAccepted,
-  withPendingGraduatedFields,
-} from "@/lib/pending-be-fields";
+import { withPendingGraduatedFields } from "@/lib/pending-be-fields";
 import { digitsOf, formatPhone } from "@/lib/profile-form";
 import { useSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
@@ -75,7 +72,7 @@ function RouteComponent() {
   if (role === "mentor") {
     return (
       <>
-        {/* 신청마다 수락 상태(임시 기록)를 새로 읽도록 key 를 준다 */}
+        {/* 신청을 옮겨 가면 수락 확인 상자 · 처리 상태가 남지 않도록 key 를 준다 */}
         <ReceivedDetailPage key={applicationId} applicationId={applicationId} />
         {/* 내 연락처 공유 확인(`share`)은 이 위에 뜬다 */}
         <Outlet />
@@ -116,29 +113,24 @@ function RouteComponent() {
  * **오버레이가 아니라 한 장짜리 화면이다.** 맨 위 `← 받은 신청 목록`, 화면
  * 제목, 학생 프로필 카드. 흐름이 두 단계다(정책 D5-1, 06장 6.5.3).
  *
- * 1. 수락 전: 카드 아래 `이전` · `커피챗 수락하기`. 학생 연락처는 그리지 않는다.
- * 2. 수락 뒤: 버튼이 빠지고 `커피챗 시작하기` 묶음이 선다 — `학생 연락처`
- *    (내가 먼저 연락하기) · `내 연락처`(내 연락처 공유하기 → 공유 완료).
+ * 1. 수락 전: 카드 아래 `이전` · `커피챗 수락하기`. 학생 연락처는 서버가
+ *    주지 않는다(수락 전 `student.email` · `phone` 은 늘 null).
+ * 2. `커피챗 수락하기` → 확인 상자 `네` → `POST .../accept`(#46 1번). 상세를
+ *    다시 받으면 학생 연락처가 채워져 온다.
+ * 3. 수락 뒤: 버튼이 빠지고 `커피챗 시작하기` 묶음이 선다 — `학생 연락처`
+ *    (내가 먼저 연락하기, API 없음) · `내 연락처`(내 연락처 공유하기 →
+ *    `share-contact` → 공유 완료).
  *
- * **지금 명세에는 "수락" API 가 없다**(#46 1번, 06장 D6-1). 그래서
- * `커피챗 수락하기` 는 **API 를 부르지 않고** 이 브라우저에만 기록한다
- * (`markLocallyAccepted`). 서버에 가는 것은 `내 연락처 공유하기` 의
- * `share-contact` 뿐이다. 이미 공유한 신청은 수락한 것으로 본다.
- * TODO(#47): 수락 API 가 생기면 서버 상태로 판정하고 수락 때 API 를 부른다.
+ * 수락 여부는 서버 상태(`status`)로만 판정한다. 수락 자체로는 학생에게 알림이
+ * 가지 않고 학생 화면에도 드러나지 않는다 — 학생이 아는 것은 공유뿐이다.
  */
 function ReceivedDetailPage({ applicationId }: { applicationId: string }) {
   const { data: request } = useSuspenseQuery(receivedRequestQuery(applicationId));
-  const [locallyAccepted, setLocallyAccepted] = useState(() =>
-    isLocallyAccepted(applicationId)
-  );
-  const accepted = isAccepted(request.status) || locallyAccepted;
+  const accepted = isAccepted(request.status);
   const [accepting, setAccepting] = useState(false);
-
-  const accept = () => {
-    markLocallyAccepted(applicationId);
-    setLocallyAccepted(true);
-    setAccepting(false);
-  };
+  // 방금 수락했으면 아래에 새로 선 `커피챗 시작하기` 로 데려간다 — 모바일은
+  // 프로필 카드가 길어서 학생 연락처가 화면 밖에 생긴다
+  const [justAccepted, setJustAccepted] = useState(false);
 
   return (
     <PageContainer className="flex flex-col items-center pt-8 pb-12 lg:pt-16 lg:pb-18">
@@ -185,12 +177,34 @@ function ReceivedDetailPage({ applicationId }: { applicationId: string }) {
           </div>
         </section>
 
-        {accepted ? <StartCoffeeChat applicationId={applicationId} request={request} /> : null}
+        {accepted ? (
+          <StartCoffeeChat
+            applicationId={applicationId}
+            request={request}
+            scrollIntoView={justAccepted}
+          />
+        ) : null}
       </div>
 
-      <AcceptDialog open={accepting} onOpenChange={setAccepting} onAccept={accept} />
+      <AcceptDialog
+        applicationId={applicationId}
+        open={accepting}
+        onOpenChange={setAccepting}
+        onAccepted={() => {
+          setAccepting(false);
+          setJustAccepted(true);
+        }}
+      />
     </PageContainer>
   );
+}
+
+/**
+ * 선배가 수락했는가. 공유는 수락 뒤에만 되므로 `contact_shared` 도 수락이다
+ * (수락 API 이전에 공유한 요청도 BE 마이그레이션으로 수락이 채워졌다).
+ */
+function isAccepted(status: ReceivedStatus): boolean {
+  return status === "accepted" || status === "contact_shared";
 }
 
 /**
@@ -245,31 +259,56 @@ function StudentProfile({
  * 피그마 `커피챗 수락 모달`(1245:16951). 버튼 `커피챗 수락하기` 의 주석:
  * *"커피챗 수락 모달로 한 번 더 확인"*. 문구는 시안 그대로다.
  *
- * 수락 API 가 없어 `네` 는 서버에 아무것도 보내지 않는다(D6-1). 호출부가
- * 이 브라우저에 수락을 기록하고 `커피챗 시작하기` 를 연다.
- * TODO(#47): 수락 API 가 생기면 여기서 부르고, 처리 중 · 실패 상태를 붙인다.
+ * `네` 가 `POST .../accept` 를 부른다. 상세를 다시 받아 학생 연락처가 채워질
+ * 때까지 처리 중이고(`useAcceptRequest`), 그동안은 닫히지 않는다. 이미 수락한
+ * 요청이어도 서버가 처음 결과를 돌려주므로 다시 눌러도 안전하다.
  */
 function AcceptDialog({
+  applicationId,
   open,
   onOpenChange,
-  onAccept,
+  onAccepted,
 }: {
+  applicationId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAccept: () => void;
+  onAccepted: () => void;
 }) {
+  const accept = useAcceptRequest();
+
   return (
     <ConfirmDialog
       layout="choice"
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={(next) => {
+        if (accept.isPending) return;
+        // 다시 열 때 지난 실패 문구가 남지 않게 한다
+        if (next) accept.reset();
+        onOpenChange(next);
+      }}
       title="커피챗을 수락할까요?"
       description="수락하면 학생의 연락처를 확인할 수 있어요."
       cancelLabel="아니오"
       confirmLabel="네"
-      onConfirm={onAccept}
-    />
+      onConfirm={() => accept.mutate(applicationId, { onSuccess: onAccepted })}
+      busy={accept.isPending}
+      busyLabel="수락하는 중…"
+    >
+      {accept.error ? (
+        <p role="alert" className="text-body-sm text-danger text-center">
+          {describeAcceptError(accept.error)}
+        </p>
+      ) : null}
+    </ConfirmDialog>
   );
+}
+
+function describeAcceptError(error: unknown): string {
+  if (!isApiError(error)) return "수락하지 못했어요. 다시 시도해 주세요.";
+  if (error.status === 410) return "학생이 탈퇴해 수락할 수 없어요.";
+  if (error.status === 404) return "신청을 찾을 수 없어요. 목록에서 다시 확인해 주세요.";
+  if (error.status === 403) return "이 계정에서는 커피챗을 수락할 수 없어요.";
+  return "수락하지 못했어요. 다시 시도해 주세요.";
 }
 
 /**
@@ -280,18 +319,29 @@ function AcceptDialog({
 function StartCoffeeChat({
   applicationId,
   request,
+  scrollIntoView,
 }: {
   applicationId: string;
   request: ReceivedRequestDetail;
+  /** 방금 수락했으면 이 묶음으로 화면을 옮긴다. 이미 수락한 신청을 열 때는 그대로 둔다 */
+  scrollIntoView: boolean;
 }) {
   const { data: me } = useSuspenseQuery(userInfoQuery());
   // 공유하면 켠 채널의 연락처가 모두 간다(D3-3). 공유 확인과 같은 값
   const mine = mySharedContactOf(me);
+  // 수락 뒤 상세에만 채워져 온다. 재학생이 고른 연락 수단만 값이 있다
   const { student } = request;
   const [contacting, setContacting] = useState(false);
 
   return (
-    <section className="flex flex-col gap-3">
+    <section
+      ref={
+        scrollIntoView
+          ? (node) => node?.scrollIntoView({ behavior: "smooth", block: "start" })
+          : undefined
+      }
+      className="flex flex-col gap-3"
+    >
       <h2 className="text-screen text-ink">커피챗 시작하기</h2>
       <div className="flex flex-col gap-4 lg:flex-row">
         {/* 피그마 `Contact choice / mailtoStudent` */}
@@ -484,7 +534,12 @@ function ContactStudentDialog({
  *   (탈퇴가 수락보다 우선 — 명세도 탈퇴하면 연락처를 null 로 준다)
  * - 오른쪽 열: `전달한 내 정보`. **지금 내 정보**다 — 신청 당시 스냅샷을 쓰지
  *   않기로 했다(D5-14)
- * - 선배의 로고 · 부서 · LinkedIn 은 명세에 아직 없어 임시값(없음)이다(#46)
+ * - 선배의 로고 · LinkedIn 은 명세에 아직 없어 임시값(없음)이다(#46). 부서는
+ *   명세 2026-11-15 갱신으로 실제 값이다
+ *
+ * **학생에게는 "수락" 이 보이지 않는다**(#46). 선배가 수락해도 보낸 요청은
+ * `viewed` 그대로이고, 선배가 `내 연락처 공유하기` 를 해야 `contact_shared` 와
+ * `shared_contact` 가 온다. 그래서 선배 연락처는 `shared_contact` 만 본다.
  */
 function SentDetail({ applicationId }: { applicationId: string }) {
   const queryClient = useQueryClient();
@@ -492,9 +547,8 @@ function SentDetail({ applicationId }: { applicationId: string }) {
   const { data: request } = useSuspenseQuery(sentRequestQuery(applicationId));
   const withdrawn = request.graduated_withdrawn;
   const graduated = withPendingGraduatedFields(request.graduated);
-  // 수락되면(D5-1) 선배 연락처가 공개된다
-  const shared =
-    !withdrawn && isAccepted(request.status) ? request.shared_contact : null;
+  // 공유 전이면 null. 탈퇴하면 명세도 연락처를 비우지만 화면은 탈퇴 안내가 우선이다
+  const shared = withdrawn ? null : request.shared_contact;
 
   /** presigned 첨부 URL 이 만료됐을 수 있어 누를 때 내 정보를 다시 받는다 */
   const refreshAttachments = async () =>
@@ -516,7 +570,7 @@ function SentDetail({ applicationId }: { applicationId: string }) {
         ) : (
           <>
             <MentorSummaryCard
-              // 수락하면 실명이 함께 보인다. 시안 표기가 폭마다 달라 공백 있는 쪽(D5-16)
+              // 연락처를 공유하면 실명이 함께 보인다. 시안 표기가 폭마다 달라 공백 있는 쪽(D5-16)
               name={
                 shared
                   ? `${graduated.nickname}(${shared.name}) 선배`
@@ -558,8 +612,13 @@ function SentDetail({ applicationId }: { applicationId: string }) {
 
 /**
  * 피그마 `선배 연락처`(대기 1251:15637 / 1251:15669, 수락 1251:15620 /
- * 1251:15680). 수락 전에는 안내 상자, 수락 뒤에는 이메일 · 전화번호 줄.
+ * 1251:15680). 공유 전에는 안내 상자, 공유 뒤에는 이메일 · 전화번호 줄.
  * 이름 줄은 없다 — 실명은 선배 카드 제목으로 간다.
+ *
+ * 안내 문구는 시안의 "수락하면" 대신 **"공유하면"** 이다(D6-10, 2026-11-15
+ * 사용자 결정). 학생에게는 수락이 보이지 않고 선배가 연락처를 공유해야
+ * 열리기 때문이다(#46). 수락만 하고 선배가 먼저 연락하면 이 상자는 계속
+ * 안내로 남는다.
  */
 function MentorContact({ contact }: { contact: SharedContact | null }) {
   return (
@@ -578,9 +637,9 @@ function MentorContact({ contact }: { contact: SharedContact | null }) {
         </dl>
       ) : (
         <p className="border-line text-label-sm text-ink-soft flex h-20 items-center justify-center border-b py-2.5 text-center">
-          선배가 커피챗을 수락하면
+          선배가 연락처를 공유하면
           <br />
-          연락처가 공개돼요
+          여기에 공개돼요
         </p>
       )}
     </section>

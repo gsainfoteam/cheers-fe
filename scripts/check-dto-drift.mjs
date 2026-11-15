@@ -58,6 +58,7 @@ const MAP = {
   RequestStudentDto: "RequestStudentSchema",
   ReceivedRequestDetailDto: "ReceivedRequestDetailSchema",
   ShareContactResponseDto: "ShareContactResultSchema",
+  AcceptResponseDto: "AcceptResultSchema",
 };
 
 /**
