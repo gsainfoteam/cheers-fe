@@ -519,7 +519,7 @@ D5-1로 "수락하면 연락처가 공개된다"가 정책이 됐다. 지금 API
 | D5-11 | 행 이름 뒤 `선배`(시안은 닉네임만) | 디자이너에게 알림 | `{닉네임} 선배` 유지(D0-8과 같은 이유, `탈퇴한 선배`와 짝) | 유지 |
 | D5-12 | 탈퇴 행 칩 `#열람 불가` | 디자이너 | 그리지 않는다 | 그리지 않음 |
 | **D5-13** | `RequestGraduatedDto`에 `department: string \| null`(D0-5 연장, 세 번째 사용처), `hashtags: string[]`, `company_logo_url: string \| null`, `links: string[]`. 그리고 값이 신청 당시 스냅샷인지, 탈퇴 때 무엇이 오는지 | BE | 요청함 🔶 [#46](https://github.com/gsainfoteam/cheers-fe/issues/46) (5.8 ③) | 임시값 `null`·`[]`(5.8): 부서·칩·LinkedIn 없이, 로고는 고양이. 탈퇴면 FE가 `열람 불가`로 덮음 |
-| **D5-14** | 보낸 신청 상세의 신청 당시 학생 정보(스냅샷) | 기획 | ✅ **(2026-11-15) 스냅샷을 쓰지 않고 현재 정보를 보여 준다.** 선배에게 가는 정보도 현재 값으로 맞춘다(BE 확인, 5.8) | — |
+| **D5-14** | 보낸 신청 상세의 신청 당시 학생 정보(스냅샷) | 기획 | ✅ **(2026-11-15) 스냅샷을 쓰지 않고 현재 정보를 보여 준다.** 선배에게 가는 정보는 BE가 **요청 당시 값**으로 보내며, 그대로 두기로 했다(2026-11-15, 5.8) | — |
 | D5-15 | 수락 시 공유 날짜·"확정 아님" 안내 삭제 | 디자이너에게 알림 | 시안대로 삭제 | 삭제 |
 | D5-16 | 수락 시 실명 표기 공백(데스크톱 없음 / 모바일 있음) | 디자이너에게 알림 | `반도체냥(김선배) 선배` | 공백 있음 |
 | D5-17 | 상세 탈퇴 상태 모바일 모양 | 디자이너 | 같은 상자 폭 전체, 높이 240 | 그렇게 |
@@ -652,7 +652,7 @@ D5-1로 "수락하면 연락처가 공개된다"가 정책이 됐다. 지금 API
 | ① | `CheersCardDto` (`GET /cheers`) | `department: string \| null` | 사원증 부서 줄(0.3.9-2, 4.2.2), 커피챗 신청 선배 카드(4.3.2) | D0-5 | `department: null` → 부서 줄 없음, 카드는 `{회사}`만 | P1 |
 | ② | `ReceivedRequestDto` (`GET /cheers/received`) | `interests: string[]`, `activities: string[]` | 받은 신청 목록 행(0.4.1). 상세를 열면 읽음 처리라 FE가 상세로 채울 수 없다 | D0-6 | `[]` → 관심 분야 줄·칩 줄 없음(`학과` 한 줄만) | P1 |
 | ③ | `RequestGraduatedDto` (`GET /cheers/sent`, `GET /cheers/sent/{id}`) | `department: string \| null`, `hashtags: string[]`, `company_logo_url: string \| null`, `links: string[]` | 보낸 신청 행 `{회사} · {부서}`·칩(5.4.2), 보낸 신청 내용 선배 카드 로고·부서·LinkedIn(5.5.3) | D5-13 (D0-5 연장) | `department: null`, `hashtags: []`, `company_logo_url: null`(2D 고양이, D4-1), `links: []`(LinkedIn 줄 없음) | P1 |
-| ⑤ | `AttachmentDto` (`RequestStudentDto.attachments`) | `key: string \| null` (`StudentAttachmentDto`처럼) | presigned 주소를 다시 받을 때 `file_name` 대신 `key`로 찾는다. 같은 이름 파일이 둘이면 지금은 첫 번째가 열린다(4.3.5) | — | `key: null` → 지금처럼 `file_name`으로 찾음 | P2 |
+| ⑤ | `AttachmentDto` (`RequestStudentDto.attachments`) | `key: string \| null` (`StudentAttachmentDto`처럼) | presigned 주소를 다시 받을 때 `file_name` 대신 `key`로 찾는다. 같은 이름 파일이 둘이면 지금은 첫 번째가 열린다(4.3.5) | — | `key: null` → 지금처럼 `file_name`으로 찾음. **(2026-11-15) 영향이 작아 보류** — 같은 이름 파일 두 개는 드문 경우라 `file_name` 찾기를 유지한다 | P2 |
 | ⑥ | **D5-1 수락 흐름** (`GET /cheers/received/{id}`, `POST /cheers/received/{id}/share-contact`) | 아래 별도 표 | 받은 신청 상세(6장), 보낸 신청 내용 `선배 연락처`(5.5.4), 상태 아이콘(D5-10) | D5-1 | `share-contact` = 수락, `contact_shared` = 수락됨으로 본다. 받은 신청 상세는 `contact_shared` 전에 학생 이메일·전화번호를 **화면에 그리지 않는다**(응답 가리기는 BE 몫) | **P0** |
 
 ③은 목록과 상세가 같은 DTO를 쓴다. 목록 응답을 가볍게 두고 싶다면 목록에는 `department`·`hashtags`만, 상세에는 네 개 모두면 된다. 로고 presigned URL을 목록 50건마다 만들 필요는 없다(행에 로고가 없다).
@@ -691,4 +691,4 @@ export function withPendingReceivedFields(r: ReceivedRequest) {
 **동작 확인 (DTO 변경 아님, 3장에서 남은 것)**
 - 3.6: 채널 조합별 `share-contact` 응답(둘 다 켬 → 이메일·휴대폰 둘 다, 카카오만 → `shared_phone`만, 이메일만 → `shared_email`만). ⑥이 정해지면 같은 조합으로 수락을 확인한다.
 - ③의 값이 신청 당시 값인지 현재 값인지(D5-14로 학생 쪽은 현재 값을 쓰므로 선배 쪽도 현재 값이면 맞다), 선배가 탈퇴했을 때 무엇이 오는지. FE는 탈퇴면 `열람 불가`로 덮지만(5.4.4) 응답에 개인정보가 남지 않는지 확인한다.
-- **D5-14(현재 정보):** 선배에게 가는 학생 정보 `RequestStudentDto`(`department`, `interests`, `activities`, `attachments`)가 현재 값인지. 학생은 보낸 신청 내용에서 현재 프로필을 보므로 선배도 같은 값을 봐야 한다. 지금 `ReceivedRequestDto.department`는 *"요청 당시 학과"* 라 기준이 다르다. ②의 `interests`·`activities`도 같은 기준(현재 값)으로 맞춘다.
+- ~~**D5-14(현재 정보):** 선배에게 가는 학생 정보 `RequestStudentDto`(`department`, `interests`, `activities`, `attachments`)가 현재 값인지.~~ → **종결(2026-11-15).** BE는 선배에게 가는 학생 정보를 **요청 당시 값**으로 보낸다(`ReceivedRequestDto.department` · `interests` · `activities` 명세 설명도 "요청 당시"). 학생 쪽 현재 정보 표시와 기준이 다르지만 신경 쓰지 않기로 했다. FE는 바꿀 것 없다.

@@ -84,6 +84,12 @@ export const GraduatedProfileSchema = z.object({
   company_id: z.number(),
   company: z.string(),
   /**
+   * 회사 로고 presigned GET URL. 로고가 없으면 null. `CheersCardDto` 와 같은
+   * 값이라 마이페이지 사원증도 둘러보기와 같은 로고를 그린다 (명세 2026-11-15
+   * 갱신, 이슈 #46)
+   */
+  company_logo_url: z.string().nullable(),
+  /**
    * 비공개 — 다른 회원에게 보이지 않는다. 선택 입력이라 없으면 null
    * (명세 2026-11-14 갱신, 이슈 #43)
    */
@@ -127,6 +133,11 @@ export const UserInfoSchema = z.object({
   next_step: z.enum(["consent", "verify", "profile"]).nullable(),
   name: z.string().nullable(),
   email: z.string().nullable(),
+  /**
+   * 구글 로그인 때 받은 프로필 이미지 URL. 없으면 null. 화면에는 쓰지 않는다
+   * — `로그인 정보` 구획을 만들지 않기로 했다(05장 D5-2)
+   */
+  picture_url: z.string().nullable(),
   /** 개정된 필수 약관에 다시 동의해야 하면 true */
   consent_required: z.boolean(),
   student: StudentInfoSchema.nullable(),
@@ -229,9 +240,22 @@ export const CompanySearchItemSchema = z.object({
 /** 명세상 페이징 없는 맨 배열이다. 서버가 최대 10개로 자른다 */
 export const CompanySearchResultSchema = z.array(CompanySearchItemSchema);
 
-export const CheersStatusSchema = z.enum([
+/**
+ * 보낸 요청(재학생)의 상태. **`accepted` 가 없다** — 선배가 수락해도 학생에게는
+ * `viewed` 로 보이고, 연락처를 공유해야 `contact_shared` 가 된다(이슈 #46).
+ */
+export const SentStatusSchema = z.enum(["requested", "viewed", "contact_shared"]);
+
+/**
+ * 받은 요청(현업자)의 상태. 순서는 requested → viewed → accepted →
+ * contact_shared. 상세 응답에는 requested 가 오지 않는다(첫 조회가 viewed 로
+ * 바꾼다). 공유는 수락 뒤에만 되고, 수락 API 이전에 공유한 요청은 마이그레이션
+ * 에서 수락된 것으로 채워졌다(명세 2026-11-15 갱신, 이슈 #46).
+ */
+export const ReceivedStatusSchema = z.enum([
   "requested",
   "viewed",
+  "accepted",
   "contact_shared",
 ]);
 
@@ -241,6 +265,8 @@ export const CheersCardSchema = z.object({
   company: z.string(),
   /** 회사 로고 presigned GET URL. 로고가 없으면 null */
   company_logo_url: z.string().nullable(),
+  /** 선택 입력이라 없으면 null — 사원증 부서 줄을 그리지 않는다 (명세 2026-11-15 갱신, 이슈 #46) */
+  department: z.string().nullable(),
   job: z.string(),
   hashtags: z.array(z.string()),
   links: z.array(z.string()),
@@ -265,7 +291,14 @@ export const RequestGraduatedSchema = z.object({
   graduated_id: z.string(),
   nickname: z.string(),
   company: z.string(),
+  /**
+   * 선택 입력이라 없으면 null. 선배가 탈퇴했거나 유예기간 중이면 null
+   * (명세 2026-11-15 갱신, 이슈 #46)
+   */
+  department: z.string().nullable(),
   job: z.string(),
+  /** 선배가 탈퇴했거나 유예기간 중이면 [] (명세 2026-11-15 갱신, 이슈 #46) */
+  hashtags: z.array(z.string()),
 });
 
 export const SentRequestSchema = z.object({
@@ -279,7 +312,7 @@ export const SentRequestSchema = z.object({
    */
   graduated_withdrawn: z.boolean(),
   message: z.string(),
-  status: CheersStatusSchema,
+  status: SentStatusSchema,
   created_at: z.string(),
 });
 
@@ -309,13 +342,19 @@ export const ReceivedRequestSchema = z.object({
   /** 요청 당시 재학생 학과명 */
   department: z.string(),
   /**
+   * 요청 당시 관심 분야 · 활동. 활동이 없으면 []. 상세를 열면 읽음 처리되므로
+   * 목록 행은 이 값으로 그린다 (명세 2026-11-15 갱신, 이슈 #46)
+   */
+  interests: z.array(z.string()),
+  activities: z.array(z.string()),
+  /**
    * 재학생이 탈퇴했거나 탈퇴 유예기간 중이면 true. `SentRequestDto` 의
    * `graduated_withdrawn` 과 대칭이다.
    *
    * true 면 상세가 410 으로 막히므로 목록에서 클릭 자체를 막아야 한다.
    */
   student_withdrawn: z.boolean(),
-  status: CheersStatusSchema,
+  status: ReceivedStatusSchema,
   created_at: z.string(),
 });
 
@@ -333,6 +372,10 @@ export const RequestStudentSchema = z.object({
   interests: z.array(z.string()),
   activities: z.array(z.string()),
   attachments: z.array(AttachmentSchema),
+  /**
+   * **수락 전에는 늘 null 이다**(이슈 #46). 수락 뒤에는 재학생이 연락 수단으로
+   * 고른 것만 값이 있고 고르지 않은 것은 null. phone 은 하이픈 없는 숫자
+   */
   email: z.string().nullable(),
   phone: z.string().nullable(),
 });
@@ -340,10 +383,27 @@ export const RequestStudentSchema = z.object({
 export const ReceivedRequestDetailSchema = z.object({
   id: z.string(),
   message: z.string(),
-  status: CheersStatusSchema,
+  status: ReceivedStatusSchema,
   created_at: z.string(),
+  /** 수락한 시각. 수락 전이면 null */
+  accepted_at: z.string().nullable(),
   contact_shared_at: z.string().nullable(),
   student: RequestStudentSchema,
+});
+
+/**
+ * 커피챗 수락(`POST /cheers/received/{id}/accept`). 이미 수락한 요청에 다시
+ * 부르면 처음 결과를 그대로 돌려준다.
+ *
+ * 명세는 `student` 를 속성 없는 `object` 로만 적어 두었다. 모양은 BE 안내
+ * (2026-11-15)를 따른다 — 상세의 `student.email` · `phone` 과 같은 값이다.
+ */
+export const AcceptResultSchema = z.object({
+  accepted_at: z.string(),
+  student: z.object({
+    email: z.string().nullable(),
+    phone: z.string().nullable(),
+  }),
 });
 
 export const ShareContactResultSchema = z.object({
@@ -376,7 +436,8 @@ export type InterestList = z.infer<typeof InterestListSchema>;
 export type SendCodeResult = z.infer<typeof SendCodeResultSchema>;
 export type UploadUrl = z.infer<typeof UploadUrlSchema>;
 export type CompanySearchItem = z.infer<typeof CompanySearchItemSchema>;
-export type CheersStatus = z.infer<typeof CheersStatusSchema>;
+export type SentStatus = z.infer<typeof SentStatusSchema>;
+export type ReceivedStatus = z.infer<typeof ReceivedStatusSchema>;
 export type CheersCard = z.infer<typeof CheersCardSchema>;
 export type CheersList = z.infer<typeof CheersListSchema>;
 export type CheersRequestResult = z.infer<typeof CheersRequestResultSchema>;
@@ -390,3 +451,4 @@ export type ReceivedList = z.infer<typeof ReceivedListSchema>;
 export type RequestStudent = z.infer<typeof RequestStudentSchema>;
 export type ReceivedRequestDetail = z.infer<typeof ReceivedRequestDetailSchema>;
 export type ShareContactResult = z.infer<typeof ShareContactResultSchema>;
+export type AcceptResult = z.infer<typeof AcceptResultSchema>;
