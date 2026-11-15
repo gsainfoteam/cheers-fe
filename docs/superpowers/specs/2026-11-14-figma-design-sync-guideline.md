@@ -39,11 +39,11 @@
 | 0.3.3 | Choice | `332:6032` | `ui/choice.tsx` | ⚠️ 체크 아이콘 없어짐, 연필 아이콘 생김 → **체크 제거, 연필은 수정 화면에서만** | P1 |
 | 0.3.4 | Checkbox | `332:6136` | `routes/onboarding/terms.tsx` `CheckRow` | ⚠️ Disable 상태가 새로 생김 | P2 |
 | 0.3.5 | Social | `332:6152` | `google-sign-in-button.tsx`, `login.tsx` | ✅ 의도적으로 다름(GIS 버튼) | — |
-| 0.3.6 | Contact choice | `338:7636` | `applications/$applicationId.tsx` `ContactChoice` | ⚠️ hover 색, focus 두께 | P1 |
+| 0.3.6 | Contact choice | `338:7636` | `applications/$applicationId.tsx` `ContactCard` | ✅ 06장에서 새 카드로 교체(6.5.4) | — |
 | 0.3.7 | Header | `353:9429` | `layout/site-header.tsx` | ⚠️ 데스크톱 로고 크기, 로고 자산 | P1 |
 | 0.3.8 | Footer | `353:9657` | `layout/site-footer.tsx` | ✅ 일치 | — |
 | 0.3.9 | Employee badge | `354:9525` | `employee-badge.tsx`, `mentors.tsx` | ⚠️ 띠의 인장 교체, 부서 줄 추가(BE 필드 없음), CTA 상태 없음 | P1 🔶 BE |
-| 0.3.10 | Profile row / Profile identity | `332:5713` / `410:5945` | `ui/profile-row.tsx`, `ui/profile-identity.tsx` | ⚠️ 이름표 칸 폭 96 ↔ 112 | P2 (화면 장에서 결정) |
+| 0.3.10 | Profile row / Profile identity | `332:5713` / `410:5945` | `ui/profile-row.tsx` | ✅ 정리(06장 6.6): 남은 크기 둘 다 96, `ProfileIdentity` 삭제 | — |
 | 0.3.11 | Signup step / progress | `476:5165` / `476:5241` / `486:5821` | `signup-progress.tsx` | ✅ 일치 | — |
 | 0.3.12 | Hastag | `875:30520` | `ui/tag-input.tsx` 안쪽 | ⚠️ Focused·Candidate 상태 없음, 공통 칩이 없음 → **4상태 모두 만들어 둠** | **P0** (0.4가 의존) |
 | 0.3.13 | Brand / Cat cheers | `253:464` | `assets/brand/cat-cheers.svg` | ⚠️ 벡터 → 3D 렌더 이미지 → **3D로 진행** | P1 |
@@ -231,6 +231,8 @@ Off(22px, `rounded-sm`, 1px `border-line-strong`, `bg-surface`)와 On(`bg-ink-fi
 
 #### 0.3.6 Contact choice (`338:7636`) → `ContactChoice`, `CHOICE_ACTION` — P1
 
+> **✅ 06장에서 정리(2026-11-15).** 받은 신청 내용 시안이 바뀌어 이 카드는 `커피챗 시작하기`의 `학생 연락처` / `내 연락처` 카드(`ContactCard`, 버튼은 Primary 240)가 됐다. `ContactChoice`·`CHOICE_ACTION`·`CHOICE_STATUS`는 지웠다. 아래는 옛 기록이다(06장 6.5.4).
+
 | | 시안 | 코드 |
 |---|---|---|
 | 카드 | `bg-surface` 1px `border-line` `rounded-lg` `p-6` `gap-3`, 그림자 Work surface | 확인 후 맞춤 |
@@ -276,6 +278,8 @@ Off(22px, `rounded-sm`, 1px `border-line-strong`, `bg-surface`)와 On(`bg-ink-fi
    - 카드 자체의 Hover/Focus 변형은 **본체가 Default와 똑같다.** 상태는 CTA에만 있다.
 
 #### 0.3.10 Profile row (`332:5713`) / Profile identity (`410:5945`) — P2
+
+> **✅ 정리(06장 6.6, 2026-11-15).** 04·05·06장 화면이 모두 96이었다. `comfortable`(05장)과 `card`(06장)를 지워 남은 크기는 `compact`·`document` 둘이고 이름표 칸은 둘 다 96(`w-24`)이다. `ProfileIdentity`는 05·06장 마이페이지에서 쓰지 않게 되어 지웠다. 아래는 옛 기록이다.
 
 - **Profile identity: 일치 ✅** (`pt-3 pb-6`, `gap-1`, Label/Small + Task/Person, 아래 구분선)
 - **Profile row: 디자인 시스템 원본과 코드 변형의 값이 다르다.**
@@ -422,12 +426,12 @@ Off(22px, `rounded-sm`, 1px `border-line-strong`, `bg-surface`)와 On(`bg-ink-fi
 | # | 질문 | 결정 | 남은 일 |
 |---|---|---|---|
 | D0-1 | Ghost 버튼 바탕 | ✅ **투명** | — |
-| D0-2 | Choice 체크 아이콘 / `edit` 연필 | ✅ **체크 제거.** 연필은 FE가 정함: **`/me/edit`의 선택된 칩에만** (0.3.3). **개정(02장 2.5.3):** 사용자 `기타` 칩에도 켠다 | — |
+| D0-2 | Choice 체크 아이콘 / `edit` 연필 | ✅ **체크 제거.** 연필은 FE가 정함: **`/me/edit`의 선택된 칩에만** (0.3.3). **개정(02장 2.5.3):** 사용자 `기타` 칩에도 켠다. **재개정(05장 5.3.2, D5-7):** 05장 시안대로 **사용자 칩에만** 켠다. 고정 칩은 정보 수정에서도 연필 없음 | — |
 | D0-3 | Field 드롭다운 | ✅ **listbox**(`@base-ui/react/select`). 사용처는 `학과` 한 곳 (0.3.2) | — |
 | D0-4 | 3D 고양이 자산 | ✅ **현재 3D 자산으로 진행** | — |
 | D0-5 | 사원증 부서 필드 | 🔶 OpenAPI 동기화 후에도 **`CheersCardDto`에 없음** | **BE에 추가 요청** |
 | D0-6 | 받은 신청 목록의 `interests`, `activities` | 🔶 OpenAPI 동기화 후에도 **`ReceivedRequestDto`에 없음** | **BE에 추가 요청** |
-| D0-7 | 보낸 신청 행에 무엇을 보여 주는가(예시 데이터가 학생 정보) | ⏳ 미정 | 디자인 확인. 보낸 신청 화면 장에서 다시 본다 |
+| D0-7 | 보낸 신청 행에 무엇을 보여 주는가(예시 데이터가 학생 정보) | ✅ **(2026-11-15) 선배 정보**: `회사`(`{회사} · {부서}`) / `직무` + 선배 해시태그 칩 (05장 5.4.2) | 부서·해시태그 BE 필드(#46) |
 | D0-8 | 받은 신청 제목 | ✅ **`{이름}님의 신청` 유지** | — |
 | D0-9 | Hastag Focused·Candidate | ✅ **4상태를 지금 만들어 둠.** 어디에 연결할지는 섹션을 진행하며 정함 | 각 화면 장 |
 
@@ -473,7 +477,7 @@ Off(22px, `rounded-sm`, 1px `border-line-strong`, `bg-surface`)와 On(`bg-ink-fi
 **P2**
 - [ ] 사원증 `department?` 줄 (0.3.9-2) — **보류.** D0-5와 함께 BE 답을 기다린다
 - [x] `CheckRow` Disable 상태 + 공통화, 포커스 링 통일 (0.3.4)
-- [ ] Profile row 이름표 칸 96 ↔ 112: 화면 장마다 확인 (0.3.10)
+- [x] Profile row 이름표 칸 96 ↔ 112: 화면 장마다 확인 → 모두 96, `card` 삭제 (0.3.10, 06장 6.6)
 
 **검증**
 - [x] `tsc -b`, `bun run lint`, `bun run build` 통과
@@ -487,6 +491,6 @@ Off(22px, `rounded-sm`, 1px `border-line-strong`, `bg-surface`)와 On(`bg-ink-fi
 피그마의 나머지 섹션(화면들)은 **섹션마다 별도의 가이드라인 문서**로 쓴다. 이 문서는 디자인 시스템(섹션 `00`)만 다룬다. 화면 문서는 같은 형식(요약 표 → 항목별 현재/시안/바꿀 것 → 결정 필요 → 체크리스트)을 따르고, 이 문서의 0.6 결정(D0-*)과 0.2.2 자간 단위 표를 참조한다. 화면 문서에서 정해야 하는 것은 아래와 같다.
 
 - 0.2.2: 이 섹션에 없던 텍스트 스타일(H1, H2, Screen, Display, Statement, Task/Title)의 자간 단위
-- 0.3.10: Profile row 이름표 칸 96 ↔ 112
+- ~~0.3.10: Profile row 이름표 칸 96 ↔ 112~~ → ✅ 06장에서 정리(모두 96)
 - 0.3.12 / D0-9: Hashtag Focused · Candidate를 붙일 화면
 - 0.4.2 / D0-7: 보낸 신청 행 내용

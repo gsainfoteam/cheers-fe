@@ -1,20 +1,27 @@
-import { Link, Outlet, createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { Link, Outlet, createFileRoute, useChildMatches } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   receivedRequestsQuery,
   sentRequestsQuery,
   userInfoQuery,
   type ReceivedRequest,
+  type SentRequest,
 } from "@/api";
 import { PageContainer } from "@/components/layout/page-container";
 import { action } from "@/components/ui/action";
+import { NoticeDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { RequestItem } from "@/components/ui/request-item";
+import {
+  withPendingGraduatedFields,
+  withPendingReceivedFields,
+} from "@/lib/pending-be-fields";
 import { useSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
 /**
- * 보낸 신청 · 받은 신청. 피그마 학생 `Cheers / 보낸 신청`(337:7514 / 337:7389),
+ * 보낸 신청 · 받은 신청. 피그마 학생 `Cheers / 보낸 신청`(1251:10163 / 1251:10174),
  * `보낸 신청 없음`(337:8004 / 337:7920), 선배 `Cheers / 받은 신청`
  * (338:9655 / 338:9530), `받은 신청 없음`(339:9992 / 339:9908).
  *
@@ -27,6 +34,12 @@ import { cn } from "@/lib/utils";
  * 둘러보기와 같은 구조다 — 목록을 **레이아웃**에 두고 상세를 자식으로 받는다.
  * 설계 5.3 이 "상세는 PC 에서 목록 위 모달, 모바일에서 전체 화면" 이라고
  * 정해 뒀고, 목록이 언마운트되면 그게 성립하지 않는다.
+ *
+ * **선배의 받은 신청 내용은 06장에서 한 장짜리 화면이 됐다**(`← 받은 신청
+ * 목록` + 화면 제목, 동기화 가이드 6.5.1). 경로는 학생과 같은
+ * `/applications/{id}` 로 둔다(알림톡 딥링크). 그래서 선배는 자식 경로가 있으면
+ * 목록을 그리지 않고 자식만 그린다. 목록 데이터는 loader 가 받아 둔 채라
+ * `← 받은 신청 목록` 으로 돌아오면 바로 뜬다.
  */
 export const Route = createFileRoute("/_app/applications")({
   loader: async ({ context }) => {
@@ -51,6 +64,10 @@ const LIST_PARAMS = { size: 50 } as const;
 
 function RouteComponent() {
   const { role } = useSession();
+  const hasChild = useChildMatches().length > 0;
+
+  // 선배의 받은 신청 내용은 목록 위 오버레이가 아니라 한 장짜리 화면이다(06장)
+  if (role === "mentor" && hasChild) return <Outlet />;
 
   return (
     <>
@@ -100,36 +117,64 @@ function SentList() {
     <ul className="flex flex-col gap-4">
       {data.items.map((request) => (
         <li key={request.id}>
-          {/*
-           * 피그마 `Cheers / Sent Requests`(1237:11072). 시안 예시 데이터가
-           * 학생 정보(학과 · 관심 분야 · 참여 활동)로 채워져 있는데, 보낸 신청에
-           * 보여야 할 건 상대 선배다. 무엇을 보여 줄지 정해지기 전까지(동기화
-           * 가이드 D0-7) 지금 갖고 있는 회사 · 직무를 정의 행으로 옮겨 둔다.
-           */}
-          <RequestItem
-            applicationId={request.id}
-            name={`${request.graduated.nickname} 선배`}
-            date={request.created_at}
-            /*
-             * 탈퇴한 선배도 기록은 남는다(명세 `graduated_withdrawn`). 시안에
-             * 이 상태가 없어서 행 대신 그 사실을 적는다 — 빈칸으로 두면
-             * "정보가 없는 선배" 처럼 읽힌다.
-             */
-            note={request.graduated_withdrawn ? "탈퇴한 선배" : undefined}
-            rows={
-              request.graduated_withdrawn
-                ? []
-                : [
-                    { label: "회사", value: request.graduated.company },
-                    { label: "직무", value: request.graduated.job },
-                  ]
-            }
-          />
+          <SentRow request={request} />
         </li>
       ))}
     </ul>
   );
 }
+
+/**
+ * 피그마 `Cheers / Sent Requests`(1237:11072 / 1248:17998). 동기화 가이드
+ * 05장 5.4 — 보낸 신청 행은 **상대 선배의 정보**다(D0-7): `회사`(`{회사} ·
+ * {부서}`) / `직무` 정의 행 + 선배 해시태그 칩. 부서 · 해시태그는 명세에
+ * 아직 없어 임시값(없음)이다(#46).
+ *
+ * - 이름 뒤 `선배` 는 시안(닉네임만)과 달리 유지한다(D5-11)
+ * - 시안의 상태 아이콘(안 읽음 / 읽음 / 수락함)은 수락 흐름이 정해질 때까지
+ *   그리지 않는다(D5-10)
+ */
+function SentRow({ request }: { request: SentRequest }) {
+  /*
+   * 탈퇴한 선배(1258:9593). 기록은 남고 상세도 열린다(명세에 410 이 없다).
+   * 서버가 보내는 선배 값은 쓰지 않고 FE 가 `열람 불가` 로 덮는다. 시안의
+   * 칩 `#열람 불가` 는 그리지 않는다 — 선배가 단 태그처럼 읽힌다(D5-12)
+   */
+  if (request.graduated_withdrawn) {
+    return (
+      <RequestItem
+        applicationId={request.id}
+        name="탈퇴한 선배"
+        date={request.created_at}
+        rows={[
+          { label: "회사", value: WITHDRAWN_VALUE },
+          { label: "직무", value: WITHDRAWN_VALUE },
+        ]}
+      />
+    );
+  }
+
+  const graduated = withPendingGraduatedFields(request.graduated);
+  return (
+    <RequestItem
+      applicationId={request.id}
+      name={`${graduated.nickname} 선배`}
+      date={request.created_at}
+      rows={[
+        {
+          label: "회사",
+          value: graduated.department
+            ? `${graduated.company} · ${graduated.department}`
+            : graduated.company,
+        },
+        { label: "직무", value: graduated.job },
+      ]}
+      tags={graduated.hashtags}
+    />
+  );
+}
+
+const WITHDRAWN_VALUE = "열람 불가";
 
 /* ───────────────── 선배 · 받은 신청 ───────────────── */
 
@@ -138,27 +183,11 @@ function ReceivedList() {
 
   if (data.items.length === 0) {
     /*
-     * 피그마 `받은 신청 없음`(339:9992). 텍스트 노드 이름은 학생 문구로 남아
-     * 있지만 렌더된 화면은 선배용이다 — 화면 글자를 옮겼다. 버튼은 둘러보기가
-     * 아니라 **내 프로필**로 간다.
+     * 피그마 `받은 신청 없음`(339:9998 / 339:9914) — 아이콘과 한 줄뿐이다.
+     * 옛 시안의 설명 두 줄과 `내 프로필 확인` 버튼은 없어졌다(06장 6.4.3).
+     * 레이어 이름은 `보낸` 이지만 화면 글자는 `받은` 이다
      */
-    return (
-      <EmptyState
-        title="아직 받은 신청이 없어요."
-        description={
-          <>
-            프로필과 연락 설정을 확인해 보세요.
-            <br />
-            신청이 오면 이곳에서 볼 수 있어요.
-          </>
-        }
-        action={
-          <Link to="/me" className={cn(action(), "w-full lg:w-60")}>
-            내 프로필 확인
-          </Link>
-        }
-      />
-    );
+    return <EmptyState title="아직 받은 신청이 없어요." />;
   }
 
   /*
@@ -178,28 +207,50 @@ function ReceivedList() {
 }
 
 /**
- * 피그마 `Cheers / Received Requests`(1237:10977).
+ * 피그마 `Cheers / Received Requests`(1237:10977), 학생 탈퇴 시(1248:18431).
  *
  * 시안에는 학과 · 관심 분야 · 참여 활동이 있지만 목록 명세
  * (`ReceivedRequestDto`)에는 학과만 있다. 상세를 부르면 읽음 처리가 되므로
- * 목록에서 채울 수 없다(가이드 §7 #13). 관심 분야 · 참여 활동은 명세에
- * 생기면 `rows` · `tags` 에 더한다(동기화 가이드 D0-6).
+ * 목록에서 채울 수 없다(가이드 §7 #13). 관심 분야 · 참여 활동은 명세에 생길
+ * 때까지 임시값(빈 목록)이라 그 줄이 그려지지 않는다(D0-6, #46).
  */
-function ReceivedRow({ request }: { request: ReceivedRequest }) {
-  const rows = [{ label: "학과", value: request.department }];
+function ReceivedRow({ request: raw }: { request: ReceivedRequest }) {
+  const request = withPendingReceivedFields(raw);
+  const [notice, setNotice] = useState(false);
 
-  // 탈퇴한 학생의 신청은 상세가 410 으로 막힌다(명세: "프론트는 목록 클릭을
-  // 막음"). 이름 자리에 서버가 `탈퇴한 학생의 신청서입니다` 를 보내 주므로
-  // `님의 신청` 을 붙이지 않는다. 시안에 없는 상태다
+  /*
+   * 탈퇴한 학생(1248:18431). 상세는 410 으로 막혀 있다. 시안 주석: *"리스트에서도
+   * 이름 정보 가리기, 클릭 시 '탈퇴한 학생의 신청입니다. 열람이 불가능해요'
+   * 모달"*. 서버 값(이름 자리의 `탈퇴한 학생의 신청서입니다`, 학과)은 쓰지 않고
+   * FE 가 `열람 불가` 로 덮는다. 칩 `#열람 불가` 는 그리지 않는다 — 보낸 신청의
+   * 탈퇴한 선배 행과 같은 이유(D5-12, D6-9)
+   */
   if (request.student_withdrawn) {
     return (
-      <RequestItem
-        name={request.student_name}
-        date={request.created_at}
-        rows={rows}
-      />
+      <>
+        <RequestItem
+          onSelect={() => setNotice(true)}
+          name="탈퇴한 학생"
+          date={request.created_at}
+          rows={[
+            { label: "학과", value: WITHDRAWN_VALUE },
+            { label: "관심 분야", value: WITHDRAWN_VALUE },
+          ]}
+        />
+        <NoticeDialog
+          open={notice}
+          onOpenChange={setNotice}
+          title="열람할 수 없어요"
+          description="탈퇴한 학생의 신청입니다."
+        />
+      </>
     );
   }
+
+  const rows = [
+    { label: "학과", value: request.department },
+    { label: "관심 분야", value: request.interests.join(", ") },
+  ];
 
   return (
     <RequestItem
@@ -208,6 +259,7 @@ function ReceivedRow({ request }: { request: ReceivedRequest }) {
       name={`${request.student_name}님의 신청`}
       date={request.created_at}
       rows={rows}
+      tags={request.activities}
       tagsLabel="참여 활동"
     />
   );

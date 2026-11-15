@@ -47,6 +47,22 @@ export function httpUrlOrNull(value: string | null | undefined): string | null {
   return trimmed && /^https?:\/\//i.test(trimmed) ? trimmed : null;
 }
 
+/**
+ * 링크를 화면에 적을 글자. LinkedIn 프로필이면 주소 끝(`/in/` 뒤)만,
+ * 아니면 스킴을 뗀 주소. 마이페이지 `LinkedIn` 줄의 시안 값이
+ * `sunbae-kim-a12345678` 이다(06장 6.2.2).
+ */
+export function linkLabelOf(link: string): string {
+  try {
+    const url = new URL(link);
+    const slug = /^\/in\/([^/]+)/.exec(url.pathname)?.[1];
+    if (url.hostname.endsWith("linkedin.com") && slug) return decodeURIComponent(slug);
+    return `${url.host}${url.pathname === "/" ? "" : url.pathname}`;
+  } catch {
+    return link;
+  }
+}
+
 export function isValidLink(link: string): boolean {
   try {
     const url = new URL(normalizeLink(link));

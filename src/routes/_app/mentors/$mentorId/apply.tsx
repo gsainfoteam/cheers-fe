@@ -7,18 +7,16 @@ import {
   useRequestCheers,
   userInfoQuery,
   type CheersCard,
-  type StudentAttachment,
 } from "@/api";
-import catCheers from "@/assets/brand/cat-cheers.svg";
-import linkedinIcon from "@/assets/icons/linkedin.svg";
 import openNewWindowIcon from "@/assets/icons/open-new-window.svg";
+import { MentorSummaryCard } from "@/components/mentor-summary-card";
 import { action } from "@/components/ui/action";
-import { AttachmentLink } from "@/components/ui/attachment-link";
+import { AttachmentGroup } from "@/components/ui/attachment-group";
 import { ProfileRow } from "@/components/ui/profile-row";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { studentProfileRowsOf } from "@/features/profile/student-profile-rows";
+import { withPendingCardFields } from "@/lib/pending-be-fields";
 import { useSession } from "@/lib/session";
-import { httpUrlOrNull } from "@/lib/profile-form";
 import { useAutosize } from "@/lib/use-autosize";
 import { BELOW_LG, useMediaQuery } from "@/lib/use-media-query";
 import { cn } from "@/lib/utils";
@@ -180,11 +178,16 @@ function RouteComponent() {
         </>
       }
     >
-      {/* 피그마 `Request form` — 모바일 세로, 데스크톱 좌우 반반 */}
-      <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
+      {/*
+       * 피그마 `Request form` — 모바일 세로, 데스크톱 456 | 24 | 456.
+       * 열 사이 24, 왼쪽 열의 카드 → 질문 16 은 05장 5.5.1 에서 시안을 다시 재서
+       * 맞췄다(보낸 신청 내용과 같은 틀)
+       */}
+      <div className="flex flex-col gap-6 lg:flex-row lg:gap-6">
         {/* 왼쪽 열: 선배 카드 + 질문 */}
-        <div className="flex min-w-0 flex-1 flex-col gap-6">
-          <SelectedMentorCard card={mentor} />
+        <div className="flex min-w-0 flex-1 flex-col gap-6 lg:gap-4">
+          {/* 피그마 `Selected alumni`(1197:10107 / 1248:17975). 4.3.2 */}
+          <SelectedMentor card={mentor} />
 
           {/* 피그마 `Question` */}
           <div className="flex flex-col gap-3">
@@ -269,7 +272,7 @@ function RouteComponent() {
             </div>
 
             <dl>
-              {studentProfileRowsOf(me, { withAttachments: false }).map((row) => (
+              {studentProfileRowsOf(me).map((row) => (
                 <ProfileRow key={row.label} label={row.label} value={row.value} />
               ))}
             </dl>
@@ -292,86 +295,18 @@ function RouteComponent() {
   );
 }
 
-/**
- * 피그마 `Selected alumni`(1197:10107 / 1248:17975). 4.3.2.
- *
- * 로고가 없으면(또는 못 받으면) 같은 60×40 칸에 2D 고양이를 둔다(D4-1).
- * 3D 고양이는 이 작은 칸에 어색해서 **이 카드에서만** 이전 고양이를 쓴다.
- * 칸이 늘 있으므로 글자 위치는 로고 유무와 상관없이 같다.
- *
- * TODO(D0-5): `CheersCardDto.department` 가 생기면 회사 줄을
- * `{회사} · {부서}` 로(부서가 null 이면 지금처럼 회사만).
- */
-function SelectedMentorCard({ card }: { card: CheersCard }) {
-  const [logoFailed, setLogoFailed] = useState(false);
-  const logo = !logoFailed ? card.company_logo_url : null;
-  const linkedin = httpUrlOrNull(card.links[0]);
-
+/** 목록 카드(`CheersCardDto`)를 요약 카드에 옮긴다. 부서는 #46 전까지 없음 */
+function SelectedMentor({ card }: { card: CheersCard }) {
+  const { department } = withPendingCardFields(card);
   return (
-    <div className="bg-canvas border-line flex items-start gap-4 rounded-md border p-3">
-      {/* 회사 이름이 바로 옆 글자라 로고는 꾸밈이다(사원증과 같다) */}
-      <img
-        src={logo ?? catCheers}
-        alt=""
-        onError={logo ? () => setLogoFailed(true) : undefined}
-        className="h-10 w-15 shrink-0 object-contain"
-      />
-      <div className="flex min-w-0 flex-col gap-1">
-        <p className="text-label-lg text-ink">{card.nickname} 선배</p>
-        <div className="text-body-sm text-ink-soft flex flex-col">
-          <p>{card.company}</p>
-          <p>{card.job}</p>
-        </div>
-        {/*
-         * 사원증 안에는 LinkedIn 을 두지 않지만(사원증 규칙) 이 카드는
-         * 사원증이 아니다. 다른 회원이 넣은 값이라 `http(s)` 만 그린다.
-         * 새 탭 — 같은 탭으로 떠나면 대화상자가 닫히고 적던 질문이 사라진다
-         */}
-        {linkedin ? (
-          <a
-            href={linkedin}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-body-sm text-brand flex items-center gap-1 self-start underline"
-          >
-            LinkedIn 프로필 보기
-            <img src={linkedinIcon} alt="" className="size-4.5 shrink-0" />
-            <span className="sr-only">(새 탭에서 열림)</span>
-          </a>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-/** 피그마 `Attachments`(1119:10695 / 1119:10752). 파일마다 누를 수 있는 상자. 4.3.5 */
-function AttachmentGroup({
-  attachments,
-  refresh,
-}: {
-  attachments: StudentAttachment[];
-  refresh: () => Promise<StudentAttachment[]>;
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <p className="text-label-sm text-ink-soft">이력서 / 포트폴리오</p>
-      {attachments.length ? (
-        <ul className="flex flex-col gap-1">
-          {attachments.map((attachment) => (
-            <li key={attachment.key ?? attachment.url}>
-              <AttachmentLink
-                attachment={attachment}
-                refresh={refresh}
-                className="bg-surface border-line text-label-sm text-brand flex h-9.5 items-center rounded-md border px-3 py-2 underline underline-offset-2"
-              />
-            </li>
-          ))}
-        </ul>
-      ) : (
-        // 시안에 없는 상태라 문구를 정했다(D4-4)
-        <p className="text-body-sm text-ink-faint">등록된 이력서, 포트폴리오가 없습니다</p>
-      )}
-    </div>
+    <MentorSummaryCard
+      name={`${card.nickname} 선배`}
+      company={card.company}
+      department={department}
+      job={card.job}
+      logoUrl={card.company_logo_url}
+      linkedinUrl={card.links[0]}
+    />
   );
 }
 

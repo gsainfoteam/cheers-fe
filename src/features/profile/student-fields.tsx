@@ -1,9 +1,10 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
-import { isApiError, uploadFile, type Department } from "@/api";
+import { isApiError, uploadFile, type Department, type StudentAttachment } from "@/api";
 import attachmentIcon from "@/assets/icons/attachment.svg";
 import xmarkCircleIcon from "@/assets/icons/xmark-circle.svg";
 import { action } from "@/components/ui/action";
+import { AttachmentLink } from "@/components/ui/attachment-link";
 import { Choice, ChoiceAdd } from "@/components/ui/choice";
 import { CompactDialog } from "@/components/ui/compact-dialog";
 import { Field, Select } from "@/components/ui/field";
@@ -52,7 +53,7 @@ export function StudentIdentityFields({
   departments,
 }: {
   nameLocked: boolean;
-  /** 가입 화면은 `가입 후 변경할 수 없어요.`, 정보 수정 시안은 도움말이 없다 */
+  /** 가입 화면은 `가입 후 변경할 수 없어요.`, 정보 수정은 `가입 후에는 변경할 수 없어요.`(각 시안) */
   nameHint?: string;
   departments: Department[];
 }) {
@@ -113,7 +114,8 @@ type InterestDialogState = { mode: "add" } | { mode: "edit"; value: string } | n
  * 칩 폭(모바일 112.33 · 데스크톱 113.33)은 칸을 똑같이 나눈 값이라
  * `flex-wrap` 이 아니라 3열/6열 격자다(설계 3-5a).
  *
- * - 고정 칩: 누르면 선택이 토글된다
+ * - 고정 칩: 누르면 선택이 토글된다. 연필은 붙지 않는다(정보 수정에서도 —
+ *   동기화 가이드 05장 5.3.2, D5-7)
  * - 사용자 칩: 늘 선택 상태 + 연필. 누르면 수정 팝업(`변경` / `삭제`)이 열린다.
  *   눌러서 선택을 풀지 않는다 — 지우는 길은 `삭제` 하나다
  * - `+ 기타`: 추가 모달. 20개가 차면 끈다
@@ -126,16 +128,10 @@ type InterestDialogState = { mode: "add" } | { mode: "edit"; value: string } | n
 export function StudentInterestsField({
   options,
   description,
-  className,
-  editing = false,
 }: {
   options: string[];
-  /** 저장된 값을 고치는 화면(`/me/edit`). 선택된 고정 칩에 연필이 붙는다 */
-  editing?: boolean;
-  /** 가입 화면은 `하나 이상 선택해 주세요.`, 정보 수정 시안은 설명이 없다 */
+  /** 가입 · 정보 수정 모두 `하나 이상 선택해 주세요.` */
   description?: string;
-  /** 묶음 안 간격. 기본 12, 정보 수정 시안은 28(`gap-7`) */
-  className?: string;
 }) {
   const { control } = useFormContext<Values>();
   const labelId = useId();
@@ -163,7 +159,7 @@ export function StudentInterestsField({
           <div
             role="group"
             aria-labelledby={labelId}
-            className={cn("flex flex-col gap-3", className)}
+            className="flex flex-col gap-3"
           >
             <p id={labelId} className="text-label text-ink">
               관심 분야
@@ -176,7 +172,6 @@ export function StudentInterestsField({
                 <Choice
                   key={interest}
                   selected={values.includes(interest)}
-                  edit={editing}
                   // 20개가 찼으면 새로 켜지는 못하고 끄기만 된다
                   disabled={full && !values.includes(interest)}
                   onClick={() => toggle(interest)}
@@ -389,6 +384,7 @@ type PendingFile = {
 };
 
 const PDF_ONLY = "pdf 파일만 올릴 수 있어요.";
+const OVER_LIMIT = `pdf 파일은 최대 ${ATTACHMENT_MAX}개까지 첨부할 수 있어요.`;
 
 function isPdf(file: File): boolean {
   return file.type === "application/pdf" || /\.pdf$/i.test(file.name);
@@ -417,11 +413,17 @@ function describeUploadError(error: unknown): string {
  *
  * 올리는 중 · 실패 · 3개 참 상태는 시안에 없다(가이드 D2-8 임시안). 올리는
  * 동안에는 `onBusyChange(true)` 로 알려 저장 버튼을 막게 한다.
+ *
+ * 정보 수정은 **이미 저장된 파일**도 보인다. 그 링크는 presigned URL 이라
+ * 만료되므로 `refresh` 를 주면 누를 때 새 URL 로 연다(05장 5.3.3). 가입
+ * 화면은 방금 올린 파일(blob URL)뿐이라 주지 않는다.
  */
 export function StudentAttachmentsField({
   onBusyChange,
+  refresh,
 }: {
   onBusyChange?: (busy: boolean) => void;
+  refresh?: () => Promise<StudentAttachment[]>;
 }) {
   const { control } = useFormContext<Values>();
 
@@ -437,6 +439,7 @@ export function StudentAttachmentsField({
             field.onBlur();
           }}
           onBusyChange={onBusyChange}
+          refresh={refresh}
         />
       )}
     />
@@ -447,10 +450,12 @@ function AttachmentsBox({
   value,
   onChange,
   onBusyChange,
+  refresh,
 }: {
   value: StudentAttachmentValue[];
   onChange: (next: StudentAttachmentValue[]) => void;
   onBusyChange?: (busy: boolean) => void;
+  refresh?: () => Promise<StudentAttachment[]>;
 }) {
   const labelId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -482,13 +487,18 @@ function AttachmentsBox({
   );
 
   const used = value.length + pending.filter((p) => p.status === "uploading").length;
+  /**
+   * 예전 첨부가 3개를 넘는 학생(서버 상한은 10). 스키마가 막아 저장이 꺼지므로
+   * 이유를 알려 준다 — 지워서 3개 이하로 맞추면 사라진다(05장 5.3.4)
+   */
+  const over = value.length > ATTACHMENT_MAX;
   const full = used >= ATTACHMENT_MAX;
 
   const choose = (files: File[]) => {
     setNotice(undefined);
     const room = ATTACHMENT_MAX - used;
     if (files.length > room) {
-      setNotice(`pdf 파일은 최대 ${ATTACHMENT_MAX}개까지 첨부할 수 있어요.`);
+      setNotice(OVER_LIMIT);
     }
 
     for (const file of files.slice(0, Math.max(0, room))) {
@@ -628,7 +638,8 @@ function AttachmentsBox({
         ) : null}
 
         {hasRows ? (
-          <div className="flex flex-col gap-1">
+          // 목록 → 개수 줄: 데스크톱 0, 모바일 4(05장 5.3.4)
+          <div className="flex flex-col gap-1 lg:gap-0">
             <ul className="flex flex-col gap-1">
               {value.map((attachment, index) => (
                 <AttachmentRow
@@ -639,6 +650,24 @@ function AttachmentsBox({
                       : attachment.url.replace(/^https?:\/\//i, "").replace(/\/$/, "")
                   }
                   href={attachment.source === "file" ? attachment.href : attachment.url}
+                  // 저장돼 있던 파일(blob 이 아닌 presigned URL)은 누를 때 새 URL 로
+                  stored={
+                    refresh &&
+                    attachment.source === "file" &&
+                    attachment.href &&
+                    !attachment.href.startsWith("blob:")
+                      ? {
+                          attachment: {
+                            kind: attachment.kind,
+                            source: "file",
+                            key: attachment.key,
+                            url: attachment.href,
+                            file_name: attachment.fileName,
+                          },
+                          refresh,
+                        }
+                      : undefined
+                  }
                   onRemove={() => removeDone(index)}
                 />
               ))}
@@ -668,9 +697,9 @@ function AttachmentsBox({
         <div className="flex justify-center lg:hidden">{pick}</div>
       </div>
 
-      {notice ? (
+      {notice || over ? (
         <p role="alert" className="text-body-sm text-danger">
-          {notice}
+          {notice ?? OVER_LIMIT}
         </p>
       ) : null}
     </div>
@@ -684,6 +713,7 @@ function AttachmentsBox({
 function AttachmentRow({
   name,
   href,
+  stored,
   status,
   error,
   onRemove,
@@ -691,6 +721,11 @@ function AttachmentRow({
 }: {
   name: string;
   href?: string;
+  /** 저장된 파일. 주면 누를 때 presigned URL 을 다시 받아 연다(`AttachmentLink`) */
+  stored?: {
+    attachment: StudentAttachment;
+    refresh: () => Promise<StudentAttachment[]>;
+  };
   status?: string;
   error?: string;
   onRemove: () => void;
@@ -699,7 +734,13 @@ function AttachmentRow({
   return (
     <li className="bg-surface border-line flex flex-col gap-1 rounded-md border px-3 py-2">
       <div className="flex min-h-5 items-center justify-between gap-3">
-        {href ? (
+        {stored ? (
+          <AttachmentLink
+            attachment={stored.attachment}
+            refresh={stored.refresh}
+            className="text-label-sm text-brand flex min-w-0 underline"
+          />
+        ) : href ? (
           <a
             href={href}
             target="_blank"

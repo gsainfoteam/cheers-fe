@@ -26,14 +26,11 @@ import type { ContactChannels } from "@/lib/profile-form";
 type Values = { contact: ContactChannels };
 
 export function ContactChannelFields({
-  id,
   title,
   description,
   notice,
   requireOne,
 }: {
-  /** 바깥 닻. 마이페이지의 `연락처·알림 번호 수정` 이 이 자리로 바로 온다 */
-  id?: string;
   title: string;
   description: React.ReactNode;
   /** 설명 아래 한 줄 더. 시안에 없는 임시 안내를 둘 때 쓴다 */
@@ -52,11 +49,7 @@ export function ContactChannelFields({
   });
 
   return (
-    <fieldset
-      id={id}
-      aria-labelledby={titleId}
-      className="flex min-w-0 scroll-mt-24 flex-col gap-2"
-    >
+    <fieldset aria-labelledby={titleId} className="flex min-w-0 flex-col gap-2">
       {/* `legend` 는 flex 배치를 따르지 않아 `p` + aria 로 묶는다 */}
       <p id={titleId} className="text-label text-ink">
         {title}

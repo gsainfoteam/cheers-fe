@@ -6,7 +6,7 @@ import { HashtagList } from "./hashtag";
 
 /**
  * 신청 행. 피그마 `Cheers / Received Requests`(1237:10977)와
- * `Cheers / Sent Requests`(1237:11072).
+ * `Cheers / Sent Requests`(1237:11072 / 모바일 1248:17998).
  *
  * 둘은 틀이 같다 — 이름 + 날짜 줄, 이름표/값 정의 행, 해시태그 줄, 오른쪽 쐐기.
  * 다른 건 **어떤 정보를 넣느냐**뿐이라 컴포넌트는 하나고, 행과 칩은 호출부가
@@ -16,36 +16,38 @@ import { HashtagList } from "./hashtag";
  * ## 폭에 따라
  *
  * - 데스크톱: 이름표 80 + 값이 한 줄(`gap-3`), 둘 다 Body/Medium 16.
- * - 모바일: 이름표(Label/Micro 11)가 위, 값이 아래로 쌓인다. 해시태그 줄에도
- *   이름표(`tagsLabel`)가 붙는다. 데스크톱에는 칩만 있다.
+ * - 모바일: 이름표(Label/Micro 11)가 위, 값이 아래로 쌓인다. 받은 신청은
+ *   해시태그 줄에도 이름표(`tagsLabel`)가 붙는다. 보낸 신청 모바일 시안에는
+ *   칩 이름표가 없다. 데스크톱에는 둘 다 칩만 있다.
  *
- * `Sent Requests` 는 데스크톱 시안만 있어서 모바일은 Received 의 규칙을 같이 쓴다.
+ * ## 누르면 무엇이 되나
  *
- * ## 누를 수 없는 행
- *
- * `applicationId` 를 주지 않으면 링크 대신 `<div>` 로 그리고 쐐기를 뺀다 —
- * 탈퇴한 학생의 신청처럼 상세가 410 으로 막힌 행을 색이 아니라 구조로 막는다.
+ * - `applicationId`: 상세로 가는 링크.
+ * - `onSelect`: 상세로 가지 않고 호출부가 정한 일을 하는 버튼. 탈퇴한 학생의
+ *   신청(06장 6.4.2)은 상세가 410 이라 `열람할 수 없어요` 안내 상자를 띄운다.
+ *   시안이 이 행에도 쐐기를 그렸다.
+ * - 둘 다 없으면 `<div>` 로 그리고 쐐기를 뺀다.
  */
 export type RequestRow = { label: string; value: string };
 
 export function RequestItem({
   applicationId,
+  onSelect,
   name,
   date,
   rows,
-  note,
   tags = [],
   tagsLabel,
 }: {
   applicationId?: string;
+  /** 링크 대신 버튼으로 그린다. `applicationId` 와 함께 주지 않는다 */
+  onSelect?: () => void;
   /** 굵은 첫 줄. `{학생}님의 신청`, `{선배} 선배` 처럼 호출부가 짓는다 */
   name: string;
   /** ISO 시각. `2026.10.12 신청` 으로 그린다 */
   date: string;
   /** 이름표/값 정의 행. 값이 빈 행은 그리지 않는다 */
   rows: RequestRow[];
-  /** 정의 행 대신 쓰는 한 줄 안내. 탈퇴한 상대처럼 시안에 없는 상태용 */
-  note?: string;
   /** 해시태그. 비어 있으면 줄째 그리지 않는다 */
   tags?: string[];
   /** 모바일에서 칩 위에 붙는 이름표(예: `참여 활동`) */
@@ -59,13 +61,25 @@ export function RequestItem({
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         {/* 피그마 `Name and Date` */}
         <p className="flex flex-wrap items-center gap-x-2">
-          <span className="text-h3 text-ink break-words">{name}</span>
+          {onSelect ? (
+            /*
+             * `<button>` 안에는 `<dl>` 을 넣을 수 없어 이름만 버튼으로 두고
+             * `after:` 로 누를 자리를 행 전체로 넓힌다
+             */
+            <button
+              type="button"
+              onClick={onSelect}
+              className="text-h3 text-ink break-words text-left after:absolute after:inset-0 focus-visible:outline-none"
+            >
+              {name}
+            </button>
+          ) : (
+            <span className="text-h3 text-ink break-words">{name}</span>
+          )}
           <span className="text-label-xs text-ink-soft whitespace-nowrap">
             {formatDate(date)} 신청
           </span>
         </p>
-
-        {note ? <p className="text-body-sm text-ink-soft">{note}</p> : null}
 
         {/* 피그마 `기본 정보` */}
         {visibleRows.length > 0 ? (
@@ -94,7 +108,7 @@ export function RequestItem({
         ) : null}
       </div>
 
-      {applicationId ? (
+      {applicationId || onSelect ? (
         // 피그마 `Icon / chevron` — 20 칸 가운데
         <span className="flex size-5 shrink-0 items-center justify-center">
           <img src={chevronRight} alt="" />
@@ -109,6 +123,19 @@ export function RequestItem({
     applicationId &&
       "focus-visible:ring-focus focus-visible:ring-2 focus-visible:ring-inset focus-visible:outline-none"
   );
+
+  if (onSelect) {
+    return (
+      <div
+        className={cn(
+          className,
+          "has-[:focus-visible]:ring-focus relative cursor-pointer has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-inset"
+        )}
+      >
+        {body}
+      </div>
+    );
+  }
 
   return applicationId ? (
     <Link

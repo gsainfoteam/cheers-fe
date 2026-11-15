@@ -51,8 +51,8 @@ export function TagInput({
         {label}
       </label>
 
-      {/* 피그마 `Input / 참여 활동` — 생김새는 `Field` 와 같고 높이만 늘어난다 */}
-      <div className="border-control bg-surface focus-within:border-focus focus-within:ring-focus flex min-h-13 w-full flex-wrap items-center gap-1 rounded-md border px-4 py-3 focus-within:ring-1 focus-within:ring-inset">
+      {/* 피그마 `Input / 참여 활동` — 생김새는 `Field` 와 같고 높이만 늘어난다. 칩 사이 모바일 행 12 · 열 4, 데스크톱 좌우 여백 8(05장 5.3.4) */}
+      <div className="border-control bg-surface focus-within:border-focus focus-within:ring-focus flex min-h-13 w-full flex-wrap items-center gap-x-1 gap-y-3 rounded-md border px-4 py-3 lg:gap-1 lg:px-2 focus-within:ring-1 focus-within:ring-inset">
         {value.map((tag) => (
           // 피그마 `Hastag / State=Complete` — ✕ 는 두 폭 모두 둔다(`Hashtag` 주석)
           <Hashtag key={tag} value={tag} onRemove={() => remove(tag)} />

@@ -241,17 +241,35 @@ export function MentorExtraFields({
 /**
  * 선배 커피챗 참여 설정 — 피그마 `커피챗 참여 설정 (선택)`(선배 추가 정보
  * 1159:10067 / 1159:10229, 동기화 가이드 3.5.3). 가입 추가 정보와 정보 수정이
- * 같은 묶음을 쓴다. 바깥 `id` 는 마이페이지의 `연락처·알림 번호 수정` 이 이
- * 자리로 바로 오게 하는 닻이다(`#contact`).
+ * 같은 묶음을 쓴다. (마이페이지의 `연락처·알림 번호 수정` 링크와 그 닻
+ * `#contact` 는 06장에서 마이페이지 연락처 카드와 함께 없어졌다.)
  *
  * 입력한 연락처는 알림용이자 공유용이다 — 연락처를 공유하면 켠 채널의 값이
- * 모두 학생에게 간다(가이드 D3-3). 시안 설명은 알림만 말해서, 공유된다는
- * 사실을 임시 안내 한 줄로 더했다(가이드 D3-9, 디자이너 확인 필요).
+ * 모두 학생에게 간다(가이드 D3-3).
+ *
+ * **설명 문구가 화면마다 다르다.**
+ * - 가입(`signup`, 03장): 시안 설명은 알림만 말해서, 공유된다는 사실을 임시
+ *   안내 한 줄로 더했다(가이드 D3-9, 디자이너 확인 필요).
+ * - 정보 수정(`edit`, 06장 6.3): 시안 설명이 *"…커피챗 수락 시 학생에게
+ *   연락처를 공유할 수 있어요."* 로 공유를 말한다. 임시 안내는 빼고 시안
+ *   그대로 둔다. 가입 시안도 이 문구로 바뀌면 D3-9 를 닫는다(D6-11).
  */
-export function MentorContactFields({ id }: { id?: string }) {
+export function MentorContactFields({
+  variant = "signup",
+}: {
+  variant?: "signup" | "edit";
+}) {
+  if (variant === "edit") {
+    return (
+      <ContactChannelFields
+        title="커피챗 참여 설정 (선택)"
+        description="선택한 연락 수단으로 커피챗 신청 알림을 보내드려요. 커피챗 수락 시 학생에게 연락처를 공유할 수 있어요."
+      />
+    );
+  }
+
   return (
     <ContactChannelFields
-      id={id}
       title="커피챗 참여 설정 (선택)"
       description={
         <>
@@ -266,9 +284,6 @@ export function MentorContactFields({ id }: { id?: string }) {
   );
 }
 
-/**
- * 임시 문구 — 시안에 없다(가이드 D3-9). 마이페이지 연락처 카드도 같은 말을
- * 해야 해서 내보낸다.
- */
-export const SHARED_CONTACT_NOTICE =
+/** 임시 문구 — 가입 시안에 없다(가이드 D3-9) */
+const SHARED_CONTACT_NOTICE =
   "연락처를 공유한 학생에게는 입력한 연락처가 이름과 함께 전달돼요.";

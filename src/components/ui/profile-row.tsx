@@ -8,23 +8,19 @@ import { cn } from "@/lib/utils";
  * request details."* — 프로필과 신청 상세가 **같은 읽기 축**을 쓰라는 뜻이라,
  * 처음부터 공통으로 둔다.
  *
- * **크기가 네 벌이다.** 같은 컴포넌트인데 시안에서 자리마다 다르게 쓰인다.
+ * **크기가 두 벌이다.** 같은 컴포넌트인데 시안에서 자리마다 다르게 쓰인다.
  *
- * | | `compact` (커피챗 신청) | `card` (받은 신청 내용 · 연락처 공유 확인) | `comfortable` (보낸 신청 내용) | `document` (마이페이지) |
- * |---|---|---|---|---|
- * | 이름표 칸 | **96** | 112 | 112 | 112 |
- * | 위아래 여백 | 10 | 12 | 12 | 14 |
- * | 이름표·값 사이 | 12 | 12 | 16 | 16 |
- * | 이름표 | Label/Small 12 | Body/Small 14 | Body/Small 14 | **Label/Medium 14** |
- * | 값 | Body/Small 14 | Body/Small 14 | Body/Medium 16 | Body/Medium 16 |
+ * | | `compact` (커피챗 신청 · 신청 내용 · 확인 상자) | `document` (마이페이지) |
+ * |---|---|---|
+ * | 이름표 칸 | 96 | 96 |
+ * | 위아래 여백 | 10 | 14 |
+ * | 이름표·값 사이 | 12 | 16 |
+ * | 이름표 | Label/Small 12 | Label/Medium 14 |
+ * | 값 | Body/Small 14 | Body/Medium 16 |
  *
- * 보내기 전에는 "확인하는 요약" 이라 빽빽하고, 보낸 뒤에는 "읽는 기록" 이라
- * 느슨하다. `card` 는 좁은 카드(360)·대화상자(416) 안에 들어가는 자리라
- * 값을 한 급 줄였다. 이름표 칸이 고정이고 값이 남은 폭을 먹는 구조는 넷이 같다.
- *
- * **이름표 칸은 크기마다 시안을 보고 정한다**(동기화 가이드 0.3.10). 04장
- * 커피챗 신청 시안이 96 이라 `compact` 만 바꿨다. 나머지는 그 화면 장에서
- * 확인할 때까지 112 다.
+ * 이름표 칸이 고정이고 값이 남은 폭을 먹는 구조는 둘이 같다. 05장에서
+ * `comfortable` 을, 06장에서 `card`(112, 옛 받은 신청 내용 · 연락처 공유 확인)를
+ * 없앴다 — 그 자리들이 모두 `compact` 로 바뀌었다(동기화 가이드 0.3.10, 6.5).
  *
  * **값이 `null` 이면 `등록하지 않음` 을 흐린 글자로 그린다.** 시안(04장 4.3.4)이
  * 빈 값을 text-disabled 로 칠한다 — 값이 있는 줄과 한눈에 갈린다.
@@ -42,33 +38,22 @@ export function ProfileRow({
   label: React.ReactNode;
   /** `null` 이면 `등록하지 않음`(흐린 글자). 다른 문구가 필요하면 호출부가 넣는다 */
   value: React.ReactNode | null;
-  size?: "compact" | "card" | "comfortable" | "document";
+  size?: "compact" | "document";
   className?: string;
 }) {
   return (
     <div
       className={cn(
         "border-line flex border-b",
-        size === "document"
-          ? "gap-4 py-3.5"
-          : size === "comfortable"
-            ? "gap-4 py-3"
-            : size === "card"
-              ? "gap-3 py-3"
-              : "gap-3 py-2.5",
+        size === "document" ? "gap-4 py-3.5" : "gap-3 py-2.5",
         className
       )}
     >
       {/* 이름표 칸은 고정 — 줄마다 값이 같은 선에서 시작한다 */}
       <dt
         className={cn(
-          "text-ink-soft shrink-0",
-          size === "compact" ? "w-24" : "w-28",
-          size === "compact"
-            ? "text-label-sm"
-            : size === "document"
-              ? "text-label"
-              : "text-body-sm"
+          "text-ink-soft w-24 shrink-0",
+          size === "document" ? "text-label" : "text-label-sm"
         )}
       >
         {label}
@@ -77,7 +62,7 @@ export function ProfileRow({
         className={cn(
           "min-w-0 flex-1 break-words",
           value === null ? "text-ink-faint" : "text-ink",
-          size === "comfortable" || size === "document" ? "text-body" : "text-body-sm"
+          size === "document" ? "text-body" : "text-body-sm"
         )}
       >
         {value ?? "등록하지 않음"}

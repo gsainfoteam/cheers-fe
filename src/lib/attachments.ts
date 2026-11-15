@@ -15,10 +15,3 @@ export function attachmentLabel(attachment: {
   return attachment.url.replace(/^https?:\/\//i, "").replace(/\/$/, "");
 }
 
-/** 글자 한 줄로만 그리는 자리(요약 행)용. 없으면 `null` */
-export function attachmentLabelsOf(
-  attachments: Parameters<typeof attachmentLabel>[0][] | undefined
-): string | null {
-  if (!attachments?.length) return null;
-  return attachments.map(attachmentLabel).join(" · ");
-}

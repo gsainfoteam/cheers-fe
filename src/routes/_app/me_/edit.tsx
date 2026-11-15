@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 import {
@@ -115,11 +115,22 @@ const FORM_CARD =
 
 function StudentEditForm({ me }: { me: UserInfo }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: departments } = useSuspenseQuery(studentDepartmentsQuery());
   const { data: interests } = useSuspenseQuery(studentInterestsQuery());
   const submit = useSubmitStudentInfo();
   /** 첨부를 올리는 중. 끝나기 전에 저장하면 그 파일이 빠진다 */
   const [uploading, setUploading] = useState(false);
+
+  /** 저장된 파일의 presigned URL 이 만료됐을 수 있어 누를 때 내 정보를 다시 받는다 */
+  const refreshAttachments = async () =>
+    (
+      await queryClient.fetchQuery({
+        ...userInfoQuery(),
+        // presigned URL 의 수명을 모르므로 1분이 지났으면 새로 받는다
+        staleTime: 60_000,
+      })
+    ).student?.profile?.attachments ?? [];
 
   const form = useForm({
     resolver: zodResolver(studentEditSchema),
@@ -147,17 +158,27 @@ function StudentEditForm({ me }: { me: UserInfo }) {
     <FormProvider {...form}>
       <form noValidate className={FORM_CARD} onSubmit={save}>
         {/*
-         * 시안은 이름을 고칠 수 있는 칸처럼 그렸지만 명세상 첫 저장 뒤로 바뀌지
-         * 않는다(보내도 무시). 선배 정보 수정처럼 읽기 전용으로 세운다
+         * 이름은 첫 저장 뒤로 바뀌지 않는다(명세: 보내도 무시). 시안도 ReadOnly
+         * 칸 + 도움말이다(동기화 가이드 05장 5.3.1). 가입 화면 문구(`가입 후
+         * 변경할 수 없어요.`)와 조금 다른데, 각 시안대로 둔다(D5-9)
          */}
-        <StudentIdentityFields nameLocked departments={departments} />
-        {/* 시안은 라벨과 칩 사이도 28 이다 — 가입 화면에 있는 설명 줄이 없다 */}
-        <StudentInterestsField options={interests} className="gap-7" editing />
+        <StudentIdentityFields
+          nameLocked
+          nameHint="가입 후에는 변경할 수 없어요."
+          departments={departments}
+        />
 
+        {/* 시안의 첫 구분선은 이름 · 학과 아래다. 관심 분야 ~ 첨부 사이에는 없다 */}
         <div className="bg-line h-px" />
 
+        {/*
+         * 시안 주석 "수정 가능한 요소들 수정 ui는 가입 단계에서와 동일" — 설명
+         * 줄과 간격(12)이 가입 화면과 같고, 연필은 학생이 넣은 칩에만 붙는다
+         * (05장 5.3.2, D5-7)
+         */}
+        <StudentInterestsField options={interests} description="하나 이상 선택해 주세요." />
         <StudentActivitiesField />
-        <StudentAttachmentsField onBusyChange={setUploading} />
+        <StudentAttachmentsField onBusyChange={setUploading} refresh={refreshAttachments} />
 
         <div className="bg-line h-px" />
 
@@ -237,8 +258,7 @@ function MentorEditForm({
 
         <div className="bg-line h-px" />
 
-        {/* 마이페이지의 `연락처·알림 번호 수정` 이 여기로 온다(`#contact`) */}
-        <MentorContactFields id="contact" />
+        <MentorContactFields variant="edit" />
 
         <SaveError error={submit.error} />
         <SaveActions busy={submit.isPending} disabled={!form.formState.isValid} />
