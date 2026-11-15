@@ -7,7 +7,6 @@ import {
   isApiError,
   receivedRequestQuery,
   sentRequestQuery,
-  useShareContact,
   userInfoQuery,
   type ReceivedRequestDetail,
   type SharedContact,
@@ -24,7 +23,12 @@ import { ProfileRow } from "@/components/ui/profile-row";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { studentProfileRowsOf } from "@/features/profile/student-profile-rows";
 import { mySharedContactOf } from "@/lib/mentor-contact";
-import { isAccepted, withPendingGraduatedFields } from "@/lib/pending-be-fields";
+import {
+  isAccepted,
+  isLocallyAccepted,
+  markLocallyAccepted,
+  withPendingGraduatedFields,
+} from "@/lib/pending-be-fields";
 import { digitsOf, formatPhone } from "@/lib/profile-form";
 import { useSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
@@ -71,7 +75,8 @@ function RouteComponent() {
   if (role === "mentor") {
     return (
       <>
-        <ReceivedDetailPage applicationId={applicationId} />
+        {/* 신청마다 수락 상태(임시 기록)를 새로 읽도록 key 를 준다 */}
+        <ReceivedDetailPage key={applicationId} applicationId={applicationId} />
         {/* 내 연락처 공유 확인(`share`)은 이 위에 뜬다 */}
         <Outlet />
       </>
@@ -115,14 +120,25 @@ function RouteComponent() {
  * 2. 수락 뒤: 버튼이 빠지고 `커피챗 시작하기` 묶음이 선다 — `학생 연락처`
  *    (내가 먼저 연락하기) · `내 연락처`(내 연락처 공유하기 → 공유 완료).
  *
- * **지금 명세에는 "수락" API 가 없다**(#46 1번). 그 전까지 `share-contact` 를
- * 수락으로 본다 — 수락하면 내 연락처도 함께 공유된 상태가 되어 `내 연락처`
- * 카드는 처음부터 `공유 완료` 다(06장 D6-1). 판정은 `isAccepted` 한 곳이다.
+ * **지금 명세에는 "수락" API 가 없다**(#46 1번, 06장 D6-1). 그래서
+ * `커피챗 수락하기` 는 **API 를 부르지 않고** 이 브라우저에만 기록한다
+ * (`markLocallyAccepted`). 서버에 가는 것은 `내 연락처 공유하기` 의
+ * `share-contact` 뿐이다. 이미 공유한 신청은 수락한 것으로 본다.
+ * TODO(#47): 수락 API 가 생기면 서버 상태로 판정하고 수락 때 API 를 부른다.
  */
 function ReceivedDetailPage({ applicationId }: { applicationId: string }) {
   const { data: request } = useSuspenseQuery(receivedRequestQuery(applicationId));
-  const accepted = isAccepted(request.status);
+  const [locallyAccepted, setLocallyAccepted] = useState(() =>
+    isLocallyAccepted(applicationId)
+  );
+  const accepted = isAccepted(request.status) || locallyAccepted;
   const [accepting, setAccepting] = useState(false);
+
+  const accept = () => {
+    markLocallyAccepted(applicationId);
+    setLocallyAccepted(true);
+    setAccepting(false);
+  };
 
   return (
     <PageContainer className="flex flex-col items-center pt-8 pb-12 lg:pt-16 lg:pb-18">
@@ -172,7 +188,7 @@ function ReceivedDetailPage({ applicationId }: { applicationId: string }) {
         {accepted ? <StartCoffeeChat applicationId={applicationId} request={request} /> : null}
       </div>
 
-      <AcceptDialog applicationId={applicationId} open={accepting} onOpenChange={setAccepting} />
+      <AcceptDialog open={accepting} onOpenChange={setAccepting} onAccept={accept} />
     </PageContainer>
   );
 }
@@ -227,66 +243,33 @@ function StudentProfile({
 
 /**
  * 피그마 `커피챗 수락 모달`(1245:16951). 버튼 `커피챗 수락하기` 의 주석:
- * *"커피챗 수락 모달로 한 번 더 확인"*.
+ * *"커피챗 수락 모달로 한 번 더 확인"*. 문구는 시안 그대로다.
  *
- * 수락 API 가 생기기 전까지 `share-contact` 를 부른다(#46 1번). 그러면 내
- * 연락처도 학생에게 공개되므로 **시안 설명 뒤에 그 사실을 한 줄 더한다**
- * (D6-1). 수락 API 가 생기면 이 줄과 호출을 함께 바꾼다.
+ * 수락 API 가 없어 `네` 는 서버에 아무것도 보내지 않는다(D6-1). 호출부가
+ * 이 브라우저에 수락을 기록하고 `커피챗 시작하기` 를 연다.
+ * TODO(#47): 수락 API 가 생기면 여기서 부르고, 처리 중 · 실패 상태를 붙인다.
  */
 function AcceptDialog({
-  applicationId,
   open,
   onOpenChange,
+  onAccept,
 }: {
-  applicationId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onAccept: () => void;
 }) {
-  // TODO(#46): 수락 API 가 생기면 바꾼다. 지금은 연락처 공유 = 수락
-  const accept = useShareContact();
-
   return (
     <ConfirmDialog
       layout="choice"
       open={open}
-      onOpenChange={(next) => {
-        // 보내는 중에는 닫히지 않게 한다 — 결과를 못 본 채 떠나면 수락됐는지 모른다
-        if (accept.isPending) return;
-        onOpenChange(next);
-        if (!next) accept.reset();
-      }}
+      onOpenChange={onOpenChange}
       title="커피챗을 수락할까요?"
-      description={
-        <>
-          수락하면 학생의 연락처를 확인할 수 있어요.
-          {/* 임시 문구(D6-1) — 지금은 수락하면 내 연락처도 함께 간다 */}
-          <br />내 연락처도 함께 학생에게 공개돼요.
-        </>
-      }
+      description="수락하면 학생의 연락처를 확인할 수 있어요."
       cancelLabel="아니오"
       confirmLabel="네"
-      busy={accept.isPending}
-      busyLabel="수락하는 중…"
-      onConfirm={() => accept.mutate(applicationId, { onSuccess: () => onOpenChange(false) })}
-    >
-      {accept.error ? (
-        <p role="alert" className="text-body-sm text-danger text-center">
-          {describeAcceptError(accept.error)}
-        </p>
-      ) : null}
-    </ConfirmDialog>
+      onConfirm={onAccept}
+    />
   );
-}
-
-function describeAcceptError(error: unknown): string {
-  if (!isApiError(error)) return "수락하지 못했어요. 다시 시도해 주세요.";
-  // 내 커피챗 참여 설정이 비어 있어 공개할 연락처가 없음
-  if (error.status === 409)
-    return "공개할 연락처가 없어요. 정보 수정에서 커피챗 참여 설정을 먼저 등록해 주세요.";
-  if (error.status === 410) return "학생이 탈퇴해 수락할 수 없어요.";
-  if (error.status === 404) return "신청을 찾을 수 없어요. 목록에서 다시 확인해 주세요.";
-  if (error.status === 403) return "이 계정에서는 수락할 수 없어요.";
-  return "수락하지 못했어요. 다시 시도해 주세요.";
 }
 
 /**
@@ -678,7 +661,8 @@ function ReceivedErrorPage({ error }: { error: unknown }) {
           }
           description="신청을 받은 선배 계정으로 로그인해 주세요."
         >
-          <div className="flex flex-col gap-4">
+          {/* 두 버튼 사이는 시안대로 24 — `AccessMessage` 의 gap-6 과 같다 */}
+          <div className="flex flex-col gap-6">
             <Link
               to="/login"
               search={{

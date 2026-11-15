@@ -41,12 +41,54 @@ export function withPendingReceivedFields(
 }
 
 /**
- * 커피챗이 **수락**됐는가(⑥, D5-1). 정책상 선배가 수락하면 양쪽 연락처가
- * 서비스 안에서 공개된다. 지금 명세에서 그에 해당하는 것은 선배의 연락처
- * 공유(`share-contact` → `contact_shared`)다. BE 가 수락을 새 API·새 상태
- * 이름으로 바꾸면 이 함수만 고친다.
+ * 선배가 **연락처를 공유**했는가(⑥, D5-1). 지금 명세에서 서버가 아는 유일한
+ * "다음 단계"는 `share-contact` → `contact_shared` 다. 학생의 보낸 신청 내용은
+ * 이 값으로 선배 연락처를 보인다. BE 가 상태 이름을 바꾸면 이 함수만 고친다.
  */
 export function isAccepted(status: CheersStatus): boolean {
-  // TODO(#46): 수락 API·상태 이름이 정해지면 맞춘다
+  // TODO(#47): 수락 API·상태 이름이 정해지면 맞춘다(BE 요청은 #46)
   return status === "contact_shared";
+}
+
+/*
+ * ───────── 커피챗 수락 — 서버 없는 임시 기록 (06장 D6-1) ─────────
+ *
+ * 시안은 "커피챗 수락" 과 "내 연락처 공유" 를 다른 단계로 나눴지만 명세에는
+ * 수락 API 가 없다. 그래서 `커피챗 수락하기` 는 **API 를 부르지 않고** 이
+ * 브라우저에만 적어 둔다(새로고침해도 수락 상태가 유지되게). 서버가 아는
+ * 단계는 연락처 공유(`share-contact`)뿐이다.
+ *
+ * - 다른 기기 · 다른 브라우저에서는 수락 전으로 보인다.
+ * - 학생 연락처는 지금 명세상 수락 전에도 응답에 온다. 화면만 수락 뒤에 그린다.
+ *
+ * TODO(#47): 수락 API 가 생기면 이 묶음을 지우고 서버 상태로 판정한다.
+ */
+
+const LOCAL_ACCEPTED_KEY = "cheers:accepted-requests";
+
+function readLocalAccepted(): string[] {
+  try {
+    const raw = localStorage.getItem(LOCAL_ACCEPTED_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+/** 이 브라우저에서 `커피챗 수락하기` 를 누른 신청인가 */
+export function isLocallyAccepted(requestId: string): boolean {
+  return readLocalAccepted().includes(requestId);
+}
+
+/** `커피챗 수락하기` 를 기록한다. 저장이 막혀도(사생활 보호 모드) 화면 상태는 호출부가 들고 있다 */
+export function markLocallyAccepted(requestId: string): void {
+  try {
+    const ids = readLocalAccepted();
+    if (!ids.includes(requestId)) {
+      localStorage.setItem(LOCAL_ACCEPTED_KEY, JSON.stringify([...ids, requestId]));
+    }
+  } catch {
+    // 저장이 막힌 환경 — 이번 화면에서만 수락 상태가 유지된다
+  }
 }
