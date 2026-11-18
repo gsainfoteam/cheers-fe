@@ -7,8 +7,8 @@ import { Hashtag } from "./hashtag";
  * 바뀌면 두 번째 사용처가 된다 — 한도만 다르므로 `max`·`maxLength` 를 받는다.
  *
  * 칸 안에 확정된 칩이 흐르고(`flex-wrap`), 그 뒤에 입력이 이어진다. 기본값은
- * Enter · 쉼표로 확정하고, 필요하면 Enter 만으로 제한할 수 있다. 빈 입력에서
- * Backspace 를 누르면 마지막 칩이 지워진다.
+ * Enter · 쉼표로 확정하고, 필요하면 사용할 확정 키를 화면별로 바꿀 수 있다.
+ * 빈 입력에서 Backspace 를 누르면 마지막 칩이 지워진다.
  * 칸을 떠날 때도 치던 글자를 확정한다 — 안 그러면 쳐 둔 태그가 말없이 사라진다.
  *
  * **값에는 `#` 이 없다.** 화면에만 붙인다. 명세 패턴이 `^[^#]+$` 라 사용자가
@@ -23,6 +23,7 @@ export function TagInput({
   max,
   maxLength,
   commitOnComma = true,
+  commitOnSpace = false,
   showInputHash = true,
 }: {
   label: string;
@@ -33,8 +34,10 @@ export function TagInput({
   onChange: (tags: string[]) => void;
   max: number;
   maxLength: number;
-  /** 쉼표를 태그 구분자로 쓸지. 선배 해시태그는 Enter 로만 확정한다. */
+  /** 쉼표를 태그 구분자로 쓸지 */
   commitOnComma?: boolean;
+  /** 스페이스바를 태그 구분자로 쓸지 */
+  commitOnSpace?: boolean;
   /** 입력 중인 값 앞의 장식용 `#` 표시 여부 */
   showInputHash?: boolean;
 }) {
@@ -90,7 +93,11 @@ export function TagInput({
               // 한글 조합 중의 Enter 는 조합을 끝내는 키다. 그때 확정하면
               // 마지막 글자가 한 번 더 들어간 태그가 생긴다
               if (e.nativeEvent.isComposing) return;
-              if (e.key === "Enter" || (commitOnComma && e.key === ",")) {
+              if (
+                e.key === "Enter" ||
+                (commitOnComma && e.key === ",") ||
+                (commitOnSpace && e.key === " ")
+              ) {
                 e.preventDefault();
                 commit();
               } else if (e.key === "Backspace" && !text && value.length > 0) {
