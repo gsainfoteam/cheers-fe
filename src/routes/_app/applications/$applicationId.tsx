@@ -675,16 +675,21 @@ function WithdrawnMentorCard() {
  */
 function RouteErrorComponent({ error }: ErrorComponentProps) {
   const { role } = useSession();
-  return role === "student" ? (
-    <SentErrorDialog error={error} />
-  ) : (
-    <ReceivedErrorPage error={error} />
-  );
+  const status = isApiError(error) ? error.status : undefined;
+
+  // 학생이 선배에게 전달된 링크를 열면 학생용 상세 API가 404/403을 돌려준다.
+  // 이 경우도 선배 쪽 계정 불일치와 같은 안내·로그인 복귀 흐름을 쓴다.
+  if (role === "mentor" || status === 404 || status === 403) {
+    return <ReceivedErrorPage error={error} />;
+  }
+
+  return <SentErrorDialog />;
 }
 
 /**
- * 선배 쪽. 피그마 `07 · 알림톡·웹 진입` 의 다른 계정(343:9219 / 343:9168)과
- * 접근 불가(343:9318 / 343:9269).
+ * 피그마 `07 · 알림톡·웹 진입` 의 다른 계정(343:9219 / 343:9168)과
+ * 접근 불가(343:9318 / 343:9269). 선배의 받은 신청 링크뿐 아니라 학생이
+ * 선배용 링크를 연 계정 불일치에도 같은 화면을 쓴다.
  *
  * | 응답 | 명세 | 화면 |
  * |---|---|---|
@@ -776,10 +781,8 @@ function ReceivedErrorPage({ error }: { error: unknown }) {
  * 학생 쪽. 시안이 따로 없어 단계 4 의 모양 그대로다. 보낸 신청 상세에는
  * 410 이 없다 — 선배가 탈퇴해도 열리고, 화면이 탈퇴 안내를 그린다(05장 5.5.5)
  */
-function SentErrorDialog({ error }: { error: unknown }) {
-  const { applicationId } = Route.useParams();
+function SentErrorDialog() {
   const navigate = useNavigate();
-  const forbidden = isApiError(error) && error.status === 403;
 
   return (
     <ResponsiveDialog
@@ -797,24 +800,8 @@ function SentErrorDialog({ error }: { error: unknown }) {
       }
     >
       <p className="text-body text-ink-soft">
-        {forbidden
-          ? "이 계정에서는 신청을 확인할 수 없어요."
-          : "신청을 불러오지 못했어요."}
+        신청을 불러오지 못했어요.
       </p>
-
-      {forbidden ? (
-        <Link
-          to="/login"
-          search={{
-            redirect: `/applications/${applicationId}`,
-            reason: "wrong-account",
-            switchAccount: true,
-          }}
-          className="text-label text-brand underline"
-        >
-          다른 계정으로 로그인
-        </Link>
-      ) : null}
     </ResponsiveDialog>
   );
 }
