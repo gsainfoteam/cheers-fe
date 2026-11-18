@@ -2,7 +2,7 @@ import { useId } from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { CheckRow } from "@/components/ui/check-row";
 import { Field } from "@/components/ui/field";
-import type { ContactChannels } from "@/lib/profile-form";
+import { normalizeKoreanMobilePhone, type ContactChannels } from "@/lib/profile-form";
 
 /**
  * 연락 채널 묶음 — 체크박스(카카오 알림톡 · 이메일) + 켠 채널의 입력 칸.
@@ -69,6 +69,7 @@ export function ContactChannelFields({
               render={({ field, fieldState }) => (
                 <Field
                   {...field}
+                  onChange={(event) => field.onChange(normalizeKoreanMobilePhone(event.target.value))}
                   label="카카오 알림톡 받을 전화번호"
                   labelHidden
                   type="tel"
