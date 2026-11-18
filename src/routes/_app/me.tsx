@@ -152,7 +152,7 @@ function StudentMyPage() {
         description="커피챗을 수락한 선배에게만 연락처가 공개 돼요."
       >
         <dl>
-          <ProfileRow label="전화번호" value={contact.phone} size="document" />
+          <ProfileRow label="카카오 알림톡" value={contact.phone} size="document" />
           <ProfileRow label="이메일" value={contact.email} size="document" />
         </dl>
       </MyPageSection>
@@ -234,9 +234,8 @@ function MentorMyPage() {
       >
         <dl>
           <ProfileRow label="이름" value={me.name ?? null} size="document" />
-          {/* 모바일 시안 이름표는 `카카오 알림톡` 이다. 데스크톱 `전화번호` 로 맞춘다(D6-3) */}
           <ProfileRow
-            label="전화번호"
+            label="카카오 알림톡"
             value={contact.phone ? formatPhone(contact.phone) : null}
             size="document"
           />
