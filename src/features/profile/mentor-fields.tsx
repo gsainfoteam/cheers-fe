@@ -206,12 +206,18 @@ export function MentorExtraFields({
         render={({ field }) => (
           <TagInput
             label="해시태그 (선택)"
-            placeholder="#해시태그 입력"
-            hint={hashtagHint}
+            placeholder="해시태그 입력"
+            hint={
+              hashtagHint ??
+                "해시태그를 입력한 뒤 스페이스바 또는 Enter를 눌러 추가하세요."
+            }
             value={field.value}
             onChange={field.onChange}
             max={5}
             maxLength={20}
+            commitOnComma={false}
+            commitOnSpace
+            showInputHash={false}
           />
         )}
       />
