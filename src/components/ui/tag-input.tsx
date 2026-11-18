@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { Hashtag } from "./hashtag";
 
 /**
@@ -43,10 +43,17 @@ export function TagInput({
 }) {
   const id = useId();
   const [text, setText] = useState("");
+  /**
+   * 조합이 끝난 뒤 React가 최종 입력값을 반영한 다음 태그를 확정하려고 쓴다.
+   * state 클로저는 그 시점에 한 글자 전 값을 가질 수 있으므로 ref를 같이 둔다.
+   */
+  const textRef = useRef("");
+  const commitSpaceAfterComposition = useRef(false);
   const full = value.length >= max;
 
   const commit = () => {
-    const tag = text.replace(/#/g, "").trim();
+    const tag = textRef.current.replace(/#/g, "").trim();
+    textRef.current = "";
     setText("");
     // 같은 태그가 두 번 들어가면 `uniqueItems` 로 400 이다
     if (!tag || full || value.includes(tag)) return;
@@ -88,11 +95,21 @@ export function TagInput({
             disabled={full}
             placeholder={value.length === 0 ? placeholder : undefined}
             aria-describedby={hint ? `${id}-hint` : undefined}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => {
+              textRef.current = e.target.value;
+              setText(e.target.value);
+            }}
             onKeyDown={(e) => {
               // 한글 조합 중의 Enter 는 조합을 끝내는 키다. 그때 확정하면
               // 마지막 글자가 한 번 더 들어간 태그가 생긴다
-              if (e.nativeEvent.isComposing) return;
+              if (e.nativeEvent.isComposing) {
+                // 한글 IME의 첫 Space는 조합을 끝내는 데에도 쓰인다. 조합이
+                // 끝난 뒤 최신 값을 확정해 Space를 한 번만 눌러도 태그가 추가된다.
+                if (commitOnSpace && e.key === " ") {
+                  commitSpaceAfterComposition.current = true;
+                }
+                return;
+              }
               if (
                 e.key === "Enter" ||
                 (commitOnComma && e.key === ",") ||
@@ -103,6 +120,11 @@ export function TagInput({
               } else if (e.key === "Backspace" && !text && value.length > 0) {
                 remove(value[value.length - 1]);
               }
+            }}
+            onCompositionEnd={() => {
+              if (!commitSpaceAfterComposition.current) return;
+              commitSpaceAfterComposition.current = false;
+              requestAnimationFrame(commit);
             }}
             onBlur={commit}
             className="placeholder:text-ink-soft min-w-0 flex-1 bg-transparent outline-none"
