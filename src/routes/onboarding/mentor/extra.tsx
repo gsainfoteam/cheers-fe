@@ -161,7 +161,7 @@ function RouteComponent() {
                    * 모바일은 한 줄에 다 들어가지 않아 줄을 바꾼다
                    */}
                   <br className="lg:hidden" />{" "}
-                  Enter를 누르면 다음 태그로 넘어가요.
+                  입력 후 Enter를 누르면 태그가 추가돼요.
                 </>
               }
               linkedinPlaceholder="linkedin.com/in/…"

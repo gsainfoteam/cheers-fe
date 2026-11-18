@@ -6,8 +6,9 @@ import { Hashtag } from "./hashtag";
  * (336:7282 / 336:7141). 학생 참여 활동(875:30619)도 같은 계열이라 그쪽이
  * 바뀌면 두 번째 사용처가 된다 — 한도만 다르므로 `max`·`maxLength` 를 받는다.
  *
- * 칸 안에 확정된 칩이 흐르고(`flex-wrap`), 그 뒤에 입력이 이어진다. Enter ·
- * 쉼표로 확정하고, 빈 입력에서 Backspace 를 누르면 마지막 칩이 지워진다.
+ * 칸 안에 확정된 칩이 흐르고(`flex-wrap`), 그 뒤에 입력이 이어진다. 기본값은
+ * Enter · 쉼표로 확정하고, 필요하면 Enter 만으로 제한할 수 있다. 빈 입력에서
+ * Backspace 를 누르면 마지막 칩이 지워진다.
  * 칸을 떠날 때도 치던 글자를 확정한다 — 안 그러면 쳐 둔 태그가 말없이 사라진다.
  *
  * **값에는 `#` 이 없다.** 화면에만 붙인다. 명세 패턴이 `^[^#]+$` 라 사용자가
@@ -21,6 +22,8 @@ export function TagInput({
   onChange,
   max,
   maxLength,
+  commitOnComma = true,
+  showInputHash = true,
 }: {
   label: string;
   /** 줄을 폭마다 다르게 끊어야 할 때가 있어 노드도 받는다(선배 해시태그) */
@@ -30,6 +33,10 @@ export function TagInput({
   onChange: (tags: string[]) => void;
   max: number;
   maxLength: number;
+  /** 쉼표를 태그 구분자로 쓸지. 선배 해시태그는 Enter 로만 확정한다. */
+  commitOnComma?: boolean;
+  /** 입력 중인 값 앞의 장식용 `#` 표시 여부 */
+  showInputHash?: boolean;
 }) {
   const id = useId();
   const [text, setText] = useState("");
@@ -59,7 +66,8 @@ export function TagInput({
         ))}
 
         {/*
-         * 피그마 `Hastag / State=Processing` — 치는 동안에도 앞에 `#` 이 보인다.
+         * 피그마 `Hastag / State=Processing` — 필요한 입력만 치는 동안 `#` 을
+         * 보인다. 확정 칩은 항상 `Hashtag` 가 `#` 을 붙여 표시한다.
          * 한도가 차면 입력 자리를 접는다(칩의 ✕ 로 지우면 다시 생긴다).
          */}
         <div
@@ -69,7 +77,7 @@ export function TagInput({
               : "text-body text-ink flex min-w-16 flex-1 items-center"
           }
         >
-          {text ? <span aria-hidden>#</span> : null}
+          {showInputHash && text ? <span aria-hidden>#</span> : null}
           <input
             id={id}
             value={text}
@@ -82,7 +90,7 @@ export function TagInput({
               // 한글 조합 중의 Enter 는 조합을 끝내는 키다. 그때 확정하면
               // 마지막 글자가 한 번 더 들어간 태그가 생긴다
               if (e.nativeEvent.isComposing) return;
-              if (e.key === "Enter" || e.key === ",") {
+              if (e.key === "Enter" || (commitOnComma && e.key === ",")) {
                 e.preventDefault();
                 commit();
               } else if (e.key === "Backspace" && !text && value.length > 0) {
