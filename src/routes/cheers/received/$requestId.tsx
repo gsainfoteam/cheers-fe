@@ -17,6 +17,9 @@ export const Route = createFileRoute("/cheers/received/$requestId")({
     throw redirect({
       to: "/applications/$applicationId",
       params: { applicationId: params.requestId },
+      // 이 경로는 선배 수신 알림에서만 나간 옛 링크라 marker 가 없다. 새 링크와
+      // 같은 계정 불일치 안내를 쓰도록 여기서 붙인다
+      search: { type: "graduated" },
       // 뒤로가기로 이 우회로에 다시 오지 않게 기록을 바꿔 끼운다
       replace: true,
     });
