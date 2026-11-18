@@ -3,6 +3,7 @@ import { Dialog } from "@base-ui/react/dialog";
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { Link, Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { z } from "zod";
 import {
   isApiError,
   receivedRequestQuery,
@@ -30,6 +31,13 @@ import { digitsOf, formatPhone } from "@/lib/profile-form";
 import { useSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
+const detailSearchSchema = z.object({
+  // 알림 링크가 알려 주는 수신자 유형. 화면 선택에만 쓰며 권한 판단에는 쓰지 않는다.
+  type: z.enum(["student", "graduated"]).optional(),
+});
+
+type DetailSearch = z.infer<typeof detailSearchSchema>;
+
 /**
  * 신청 내용. 학생은 보낸 신청 내용(1251:14994 / 1251:11094, 동기화 가이드
  * 05장 5.5), 선배는 받은 신청 내용(1237:14051 / 1237:14505, 06장 6.5).
@@ -45,6 +53,10 @@ import { cn } from "@/lib/utils";
  *   (`share`)이 뜬다 — 그래서 `<Outlet/>`.
  */
 export const Route = createFileRoute("/_app/applications/$applicationId")({
+  validateSearch: (search: Record<string, unknown>): DetailSearch => {
+    const parsed = detailSearchSchema.safeParse(search);
+    return parsed.success ? parsed.data : {};
+  },
   loader: async ({ context, params }) => {
     const me = await context.queryClient.ensureQueryData(userInfoQuery());
 
@@ -676,10 +688,14 @@ function WithdrawnMentorCard() {
 function RouteErrorComponent({ error }: ErrorComponentProps) {
   const { role } = useSession();
   const status = isApiError(error) ? error.status : undefined;
+  const { type } = Route.useSearch();
 
-  // 학생이 선배에게 전달된 링크를 열면 학생용 상세 API가 404/403을 돌려준다.
-  // 이 경우도 선배 쪽 계정 불일치와 같은 안내·로그인 복귀 흐름을 쓴다.
-  if (role === "mentor" || status === 404 || status === 403) {
+  // 학생 API의 404/403만으로는 선배용 링크와 없는·남의 신청을 구분할 수 없다.
+  // 서버가 선배 수신 알림에 붙인 marker가 있을 때만 계정 불일치 안내를 쓴다.
+  if (
+    role === "mentor" ||
+    (type === "graduated" && (status === 404 || status === 403))
+  ) {
     return <ReceivedErrorPage error={error} />;
   }
 
@@ -709,7 +725,11 @@ function RouteErrorComponent({ error }: ErrorComponentProps) {
  */
 function ReceivedErrorPage({ error }: { error: unknown }) {
   const { applicationId } = Route.useParams();
+  const { type } = Route.useSearch();
   const status = isApiError(error) ? error.status : undefined;
+  const redirectPath = type
+    ? `/applications/${applicationId}?type=${type}`
+    : `/applications/${applicationId}`;
 
   return (
     <PageContainer className="flex flex-col items-center pt-8 pb-12 lg:pt-16 lg:pb-18">
@@ -730,7 +750,7 @@ function ReceivedErrorPage({ error }: { error: unknown }) {
             <Link
               to="/login"
               search={{
-                redirect: `/applications/${applicationId}`,
+                redirect: redirectPath,
                 reason: "wrong-account",
                 // GIS 자동 선택을 끈다 — 없으면 구글이 같은 계정으로 즉시
                 // 돌려보내 이 화면을 맴돈다
