@@ -18,6 +18,25 @@ export function digitsOf(phone: string): string {
   return phone.replace(/\D/g, "");
 }
 
+/**
+ * Chrome 자동 완성은 한국 휴대전화도 `+82 10 1234 5678`처럼 국제 형식으로
+ * 채울 수 있다. API와 이 폼의 규칙은 국내 형식(`01…`)만 받으므로, +82로
+ * 시작하는 휴대전화만 입력 시점에 국내 형식으로 돌린다.
+ *
+ * 다른 국가번호·국내 유선전화는 이 폼의 지원 범위가 아니므로 그대로 두어
+ * 기존 검증이 안내하게 한다. 공백과 하이픈은 자동 완성 형식에서만 허용한다.
+ */
+export function normalizeKoreanMobilePhone(phone: string): string {
+  const international = /^\s*\+\s*82[\s-]*(.*)$/.exec(phone);
+  if (!international) return phone;
+
+  const subscriber = international[1].replace(/[\s-]/g, "");
+  if (!/^0?1\d*$/.test(subscriber)) return phone;
+
+  const domestic = subscriber.startsWith("0") ? subscriber : `0${subscriber}`;
+  return formatPhone(domestic);
+}
+
 /** `01012345678` → `010-1234-5678`. 마이페이지 요약처럼 읽기만 하는 자리에 쓴다 */
 export function formatPhone(digits: string): string {
   const d = digitsOf(digits);
