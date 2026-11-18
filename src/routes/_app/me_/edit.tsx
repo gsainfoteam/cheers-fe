@@ -3,6 +3,7 @@ import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
+import { z } from "zod";
 import {
   isApiError,
   studentDepartmentsQuery,
@@ -60,7 +61,18 @@ import { cn } from "@/lib/utils";
  * **전체 교체 방식이다.** 폼을 지금 내 정보로 채우고 전부 보낸다. 이름 ·
  * 닉네임은 가입 뒤로 바뀌지 않아(명세: 보내도 무시) 폼 밖의 읽기 전용 칸이다.
  */
+const searchSchema = z.object({
+  // 신청 화면에서만 온 복귀 지점이다. 임의 URL 대신 식별자만 받는다.
+  mentorId: z.string().min(1).optional(),
+});
+
+type EditSearch = z.infer<typeof searchSchema>;
+
 export const Route = createFileRoute("/_app/me_/edit")({
+  validateSearch: (search: Record<string, unknown>): EditSearch => {
+    const parsed = searchSchema.safeParse(search);
+    return parsed.success ? parsed.data : {};
+  },
   // 학생은 학과 · 관심 분야 목록이 있어야 칸을 그린다. 선배는 더 받을 게 없다
   loader: async ({ context }) => {
     const me = await context.queryClient.ensureQueryData(userInfoQuery());
@@ -76,6 +88,7 @@ export const Route = createFileRoute("/_app/me_/edit")({
 
 function RouteComponent() {
   const { role } = useSession();
+  const { mentorId } = Route.useSearch();
   const { data: me } = useSuspenseQuery(userInfoQuery());
   const profile = me.graduated?.profile;
 
@@ -86,16 +99,26 @@ function RouteComponent() {
         {/* 피그마 `Task introduction` — 가입 단계 인디케이터가 없다. 링크와 제목 사이 모바일 28 / 데스크톱 40 */}
         <div className="flex flex-col gap-7 lg:w-88 lg:shrink-0 lg:gap-10 lg:pt-4">
           {/* Label/Medium 14 보조색 */}
-          <Link to="/me" className="text-label text-ink-soft self-start">
-            ← 마이페이지
-          </Link>
+          {mentorId ? (
+            <Link
+              to="/mentors/$mentorId/apply"
+              params={{ mentorId }}
+              className="text-label text-ink-soft self-start"
+            >
+              ← 커피챗 신청
+            </Link>
+          ) : (
+            <Link to="/me" className="text-label text-ink-soft self-start">
+              ← 마이페이지
+            </Link>
+          )}
           <h1 className="text-task-title text-ink">내 정보 수정</h1>
         </div>
 
         {role === "mentor" && profile ? (
-          <MentorEditForm me={me} profile={profile} />
+          <MentorEditForm me={me} profile={profile} mentorId={mentorId} />
         ) : role === "student" ? (
-          <StudentEditForm me={me} />
+          <StudentEditForm me={me} mentorId={mentorId} />
         ) : (
           // 가드를 지나 여기 왔는데 선배 프로필이 없으면 서버 쪽 사고다
           <p role="alert" className="text-body text-ink-soft">
@@ -113,7 +136,13 @@ const FORM_CARD =
 
 /* ───────────────── 학생 ───────────────── */
 
-function StudentEditForm({ me }: { me: UserInfo }) {
+function StudentEditForm({
+  me,
+  mentorId,
+}: {
+  me: UserInfo;
+  mentorId?: string;
+}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: departments } = useSuspenseQuery(studentDepartmentsQuery());
@@ -138,6 +167,14 @@ function StudentEditForm({ me }: { me: UserInfo }) {
     defaultValues: studentEditDefaults(me),
   });
 
+  const leave = () => {
+    if (mentorId) {
+      void navigate({ to: "/mentors/$mentorId/apply", params: { mentorId } });
+      return;
+    }
+    void navigate({ to: "/me" });
+  };
+
   const save = form.handleSubmit((values) =>
     submit.mutate(
       {
@@ -150,7 +187,7 @@ function StudentEditForm({ me }: { me: UserInfo }) {
         contact: contactRequestFrom(values.contact),
       },
       // 가입 완료가 아니라 응답에 토큰이 없다. `keys.user` 무효화는 훅이 한다
-      { onSuccess: () => void navigate({ to: "/me" }) }
+      { onSuccess: leave }
     )
   );
 
@@ -188,6 +225,7 @@ function StudentEditForm({ me }: { me: UserInfo }) {
         <SaveActions
           busy={submit.isPending}
           disabled={!form.formState.isValid || uploading}
+          mentorId={mentorId}
         />
       </form>
     </FormProvider>
@@ -199,9 +237,11 @@ function StudentEditForm({ me }: { me: UserInfo }) {
 function MentorEditForm({
   me,
   profile,
+  mentorId,
 }: {
   me: UserInfo;
   profile: GraduatedProfile;
+  mentorId?: string;
 }) {
   const navigate = useNavigate();
   const submit = useSubmitGraduatedInfo();
@@ -211,6 +251,14 @@ function MentorEditForm({
     mode: "all",
     defaultValues: mentorEditDefaults(me, profile),
   });
+
+  const leave = () => {
+    if (mentorId) {
+      void navigate({ to: "/mentors/$mentorId/apply", params: { mentorId } });
+      return;
+    }
+    void navigate({ to: "/me" });
+  };
 
   const save = form.handleSubmit((values) =>
     submit.mutate(
@@ -225,7 +273,7 @@ function MentorEditForm({
         // 끈 채널의 값은 보내지 않는다 — 공유에도 쓰이는 값이다(동기화 가이드 D3-3)
         contact: contactRequestFrom(values.contact),
       },
-      { onSuccess: () => void navigate({ to: "/me" }) }
+      { onSuccess: leave }
     )
   );
 
@@ -261,7 +309,11 @@ function MentorEditForm({
         <MentorContactFields variant="edit" />
 
         <SaveError error={submit.error} />
-        <SaveActions busy={submit.isPending} disabled={!form.formState.isValid} />
+        <SaveActions
+          busy={submit.isPending}
+          disabled={!form.formState.isValid}
+          mentorId={mentorId}
+        />
       </form>
     </FormProvider>
   );
@@ -270,15 +322,33 @@ function MentorEditForm({
 /* ───────────────── 공통 ───────────────── */
 
 /** 피그마 `Save changes` — 위 8, `취소` 모바일 105 / 데스크톱 120 + `변경 내용 저장` 나머지 / 240 */
-function SaveActions({ busy, disabled }: { busy: boolean; disabled: boolean }) {
+function SaveActions({
+  busy,
+  disabled,
+  mentorId,
+}: {
+  busy: boolean;
+  disabled: boolean;
+  mentorId?: string;
+}) {
   return (
     <div className="flex justify-end gap-3 pt-2">
-      <Link
-        to="/me"
-        className={cn(action({ variant: "secondary" }), "w-26.25 lg:w-30")}
-      >
-        취소
-      </Link>
+      {mentorId ? (
+        <Link
+          to="/mentors/$mentorId/apply"
+          params={{ mentorId }}
+          className={cn(action({ variant: "secondary" }), "w-26.25 lg:w-30")}
+        >
+          취소
+        </Link>
+      ) : (
+        <Link
+          to="/me"
+          className={cn(action({ variant: "secondary" }), "w-26.25 lg:w-30")}
+        >
+          취소
+        </Link>
+      )}
       <button
         type="submit"
         disabled={disabled || busy}

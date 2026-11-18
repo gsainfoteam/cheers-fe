@@ -263,6 +263,7 @@ function RouteComponent() {
                */}
               <Link
                 to="/me/edit"
+                search={{ mentorId }}
                 aria-label="내 정보 수정"
                 className="text-label text-brand flex min-h-11 items-center underline lg:hidden"
               >
@@ -284,6 +285,7 @@ function RouteComponent() {
 
           <Link
             to="/me/edit"
+            search={{ mentorId }}
             className="text-label text-brand hidden min-h-11 items-center self-end underline lg:flex"
           >
             내 정보 수정하기
