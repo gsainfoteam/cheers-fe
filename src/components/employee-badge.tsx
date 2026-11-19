@@ -133,11 +133,8 @@ export function EmployeeBadge({
               loading={logoLoading}
               decoding="async"
               onError={logo ? () => setLogoFailed(true) : undefined}
-              className={cn(
-                "h-[calc(24.865*var(--u))] w-[calc(69.858*var(--u))] object-contain",
-                // 회사 로고 위치는 그대로 두고, 고양이만 회사명과 같은 왼쪽 선에 붙인다
-                !logo && "object-left"
-              )}
+              // 로고·고양이 모두 칸 안에서 왼쪽에 붙여 회사명과 같은 왼쪽 선에 맞춘다
+              className="h-[calc(24.865*var(--u))] w-[calc(69.858*var(--u))] object-contain object-left"
             />
           )}
           {/*
