@@ -61,11 +61,10 @@ export function AccountActions() {
         onConfirm={() => withdraw.mutate(undefined, { onSettled: toLanding })}
       >
         <p className="text-body text-ink">
-          탈퇴를 신청하면 바로 로그아웃돼요.
+          회원 탈퇴 시 계정과 개인정보가 즉시 삭제되고 로그아웃돼요.
         </p>
         <p className="text-body-sm text-ink-soft">
-          유예기간 안에 다시 로그인하면 탈퇴가 취소되고, 유예기간이 지나면
-          계정이 삭제돼요.
+          삭제된 계정과 개인정보는 복구할 수 없어요.
         </p>
       </ConfirmDialog>
     </div>
