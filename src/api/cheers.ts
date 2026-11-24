@@ -14,6 +14,7 @@ import {
   SentListSchema,
   SentRequestDetailSchema,
   ShareContactResultSchema,
+  type SentRequestDetail,
 } from "./dto";
 import { unwrap } from "./errors";
 import { keys, type PageParams } from "./keys";
@@ -68,13 +69,15 @@ export function sentRequestQuery(id: string) {
   return queryOptions({
     queryKey: keys.sentDetail(id),
     queryFn: async ({ signal }) =>
+      // 명세의 `graduated` 에는 로고 · 링크가 빠져 있어(dto.ts
+      // `RequestGraduatedDetailSchema` 참고) 타입을 명세가 아닌 스키마에 맞춘다
       unwrap(
         await api.GET("/api/v1/cheers/sent/{id}", {
           params: { path: { id } },
           signal,
         }),
         SentRequestDetailSchema
-      ),
+      ) as SentRequestDetail,
   });
 }
 
