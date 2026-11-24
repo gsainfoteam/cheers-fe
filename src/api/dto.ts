@@ -332,7 +332,22 @@ export const SharedContactSchema = z.object({
   shared_at: z.string(),
 });
 
+/**
+ * 보낸 신청 **상세**의 선배. 목록(`RequestGraduatedDto`)에 로고 · 링크가 더해진다.
+ *
+ * BE 는 2026-11-15(CRB-87)부터 내려 주지만 `declare graduated` 로 선언돼
+ * Swagger 명세에는 여전히 `RequestGraduatedDto` 로 나온다. 명세만 믿고 빼면
+ * zod 가 이 두 필드를 지워 버린다(이슈 #46)
+ */
+export const RequestGraduatedDetailSchema = RequestGraduatedSchema.extend({
+  /** 회사 로고 presigned GET URL. 로고가 없거나 선배가 탈퇴했으면 null */
+  company_logo_url: z.string().nullable(),
+  /** links[0] 이 LinkedIn. 선배가 탈퇴했거나 유예기간 중이면 [] */
+  links: z.array(z.string()),
+});
+
 export const SentRequestDetailSchema = SentRequestSchema.extend({
+  graduated: RequestGraduatedDetailSchema,
   shared_contact: SharedContactSchema.nullable(),
 });
 
@@ -443,6 +458,7 @@ export type CheersCard = z.infer<typeof CheersCardSchema>;
 export type CheersList = z.infer<typeof CheersListSchema>;
 export type CheersRequestResult = z.infer<typeof CheersRequestResultSchema>;
 export type RequestGraduated = z.infer<typeof RequestGraduatedSchema>;
+export type RequestGraduatedDetail = z.infer<typeof RequestGraduatedDetailSchema>;
 export type SentRequest = z.infer<typeof SentRequestSchema>;
 export type SentList = z.infer<typeof SentListSchema>;
 export type SharedContact = z.infer<typeof SharedContactSchema>;
