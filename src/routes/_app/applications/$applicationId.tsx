@@ -25,6 +25,7 @@ import { ConfirmDialog, PROMPT_POPUP } from "@/components/ui/confirm-dialog";
 import { ProfileRow } from "@/components/ui/profile-row";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { studentProfileRowsOf } from "@/features/profile/student-profile-rows";
+import { track } from "@/lib/analytics";
 import { mySharedContactOf } from "@/lib/mentor-contact";
 import { digitsOf, formatPhone } from "@/lib/profile-form";
 import { useSession } from "@/lib/session";
@@ -301,7 +302,14 @@ function AcceptDialog({
       description="수락하면 학생의 연락처를 확인할 수 있어요."
       cancelLabel="아니오"
       confirmLabel="네"
-      onConfirm={() => accept.mutate(applicationId, { onSuccess: onAccepted })}
+      onConfirm={() =>
+        accept.mutate(applicationId, {
+          onSuccess: () => {
+            track("Coffee Chat Accepted", { request_id: applicationId });
+            onAccepted();
+          },
+        })
+      }
       busy={accept.isPending}
       busyLabel="수락하는 중…"
     >

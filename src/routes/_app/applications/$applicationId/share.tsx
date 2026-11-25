@@ -13,6 +13,7 @@ import {
 } from "@/api";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ProfileRow } from "@/components/ui/profile-row";
+import { track } from "@/lib/analytics";
 import { mySharedContactOf } from "@/lib/mentor-contact";
 import { formatPhone } from "@/lib/profile-form";
 
@@ -89,7 +90,14 @@ function RouteComponent() {
       title="내 연락처를 공유할까요?"
       cancelLabel="아니오"
       confirmLabel="네"
-      onConfirm={() => share.mutate(applicationId, { onSuccess: back })}
+      onConfirm={() =>
+        share.mutate(applicationId, {
+          onSuccess: () => {
+            track("Contact Shared", { request_id: applicationId });
+            back();
+          },
+        })
+      }
       busy={share.isPending}
       busyLabel="보내는 중…"
     >

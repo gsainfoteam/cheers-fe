@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link, Outlet, createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { cheersListQuery, type CheersCard } from "@/api";
@@ -5,7 +6,9 @@ import arrowRight from "@/assets/icons/arrow-right.svg";
 import { EmployeeBadge } from "@/components/employee-badge";
 import { badgeDataOf } from "@/components/employee-badge-data";
 import { PageContainer } from "@/components/layout/page-container";
+import { track } from "@/lib/analytics";
 import { MENTOR_LIST_PARAMS } from "@/lib/mentor-list";
+import { toApiType } from "@/lib/role";
 import { useSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
@@ -46,7 +49,17 @@ function RouteComponent() {
 function MentorList() {
   const { data } = useSuspenseQuery(cheersListQuery(MENTOR_LIST_PARAMS));
   /** 선배는 신청을 보낼 수 없다(`POST /cheers/request` 는 재학생만) */
-  const canApply = useSession().role === "student";
+  const { role } = useSession();
+  const canApply = role === "student";
+
+  // 건수가 바뀌어 다시 받았을 때만 다시 센다. 새로고침 없이 오가는 이동은
+  // 목록이 언마운트되지 않으므로(신청 오버레이가 위에 뜬다) 중복되지 않는다
+  useEffect(() => {
+    track("Mentor List Viewed", {
+      result_count: data.total,
+      viewer_type: toApiType(role),
+    });
+  }, [data.total, role]);
 
   return (
     <>

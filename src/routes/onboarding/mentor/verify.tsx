@@ -12,6 +12,7 @@ import { PageContainer } from "@/components/layout/page-container";
 import { SignupProgressSlot } from "@/components/signup-progress";
 import { action } from "@/components/ui/action";
 import { FilePickButton, useFileDrop } from "@/components/ui/file-drop";
+import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 /**
@@ -109,8 +110,14 @@ function RouteComponent() {
     verify.mutate(
       { key: upload.key },
       {
-        onSuccess: () => void router.invalidate(),
+        onSuccess: () => {
+          track("Business Card Submitted");
+          void router.invalidate();
+        },
         onError: (error) => {
+          track("Business Card Submit Failed", {
+            status: isApiError(error) ? error.status : undefined,
+          });
           // key 가 틀렸거나 올라가지 않은 경우 — 사용자가 할 수 있는 일은
           // 다시 첨부하는 것뿐이라 상자의 오류 상태로 돌린다
           if (isApiError(error) && error.status === 400) {

@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLogin } from "@/api";
 import { isApiError } from "@/api";
+import { track } from "@/lib/analytics";
 import {
   GOOGLE_CLIENT_ID,
   loadGoogleIdentity,
@@ -112,14 +113,29 @@ export function GoogleSignInButton({
           auto_select: false,
           cancel_on_tap_outside: true,
           callback: ({ credential }) => {
+            const userType = toApiType(roleRef.current);
             mutate(
               {
                 provider: "google",
-                type: toApiType(roleRef.current),
+                type: userType,
                 token: credential,
                 nonce: nonce.raw,
               },
-              { onSuccess: () => onSuccessRef.current?.() }
+              {
+                onSuccess: () => {
+                  track("Login Succeeded", {
+                    provider: "google",
+                    user_type: userType,
+                  });
+                  onSuccessRef.current?.();
+                },
+                onError: (error) =>
+                  track("Login Failed", {
+                    provider: "google",
+                    user_type: userType,
+                    status: isApiError(error) ? error.status : undefined,
+                  }),
+              }
             );
           },
         });

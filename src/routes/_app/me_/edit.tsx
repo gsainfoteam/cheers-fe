@@ -45,6 +45,7 @@ import {
   departmentRequestOf,
   normalizeLink,
 } from "@/lib/profile-form";
+import { track } from "@/lib/analytics";
 import { useSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
@@ -187,7 +188,12 @@ function StudentEditForm({
         contact: contactRequestFrom(values.contact),
       },
       // 가입 완료가 아니라 응답에 토큰이 없다. `keys.user` 무효화는 훅이 한다
-      { onSuccess: leave }
+      {
+        onSuccess: () => {
+          track("Profile Updated", { user_type: "student" });
+          leave();
+        },
+      }
     )
   );
 
@@ -273,7 +279,12 @@ function MentorEditForm({
         // 끈 채널의 값은 보내지 않는다 — 공유에도 쓰이는 값이다(동기화 가이드 D3-3)
         contact: contactRequestFrom(values.contact),
       },
-      { onSuccess: leave }
+      {
+        onSuccess: () => {
+          track("Profile Updated", { user_type: "graduated" });
+          leave();
+        },
+      }
     )
   );
 

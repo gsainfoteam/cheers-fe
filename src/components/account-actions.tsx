@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useLogout, useWithdraw } from "@/api";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { track } from "@/lib/analytics";
 import { forgetLocalAccount } from "@/lib/sign-out";
 
 /**
@@ -29,7 +30,14 @@ export function AccountActions() {
       <button
         type="button"
         disabled={logout.isPending}
-        onClick={() => logout.mutate(undefined, { onSettled: toLanding })}
+        onClick={() =>
+          logout.mutate(undefined, {
+            onSettled: () => {
+              track("Logged Out");
+              toLanding();
+            },
+          })
+        }
         className={TEXT_ACTION}
       >
         {logout.isPending ? "로그아웃 중…" : "로그아웃"}
@@ -58,7 +66,13 @@ export function AccountActions() {
         busy={withdraw.isPending}
         busyLabel="탈퇴하는 중…"
         // 훅이 성공·실패와 무관하게 세션을 비우므로 어느 쪽이든 랜딩으로 간다
-        onConfirm={() => withdraw.mutate(undefined, { onSettled: toLanding })}
+        onConfirm={() =>
+          withdraw.mutate(undefined, {
+            // 실패해도 로컬 세션은 비워지므로 랜딩으로 가지만, 탈퇴는 성공일 때만 센다
+            onSuccess: () => track("Account Withdrawn"),
+            onSettled: toLanding,
+          })
+        }
       >
         <p className="text-body text-ink">
           회원 탈퇴 시 계정과 개인정보가 즉시 삭제되고 로그아웃돼요.

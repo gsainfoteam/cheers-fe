@@ -11,6 +11,7 @@ import { PageContainer } from "@/components/layout/page-container";
 import { SignupProgressSlot } from "@/components/signup-progress";
 import { action } from "@/components/ui/action";
 import { Field } from "@/components/ui/field";
+import { track } from "@/lib/analytics";
 import { formatWait, mmss, secondsUntil } from "@/lib/countdown";
 import { isSchoolEmail, normalizeEmail } from "@/lib/school-email";
 import { cn } from "@/lib/utils";
@@ -94,6 +95,7 @@ function RouteComponent() {
       { email: normalizeEmail(email) },
       {
         onSuccess: (result) => {
+          track("Verify Code Sent");
           verify.reset();
           setServerExpired(false);
           setCode("");
@@ -110,6 +112,9 @@ function RouteComponent() {
         // 라우터를 다시 평가시키면 `/onboarding` 가드가 알아서 보낸다
         onSuccess: () => void router.invalidate(),
         onError: (error) => {
+          track("Verify Code Failed", {
+            status: isApiError(error) ? error.status : undefined,
+          });
           if (isApiError(error) && (error.status === 404 || error.status === 410)) {
             setServerExpired(true);
           }

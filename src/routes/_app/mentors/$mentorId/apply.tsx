@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import {
@@ -15,6 +15,7 @@ import { AttachmentGroup } from "@/components/ui/attachment-group";
 import { ProfileRow } from "@/components/ui/profile-row";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { studentProfileRowsOf } from "@/features/profile/student-profile-rows";
+import { track } from "@/lib/analytics";
 import { useSession } from "@/lib/session";
 import { useAutosize } from "@/lib/use-autosize";
 import { BELOW_LG, useMediaQuery } from "@/lib/use-media-query";
@@ -65,6 +66,15 @@ function RouteComponent() {
   useAutosize(textareaRef, message, useMediaQuery(BELOW_LG));
 
   const mentor = list.items.find((item) => item.graduated_id === mentorId);
+  const hasMentor = mentor !== undefined;
+
+  // 신청 화면이 실제로 열린 경우만 센다. 선배끼리 보는 안내나 "찾을 수 없어요"
+  // 상태는 신청을 시작한 게 아니다
+  useEffect(() => {
+    if (role === "student" && hasMentor) {
+      track("Coffee Chat Apply Started", { mentor_id: mentorId });
+    }
+  }, [role, hasMentor, mentorId]);
 
   const close = () => void navigate({ to: "/mentors" });
 
@@ -113,7 +123,17 @@ function RouteComponent() {
     request.mutate(
       { graduated_id: mentorId, message: trimmed },
       {
+        onError: (error) =>
+          track("Coffee Chat Request Failed", {
+            mentor_id: mentorId,
+            status: isApiError(error) ? error.status : undefined,
+          }),
         onSuccess: () => {
+          // 질문 본문은 보내지 않고 길이만 센다
+          track("Coffee Chat Requested", {
+            mentor_id: mentorId,
+            message_length: trimmed.length,
+          });
           writeDraft(mentorId, "");
           void navigate({
             to: "/mentors/$mentorId/sent",
@@ -232,6 +252,7 @@ function RouteComponent() {
              */}
             <a
               href={FAQ_URL}
+              onClick={() => track("FAQ Clicked", { placement: "apply" })}
               target="_blank"
               rel="noopener noreferrer"
               className="text-body-sm text-ink-soft -my-3 flex min-h-11 items-center gap-1 self-start underline"
