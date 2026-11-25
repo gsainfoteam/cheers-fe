@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { createQueryClient, onUnauthenticated } from "@/api";
+import { initAnalytics } from "@/lib/analytics";
 import { routeTree } from "./routeTree.gen";
 import "./index.css";
 
@@ -21,6 +22,8 @@ const router = createRouter({
   routeTree,
   context: { queryClient },
 });
+
+initAnalytics({ queryClient, router });
 
 declare module "@tanstack/react-router" {
   interface Register {
