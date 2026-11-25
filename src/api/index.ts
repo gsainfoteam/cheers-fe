@@ -26,7 +26,6 @@ export {
   isApiError,
   isContractError,
   isEmailAlreadyRegistered,
-  isNotAcceptedError,
   remainingAttemptsOf,
   retryAvailableAtOf,
   unwrap,
@@ -73,7 +72,6 @@ export {
   receivedRequestsQuery,
   sentRequestQuery,
   sentRequestsQuery,
-  useAcceptRequest,
   useRequestCheers,
   useShareContact,
 } from "./cheers";

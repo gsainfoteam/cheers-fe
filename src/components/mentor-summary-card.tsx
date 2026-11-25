@@ -25,7 +25,7 @@ export function MentorSummaryCard({
   logoUrl,
   linkedinUrl,
 }: {
-  /** 굵은 첫 줄 전체(`{닉네임} 선배`, 수락 뒤 `{닉네임}({실명}) 선배`) */
+  /** 굵은 첫 줄 전체(`{닉네임} 선배`, 연락처 공유 뒤 `{닉네임}({실명}) 선배`) */
   name: string;
   company: string;
   department?: string | null;
