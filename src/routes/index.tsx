@@ -156,18 +156,18 @@ function Hero() {
       >
         {/* 피그마 `Intro and role selection` */}
         <div className="flex w-full flex-col gap-5 lg:w-137 lg:shrink-0 lg:gap-7">
-          <p className="text-label text-brand">GIST 선후배 커피챗, 취얼스</p>
+          <p className="text-label text-brand">취업 고민, 선배는 어떻게 준비했을까?</p>
 
           <h1 className="text-hero text-ink">
-            취업의 다음 장,
+            당신의 취뽀를 위하여,
             <br />
-            선배와 한 잔.
+            Cheers
           </h1>
 
           {/* 데스크톱은 Body/Large, 모바일은 Body/Medium — 시안이 폭마다 다른
               스타일을 썼는데 반응형 토큰이 없는 쌍이라 둘을 갈아 끼운다 */}
           <p className="text-body text-ink-soft lg:text-body-lg">
-            궁금했던 회사와 직무, 혼자 고민하던 취업 준비.
+            궁금했던 회사와 직무, 막막했던 취업 준비.
             <br />
             같은 학교에서 먼저 시작한 선배와 이야기해 보세요.
           </p>
@@ -272,7 +272,7 @@ function MeetAlumniPreview() {
             먼저 해본 선배들.
           </h2>
           <p className="text-body text-ink-soft lg:w-105 lg:pt-9">
-            사원증에서 회사와 직무를 살펴보고,
+            선배들의 회사와 직무를 살펴보고,
             <br />
             나와 관심사가 닿는 선배에게 커피챗을 신청하세요.
           </p>
@@ -323,7 +323,7 @@ function HowItWorks() {
           <h2 className="text-statement text-ink">
             질문 하나가
             <br />
-            시작이 되도록.
+            시작이 되도록
           </h2>
         </div>
 
