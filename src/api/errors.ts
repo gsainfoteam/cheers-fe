@@ -122,14 +122,6 @@ export function isEmailAlreadyRegistered(error: unknown): boolean {
   return field(error, 409, "error_code") === "EMAIL_ALREADY_REGISTERED";
 }
 
-/**
- * 연락처 공유 409 가 "아직 수락하지 않은 요청" 인지. 같은 409 의 다른 이유
- * (`No contact to share` — 내 연락 설정이 희망하지 않음)와 `message` 로 가른다.
- */
-export function isNotAcceptedError(error: unknown): boolean {
-  return field(error, 409, "message") === "Coffee chat is not accepted";
-}
-
 function field(error: unknown, status: number, key: string): unknown {
   if (!isApiError(error) || error.status !== status) return undefined;
   const body = error.body;

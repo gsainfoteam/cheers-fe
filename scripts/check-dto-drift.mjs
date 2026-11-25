@@ -51,6 +51,7 @@ const MAP = {
   CheersCardDto: "CheersCardSchema",
   CreateRequestResponseDto: "CheersRequestResultSchema",
   RequestGraduatedDto: "RequestGraduatedSchema",
+  RequestGraduatedDetailDto: "RequestGraduatedDetailSchema",
   SentRequestDto: "SentRequestSchema",
   SharedContactDto: "SharedContactSchema",
   SentRequestDetailDto: "SentRequestDetailSchema",
@@ -58,7 +59,6 @@ const MAP = {
   RequestStudentDto: "RequestStudentSchema",
   ReceivedRequestDetailDto: "ReceivedRequestDetailSchema",
   ShareContactResponseDto: "ShareContactResultSchema",
-  AcceptResponseDto: "AcceptResultSchema",
 };
 
 /**
