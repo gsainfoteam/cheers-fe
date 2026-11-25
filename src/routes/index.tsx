@@ -269,7 +269,7 @@ function MeetAlumniPreview() {
           <h2 className="text-statement text-ink">
             내가 궁금한 일,
             <br />
-            먼저 해본 선배들.
+            먼저 해본 선배들
           </h2>
           <p className="text-body text-ink-soft lg:w-105 lg:pt-9">
             선배들의 회사와 직무를 살펴보고,
