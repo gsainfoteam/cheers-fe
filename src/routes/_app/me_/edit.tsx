@@ -47,6 +47,7 @@ import {
 } from "@/lib/profile-form";
 import { track } from "@/lib/analytics";
 import { useSession } from "@/lib/session";
+import { useIsMounted } from "@/lib/use-is-mounted";
 import { cn } from "@/lib/utils";
 
 /**
@@ -68,6 +69,8 @@ const searchSchema = z.object({
 });
 
 type EditSearch = z.infer<typeof searchSchema>;
+type StudentEditValues = z.infer<typeof studentEditSchema>;
+type MentorEditValues = z.infer<typeof mentorEditSchema>;
 
 export const Route = createFileRoute("/_app/me_/edit")({
   validateSearch: (search: Record<string, unknown>): EditSearch => {
@@ -149,6 +152,7 @@ function StudentEditForm({
   const { data: departments } = useSuspenseQuery(studentDepartmentsQuery());
   const { data: interests } = useSuspenseQuery(studentInterestsQuery());
   const submit = useSubmitStudentInfo();
+  const mounted = useIsMounted();
   /** 첨부를 올리는 중. 끝나기 전에 저장하면 그 파일이 빠진다 */
   const [uploading, setUploading] = useState(false);
 
@@ -176,9 +180,9 @@ function StudentEditForm({
     void navigate({ to: "/me" });
   };
 
-  const save = form.handleSubmit((values) =>
-    submit.mutate(
-      {
+  const saveValues = async (values: StudentEditValues) => {
+    try {
+      await submit.mutateAsync({
         department_id: values.departmentId,
         interests: values.interests,
         activities: activitiesOf(values.activities),
@@ -186,16 +190,18 @@ function StudentEditForm({
         attachments: attachmentRequestsOf(values.attachments),
         // 끈 채널의 값은 보내지 않는다(`contactRequestFrom`)
         contact: contactRequestFrom(values.contact),
-      },
-      // 가입 완료가 아니라 응답에 토큰이 없다. `keys.user` 무효화는 훅이 한다
-      {
-        onSuccess: () => {
-          track("Profile Updated", { user_type: "student" });
-          leave();
-        },
-      }
-    )
-  );
+      });
+    } catch {
+      // 오류 문구는 `submit.error` 가 그린다
+      return;
+    }
+    // 가입 완료가 아니라 응답에 토큰이 없다. `keys.user` 무효화는 훅이 한다.
+    // 저장 중에 화면을 떠났어도 저장은 됐으니 센다
+    track("Profile Updated", { user_type: "student" });
+    if (mounted.current) leave();
+  };
+
+  const save = form.handleSubmit((values) => void saveValues(values));
 
   return (
     <FormProvider {...form}>
@@ -251,6 +257,7 @@ function MentorEditForm({
 }) {
   const navigate = useNavigate();
   const submit = useSubmitGraduatedInfo();
+  const mounted = useIsMounted();
 
   const form = useForm({
     resolver: zodResolver(mentorEditSchema),
@@ -266,9 +273,9 @@ function MentorEditForm({
     void navigate({ to: "/me" });
   };
 
-  const save = form.handleSubmit((values) =>
-    submit.mutate(
-      {
+  const saveValues = async (values: MentorEditValues) => {
+    try {
+      await submit.mutateAsync({
         ...companyRequestOf(values.company, values.company_id),
         ...departmentRequestOf(values.department),
         job: values.job,
@@ -278,15 +285,16 @@ function MentorEditForm({
         links: values.linkedin ? [normalizeLink(values.linkedin)] : [],
         // 끈 채널의 값은 보내지 않는다 — 공유에도 쓰이는 값이다(동기화 가이드 D3-3)
         contact: contactRequestFrom(values.contact),
-      },
-      {
-        onSuccess: () => {
-          track("Profile Updated", { user_type: "graduated" });
-          leave();
-        },
-      }
-    )
-  );
+      });
+    } catch {
+      // 오류 문구는 `submit.error` 가 그린다
+      return;
+    }
+    track("Profile Updated", { user_type: "graduated" });
+    if (mounted.current) leave();
+  };
+
+  const save = form.handleSubmit((values) => void saveValues(values));
 
   return (
     <FormProvider {...form}>

@@ -51,9 +51,17 @@ export function initAnalytics({
        * 텍스트는 `sanitizePlugin` 이 한 번 더 걸러서 내보낸다.
        */
       elementInteractions: {
-        cssSelectorAllowlist: ["a", "button", '[role="button"]'],
+        cssSelectorAllowlist: CLICKABLE,
       },
-      frustrationInteractions: { rageClicks: true, deadClicks: true },
+      /**
+       * 연타·무반응 클릭도 클릭 수집과 같은 요소만 본다. `rageClicks: true` 는
+       * 기본이 모든 요소(`*`)라서, 받은 신청의 질문 본문 같은 글을 연타하면
+       * 그 글이 요소 텍스트로 실려 나간다.
+       */
+      frustrationInteractions: {
+        rageClicks: { cssSelectorAllowlist: CLICKABLE },
+        deadClicks: { cssSelectorAllowlist: CLICKABLE },
+      },
       webVitals: true,
       // 폼은 필드 이름·값이 이벤트에 실린다. 가입 입력은 직접 만든 이벤트로 본다
       formInteractions: false,
@@ -156,6 +164,8 @@ function observeUserInfo(queryClient: QueryClient) {
 const EMAIL = /[^\s@]+@[^\s@]+\.[^\s@]+/g;
 const PHONE = /\+?\d[\d\s-]{7,}\d/g;
 const MAX_TEXT = 40;
+/** 클릭류 자동 수집이 보는 요소. 입력칸 · 라벨 · 본문 글은 뺀다 */
+const CLICKABLE = ["a", "button", '[role="button"]'];
 
 /** 자동 수집 이벤트가 요소의 글자를 실을 때 쓰는 속성 */
 const TEXT_PROPERTIES = ["[Amplitude] Element Text", "[Amplitude] Element Aria Label"];
@@ -167,9 +177,10 @@ const TEXT_PROPERTIES = ["[Amplitude] Element Text", "[Amplitude] Element Aria L
  *    싣는다. 페이지뷰의 주소에는 선배·신청 ID 가 섞여 있어 화면 단위로 묶어
  *    보기 어렵다. 라우터의 상태는 주소보다 한발 늦게 바뀌므로 `location` 으로
  *    직접 맞춘다.
- * 2. 요소 텍스트 정리 — 클릭 자동 수집이 싣는 글자에서 이메일·전화번호 꼴을
+ * 2. 요소 정보 정리 — 클릭 자동 수집이 싣는 글자에서 이메일·전화번호 꼴을
  *    지우고 길이를 자른다. 카드나 링크 안에 사용자 정보가 들어 있어도 이름
- *    같은 값이 길게 실려 나가지 않게 하는 마지막 안전망이다.
+ *    같은 값이 길게 실려 나가지 않게 하는 마지막 안전망이다. 링크 주소
+ *    (`Element Href`)는 통째로 뺀다.
  */
 function sanitizePlugin(router: AnyRouter): amplitude.Types.EnrichmentPlugin {
   return {
@@ -186,6 +197,9 @@ function sanitizePlugin(router: AnyRouter): amplitude.Types.EnrichmentPlugin {
         const value = props[key];
         if (typeof value === "string") props[key] = scrub(value);
       }
+
+      // 링크 주소에는 다른 회원이 입력한 프로필 URL(LinkedIn 등)이 실릴 수 있다
+      delete props["[Amplitude] Element Href"];
 
       event.event_properties = props;
       return event;

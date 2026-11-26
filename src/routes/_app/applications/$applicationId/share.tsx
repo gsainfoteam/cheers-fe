@@ -14,6 +14,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ProfileRow } from "@/components/ui/profile-row";
 import { track } from "@/lib/analytics";
 import { mySharedContactOf } from "@/lib/mentor-contact";
+import { useIsMounted } from "@/lib/use-is-mounted";
 import { formatPhone } from "@/lib/profile-form";
 
 /**
@@ -67,6 +68,7 @@ function RouteComponent() {
   const navigate = useNavigate();
   const { data: me } = useSuspenseQuery(userInfoQuery());
   const share = useShareContact();
+  const mounted = useIsMounted();
   const contact = mySharedContactOf(me);
 
   const back = () =>
@@ -74,6 +76,18 @@ function RouteComponent() {
       to: "/applications/$applicationId",
       params: { applicationId },
     });
+
+  const confirm = async () => {
+    try {
+      await share.mutateAsync(applicationId);
+    } catch {
+      // 오류 문구는 `share.error` 가 그린다
+      return;
+    }
+    // 응답 전에 화면을 떠났어도 공유는 이미 됐다
+    track("Contact Shared", { request_id: applicationId });
+    if (mounted.current) back();
+  };
 
   return (
     <ConfirmDialog
@@ -86,14 +100,7 @@ function RouteComponent() {
       title="내 연락처를 공유할까요?"
       cancelLabel="아니오"
       confirmLabel="네"
-      onConfirm={() =>
-        share.mutate(applicationId, {
-          onSuccess: () => {
-            track("Contact Shared", { request_id: applicationId });
-            back();
-          },
-        })
-      }
+      onConfirm={() => void confirm()}
       busy={share.isPending}
       busyLabel="보내는 중…"
     >

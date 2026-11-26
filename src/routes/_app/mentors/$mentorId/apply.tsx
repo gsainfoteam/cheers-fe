@@ -17,6 +17,7 @@ import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { studentProfileRowsOf } from "@/features/profile/student-profile-rows";
 import { track } from "@/lib/analytics";
 import { useSession } from "@/lib/session";
+import { useIsMounted } from "@/lib/use-is-mounted";
 import { useAutosize } from "@/lib/use-autosize";
 import { BELOW_LG, useMediaQuery } from "@/lib/use-media-query";
 import { cn } from "@/lib/utils";
@@ -58,6 +59,7 @@ function RouteComponent() {
   const { data: me } = useSuspenseQuery(userInfoQuery());
   const { data: list } = useSuspenseQuery(cheersListQuery(MENTOR_LIST_PARAMS));
   const request = useRequestCheers();
+  const mounted = useIsMounted();
   const formId = useId();
 
   const [message, setMessage] = useState(() => readDraft(mentorId));
@@ -119,29 +121,30 @@ function RouteComponent() {
     writeDraft(mentorId, value);
   };
 
-  const send = () =>
-    request.mutate(
-      { graduated_id: mentorId, message: trimmed },
-      {
-        onError: (error) =>
-          track("Coffee Chat Request Failed", {
-            mentor_id: mentorId,
-            status: isApiError(error) ? error.status : undefined,
-          }),
-        onSuccess: () => {
-          // 질문 본문은 보내지 않고 길이만 센다
-          track("Coffee Chat Requested", {
-            mentor_id: mentorId,
-            message_length: trimmed.length,
-          });
-          writeDraft(mentorId, "");
-          void navigate({
-            to: "/mentors/$mentorId/sent",
-            params: { mentorId },
-          });
-        },
-      }
-    );
+  const send = async () => {
+    try {
+      await request.mutateAsync({ graduated_id: mentorId, message: trimmed });
+    } catch (error) {
+      // 오류 문구는 `request.error` 가 그린다. 여기서는 기록만 한다
+      track("Coffee Chat Request Failed", {
+        mentor_id: mentorId,
+        status: isApiError(error) ? error.status : undefined,
+      });
+      return;
+    }
+
+    // 응답 전에 화면을 떠났어도 보낸 신청은 센다. 질문 본문은 길이만 센다
+    track("Coffee Chat Requested", {
+      mentor_id: mentorId,
+      message_length: trimmed.length,
+    });
+    writeDraft(mentorId, "");
+    if (!mounted.current) return;
+    void navigate({
+      to: "/mentors/$mentorId/sent",
+      params: { mentorId },
+    });
+  };
 
   /** presigned 첨부 URL 이 만료됐을 수 있어 누를 때 내 정보를 다시 받는다 */
   const refreshAttachments = async () =>
@@ -216,7 +219,7 @@ function RouteComponent() {
               id={formId}
               onSubmit={(e) => {
                 e.preventDefault();
-                if (canSend) send();
+                if (canSend) void send();
               }}
               className={cn(
                 "bg-surface border-control flex flex-col rounded-md border",
