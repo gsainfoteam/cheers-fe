@@ -1,21 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import {
-  isApiError,
-  uploadFile,
-  useVerifyBusinessCard,
-  userInfoQuery,
-} from "@/api";
+import { isApiError, uploadFile, useVerifyBusinessCard } from "@/api";
 import imagePlusIcon from "@/assets/icons/media-image-plus.svg";
 import { PageContainer } from "@/components/layout/page-container";
-import { SignupProgressSlot } from "@/components/signup-progress";
 import { action } from "@/components/ui/action";
 import { FilePickButton, useFileDrop } from "@/components/ui/file-drop";
 import { cn } from "@/lib/utils";
 
 /**
- * 명함 첨부. 피그마 `Cheers / 명함 첨부`(335:7315 / 335:7236), 완료
+ * 명함 재인증. 피그마 `Cheers / 명함 첨부`(335:7315 / 335:7236), 완료
  * (336:6595 / 336:6515), 업로드 오류(336:6756 / 336:6675), 파일 드래그
  * (960:9646), 미리보기 비율 규칙(922:43811).
  *
@@ -24,11 +17,15 @@ import { cn } from "@/lib/utils";
  * `uploadFile` 로 key 를 받아 두고, `다음` 에서 그 key 로 인증한다. 인증까지
  * 가지 않은 파일은 하루 뒤 서버가 지운다(`api/file.ts`).
  *
- * 인증이 끝나면 `next_step` 이 바뀌므로 라우터를 다시 평가시키기만 하면
- * `/onboarding` 가드가 다음 화면(기본 정보)으로 보낸다.
+ * **가입 단계가 아니라 재인증이다.** 선배 가입에서는 명함 인증이 빠졌다
+ * (백엔드 CRB-107 — 가입을 마칠 때 서버가 자동으로 인증 처리). 이 화면은
+ * 어드민이 인증을 취소해 `next_step = verify` 로 돌아온, 이미 가입을 마친
+ * 선배만 온다. 그래서 가입 단계 막대를 두지 않는다.
+ *
+ * 인증이 끝나면 `next_step` 이 null 이 되므로 라우터를 다시 평가시키기만 하면
+ * `/onboarding` 가드가 선배 둘러보기로 보낸다.
  */
 export const Route = createFileRoute("/onboarding/mentor/verify")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(userInfoQuery()),
   component: RouteComponent,
 });
 
@@ -40,7 +37,6 @@ type Upload =
 
 function RouteComponent() {
   const router = useRouter();
-  const { data: me } = useSuspenseQuery(userInfoQuery());
   const verify = useVerifyBusinessCard();
 
   const [upload, setUpload] = useState<Upload>({ status: "empty" });
@@ -122,12 +118,6 @@ function RouteComponent() {
     );
   };
 
-  /**
-   * 어드민이 명함 인증을 취소한 선배(명세 `next_step = verify`)는 이미 가입을
-   * 마친 사람이다. 진행 단계만 보여주면 처음부터 다시 가입하는 것처럼 읽혀서
-   * 이유를 한 줄 더한다. 시안에 없는 문구다 — 디자이너 확인 필요.
-   */
-  const reverify = me.status === "active";
   const verifyError = describeVerifyError(verify.error);
 
   return (
@@ -135,10 +125,7 @@ function RouteComponent() {
       {/* 피그마 `Task workspace` — 976 = 352 + 64 + 560 */}
       <div className="flex w-full flex-col gap-7 lg:w-244 lg:flex-row lg:items-start lg:gap-16">
         {/* 피그마 `Task introduction` */}
-        {/* 모바일에서는 풀어서 단계 막대가 본문 전체를 기준으로 고정되게 한다 */}
-        <div className="flex flex-col gap-7 max-lg:contents lg:w-88 lg:shrink-0 lg:gap-10 lg:pt-4">
-          {/* 모바일은 제목 위에 고정, 데스크톱은 제목 아래 */}
-          <SignupProgressSlot current={1} />
+        <div className="flex flex-col gap-7 lg:w-88 lg:shrink-0 lg:gap-10 lg:pt-4">
           <div className="flex flex-col gap-3 lg:gap-5">
             <h1 className="text-task-title text-ink">명함 첨부</h1>
             <p className="text-body text-ink-soft">
@@ -146,11 +133,10 @@ function RouteComponent() {
               <br />
               명함 이미지 1장을 첨부해 주세요.
             </p>
-            {reverify ? (
-              <p className="text-body-sm text-brand">
-                명함 인증이 취소되어 다시 확인이 필요해요.
-              </p>
-            ) : null}
+            {/* 왜 이 화면이 떴는지. 시안에 없는 문구다 — 디자이너 확인 필요 */}
+            <p className="text-body-sm text-brand">
+              명함 인증이 취소되어 다시 확인이 필요해요.
+            </p>
           </div>
         </div>
 

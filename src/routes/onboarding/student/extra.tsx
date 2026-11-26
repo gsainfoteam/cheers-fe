@@ -128,7 +128,7 @@ function RouteComponent() {
         {/* 모바일에서는 풀어서 단계 막대가 본문 전체를 기준으로 고정되게 한다 */}
         <div className="flex flex-col gap-7 max-lg:contents lg:w-88 lg:shrink-0 lg:gap-10 lg:pt-4">
           {/* 모바일은 제목 위에 고정, 데스크톱은 제목 아래 */}
-          <SignupProgressSlot current={3} />
+          <SignupProgressSlot current={3} type="student" />
           <div className="flex flex-col gap-3 lg:gap-5">
             <h1 className="text-task-title text-ink">추가 정보</h1>
             <p className="text-body text-ink-soft">

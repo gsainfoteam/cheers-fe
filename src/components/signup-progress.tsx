@@ -1,3 +1,4 @@
+import type { UserType } from "@/api";
 import checkIcon from "@/assets/icons/check.svg";
 import { cn } from "@/lib/utils";
 
@@ -17,12 +18,30 @@ import { cn } from "@/lib/utils";
  * 메뉴가 아니다"*. 그래서 링크도 버튼도 아니다.
  */
 
-/** 시안의 4단계. 서버의 `next_step` 셋보다 잘게 나뉜다 — `lib/onboarding-steps.ts` 참고 */
-const STEPS = ["약관 동의", "본인 확인", "기본 정보", "추가 정보"] as const;
+/**
+ * 유형별 가입 단계. 서버의 `next_step` 셋보다 잘게 나뉜다 — `lib/onboarding-steps.ts` 참고.
+ *
+ * **선배는 `본인 확인` 이 없다.** 명함 인증이 가입 단계에서 빠졌다(백엔드 CRB-107) —
+ * 가입을 마칠 때 서버가 알아서 인증 처리한다. 명함은 어드민이 인증을 취소했을
+ * 때 다시 올리는 화면(`/onboarding/mentor/verify`)에만 남았고, 그건 가입이 아니라
+ * 재인증이라 이 막대를 쓰지 않는다. 막대 모양은 학생과 같고 칸만 하나 줄었다.
+ */
+const STEPS: Record<UserType, readonly string[]> = {
+  student: ["약관 동의", "본인 확인", "기본 정보", "추가 정보"],
+  graduated: ["약관 동의", "기본 정보", "추가 정보"],
+};
 
-export type SignupStepIndex = 0 | 1 | 2 | 3;
+/** 0부터 센 현재 칸. 그 유형의 단계 수 안이어야 한다 */
+export type SignupStepIndex = number;
 
-export function SignupProgress({ current }: { current: SignupStepIndex }) {
+export function SignupProgress({
+  current,
+  type,
+}: {
+  current: SignupStepIndex;
+  type: UserType;
+}) {
+  const steps = STEPS[type];
   return (
     <>
       {/*
@@ -33,7 +52,7 @@ export function SignupProgress({ current }: { current: SignupStepIndex }) {
        * 라벨 앞의 `✓` 글자다 — 시안이 그렇게 적어 뒀다.
        */}
       <ol className="flex items-start gap-2 lg:hidden">
-        {STEPS.map((label, i) => (
+        {steps.map((label, i) => (
           <li key={label} className="flex min-w-0 flex-1 flex-col gap-2">
             <div
               className={cn(
@@ -59,7 +78,7 @@ export function SignupProgress({ current }: { current: SignupStepIndex }) {
 
       {/* 피그마 `Signup progress / Desktop` — 세로 리스트 */}
       <ol className="hidden lg:flex lg:flex-col">
-        {STEPS.map((label, i) => (
+        {steps.map((label, i) => (
           <li key={label}>
             {/* 피그마 `Step connection` — 동그라미 사이를 잇는 세로선 */}
             {/*
@@ -90,8 +109,9 @@ export function SignupProgress({ current }: { current: SignupStepIndex }) {
 }
 
 /**
- * 가입 화면의 단계 막대 자리. 가입 화면 7개(약관 · 학생 3 · 선배 3)가 같은
- * 자리에 같은 모양으로 둔다.
+ * 가입 화면의 단계 막대 자리. 가입 화면 6개(약관 · 학생 3 · 선배 2)가 같은
+ * 자리에 같은 모양으로 둔다. `type` 이 단계 목록을 정하므로 `current` 는 그
+ * 유형의 목록에서의 순서다(선배는 기본 정보 1, 추가 정보 2).
  *
  * - 모바일은 제목 위, 데스크톱은 제목 아래(`order-first lg:order-last`)
  * - **모바일에서는 스크롤해도 화면 위에 고정한다**(동기화 가이드 D2-7, 시안
@@ -107,10 +127,19 @@ export function SignupProgress({ current }: { current: SignupStepIndex }) {
  * 지나가는 내용이 비치지 않게 한다. 위아래 8 은 음수 margin 으로 상쇄해
  * 고정되기 전 배치(제목과의 간격 28)는 시안 그대로 둔다.
  */
-export function SignupProgressSlot({ current }: { current: SignupStepIndex }) {
+export function SignupProgressSlot({
+  current,
+  type,
+}: {
+  current: SignupStepIndex;
+  type: UserType;
+}) {
   return (
-    <div className="max-lg:bg-canvas order-first max-lg:sticky max-lg:top-0 max-lg:z-10 max-lg:-mx-5 max-lg:-my-2 max-lg:px-5 max-lg:py-2 lg:order-last">
-      <SignupProgress current={current} />
+    <div
+      data-signup-progress
+      className="max-lg:bg-canvas order-first max-lg:sticky max-lg:top-0 max-lg:z-10 max-lg:-mx-5 max-lg:-my-2 max-lg:px-5 max-lg:py-2 lg:order-last"
+    >
+      <SignupProgress current={current} type={type} />
     </div>
   );
 }

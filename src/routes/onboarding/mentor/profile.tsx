@@ -134,7 +134,7 @@ function RouteComponent() {
         {/* 모바일에서는 풀어서 단계 막대가 본문 전체를 기준으로 고정되게 한다 */}
         <div className="flex flex-col gap-7 max-lg:contents lg:w-88 lg:shrink-0 lg:gap-10 lg:pt-4">
           {/* 모바일은 제목 위에 고정, 데스크톱은 제목 아래 */}
-          <SignupProgressSlot current={2} />
+          <SignupProgressSlot current={1} type="graduated" />
           <div className="flex flex-col gap-3 lg:gap-5">
             <h1 className="text-task-title text-ink">기본 정보</h1>
             {/* 텍스트 노드 이름은 예전 문구(`…사원증에 담아드려요.`)다. 화면 글자를 옮겼다 */}
@@ -161,9 +161,9 @@ function RouteComponent() {
              * 피그마 `Form actions`.
              *
              * **`이전` 은 두지 않았다** — 학생 기본 정보(설계 3-5d)와 같은 결정.
-             * 앞 단계(명함 첨부)는 이미 끝났고, 서버가 `next_step=profile` 인
-             * 사람의 명함 제출을 403 으로 막으며, `/onboarding` 가드도 곧바로
-             * 여기로 되돌려 보낸다. 디자이너 확인 필요(선배 가이드 §7 #4).
+             * 앞 단계(약관 동의)는 이미 끝났고, `/onboarding` 가드가 곧바로
+             * 여기로 되돌려 보낸다. 선배는 명함 단계가 가입에서 빠져 이 화면이
+             * 약관 바로 다음이다(CRB-107). 디자이너 확인 필요(선배 가이드 §7 #4).
              */}
             <div className="flex justify-end pt-4">
               <button
