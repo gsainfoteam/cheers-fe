@@ -242,23 +242,16 @@ export const CompanySearchItemSchema = z.object({
 export const CompanySearchResultSchema = z.array(CompanySearchItemSchema);
 
 /**
- * 보낸 요청(재학생)의 상태. **`accepted` 가 없다** — 선배가 수락해도 학생에게는
- * `viewed` 로 보이고, 연락처를 공유해야 `contact_shared` 가 된다(이슈 #46).
+ * 보낸 요청(재학생)의 상태. 연락처를 공유받아야 `contact_shared` 가 된다.
  */
 export const SentStatusSchema = z.enum(["requested", "viewed", "contact_shared"]);
 
 /**
- * 받은 요청(현업자)의 상태. 순서는 requested → viewed → accepted →
- * contact_shared. 상세 응답에는 requested 가 오지 않는다(첫 조회가 viewed 로
- * 바꾼다). 공유는 수락 뒤에만 되고, 수락 API 이전에 공유한 요청은 마이그레이션
- * 에서 수락된 것으로 채워졌다(명세 2026-11-15 갱신, 이슈 #46).
+ * 받은 요청(현업자)의 상태. 순서는 requested → viewed → contact_shared.
+ * 상세 응답에는 requested 가 오지 않는다(첫 조회가 viewed 로 바꾼다).
+ * 수락 단계(`accepted`)는 BE 에서 없어졌다(이슈 #85).
  */
-export const ReceivedStatusSchema = z.enum([
-  "requested",
-  "viewed",
-  "accepted",
-  "contact_shared",
-]);
+export const ReceivedStatusSchema = z.enum(["requested", "viewed", "contact_shared"]);
 
 export const CheersCardSchema = z.object({
   graduated_id: z.string(),
@@ -333,11 +326,8 @@ export const SharedContactSchema = z.object({
 });
 
 /**
- * 보낸 신청 **상세**의 선배. 목록(`RequestGraduatedDto`)에 로고 · 링크가 더해진다.
- *
- * BE 는 2026-11-15(CRB-87)부터 내려 주지만 `declare graduated` 로 선언돼
- * Swagger 명세에는 여전히 `RequestGraduatedDto` 로 나온다. 명세만 믿고 빼면
- * zod 가 이 두 필드를 지워 버린다(이슈 #46)
+ * 보낸 신청 **상세**의 선배(`RequestGraduatedDetailDto`). 목록
+ * (`RequestGraduatedDto`)에 로고 · 링크가 더해진다.
  */
 export const RequestGraduatedDetailSchema = RequestGraduatedSchema.extend({
   /** 회사 로고 presigned GET URL. 로고가 없거나 선배가 탈퇴했으면 null */
@@ -389,8 +379,8 @@ export const RequestStudentSchema = z.object({
   activities: z.array(z.string()),
   attachments: z.array(AttachmentSchema),
   /**
-   * **수락 전에는 늘 null 이다**(이슈 #46). 수락 뒤에는 재학생이 연락 수단으로
-   * 고른 것만 값이 있고 고르지 않은 것은 null. phone 은 하이픈 없는 숫자
+   * 재학생이 연락 수단으로 고른 것만 값이 있고 고르지 않은 것은 null.
+   * 수락 없이 처음부터 온다(이슈 #85). phone 은 하이픈 없는 숫자
    */
   email: z.string().nullable(),
   phone: z.string().nullable(),
@@ -401,25 +391,8 @@ export const ReceivedRequestDetailSchema = z.object({
   message: z.string(),
   status: ReceivedStatusSchema,
   created_at: z.string(),
-  /** 수락한 시각. 수락 전이면 null */
-  accepted_at: z.string().nullable(),
   contact_shared_at: z.string().nullable(),
   student: RequestStudentSchema,
-});
-
-/**
- * 커피챗 수락(`POST /cheers/received/{id}/accept`). 이미 수락한 요청에 다시
- * 부르면 처음 결과를 그대로 돌려준다.
- *
- * 명세는 `student` 를 속성 없는 `object` 로만 적어 두었다. 모양은 BE 안내
- * (2026-11-15)를 따른다 — 상세의 `student.email` · `phone` 과 같은 값이다.
- */
-export const AcceptResultSchema = z.object({
-  accepted_at: z.string(),
-  student: z.object({
-    email: z.string().nullable(),
-    phone: z.string().nullable(),
-  }),
 });
 
 export const ShareContactResultSchema = z.object({
@@ -468,4 +441,3 @@ export type ReceivedList = z.infer<typeof ReceivedListSchema>;
 export type RequestStudent = z.infer<typeof RequestStudentSchema>;
 export type ReceivedRequestDetail = z.infer<typeof ReceivedRequestDetailSchema>;
 export type ShareContactResult = z.infer<typeof ShareContactResultSchema>;
-export type AcceptResult = z.infer<typeof AcceptResultSchema>;

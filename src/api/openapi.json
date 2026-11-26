@@ -240,7 +240,7 @@
             "bearer": []
           }
         ],
-        "summary": "탈퇴 요청 (유예기간 뒤 삭제, 유예기간 안에 다시 로그인하면 취소)",
+        "summary": "탈퇴 요청 (가입 완료 사용자는 즉시 삭제)",
         "tags": [
           "내 정보"
         ]
@@ -1606,92 +1606,6 @@
         ]
       }
     },
-    "/api/v1/cheers/received/{id}/accept": {
-      "post": {
-        "operationId": "CheersGraduatedController_accept",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AcceptResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "id가 UUID 형식이 아님",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "access token이 없거나 유효하지 않음",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "가입을 마치지 않음, 현업자가 아님, 명함 인증이 취소됨",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "요청이 없거나 내가 받은 요청이 아님",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          },
-          "410": {
-            "description": "재학생이 탈퇴했거나 탈퇴 유예기간 중",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "커피챗 수락. 수락하면 재학생 연락처를 볼 수 있음 (알림 없음)",
-        "tags": [
-          "커피챗 · 현업자"
-        ]
-      }
-    },
     "/api/v1/cheers/received/{id}/share-contact": {
       "post": {
         "operationId": "CheersGraduatedController_shareContact",
@@ -1757,7 +1671,7 @@
             }
           },
           "409": {
-            "description": "수락하지 않은 요청이거나, 내 연락 설정이 희망하지 않음이라 공유할 연락처가 없음",
+            "description": "내 연락 설정이 희망하지 않음이라 공유할 연락처가 없음",
             "content": {
               "application/json": {
                 "schema": {
@@ -2331,6 +2245,7 @@
               "type": "string",
               "enum": [
                 "business_card",
+                "user_contact",
                 "dev_user_hard_delete"
               ]
             }
@@ -3543,6 +3458,525 @@
         "summary": "알림톡 템플릿 수정. 알리고에 등록한 템플릿과 글자 하나까지 같아야 전송됨 (CRB-78)",
         "tags": [
           "어드민 커피챗"
+        ]
+      }
+    },
+    "/api/manager/v1/dashboard/coffee-chat": {
+      "get": {
+        "operationId": "ManagerDashboardController_getCoffeeChat",
+        "parameters": [
+          {
+            "name": "range",
+            "required": false,
+            "in": "query",
+            "description": "기간 지표의 집계 기간. 생략하면 30d",
+            "schema": {
+              "default": "30d",
+              "type": "string",
+              "enum": [
+                "7d",
+                "30d",
+                "90d"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagerDashboardCoffeeChatDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "range 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "커피챗 요청 퍼널과 최근 6개월 월별 추이",
+        "tags": [
+          "어드민 대시보드"
+        ]
+      }
+    },
+    "/api/manager/v1/dashboard/member": {
+      "get": {
+        "operationId": "ManagerDashboardController_getMember",
+        "parameters": [
+          {
+            "name": "range",
+            "required": false,
+            "in": "query",
+            "description": "기간 지표의 집계 기간. 생략하면 30d",
+            "schema": {
+              "default": "30d",
+              "type": "string",
+              "enum": [
+                "7d",
+                "30d",
+                "90d"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagerDashboardMemberDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "range 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "회원 현황",
+        "tags": [
+          "어드민 대시보드"
+        ]
+      }
+    },
+    "/api/manager/v1/dashboard/demand": {
+      "get": {
+        "operationId": "ManagerDashboardController_getDemand",
+        "parameters": [
+          {
+            "name": "range",
+            "required": false,
+            "in": "query",
+            "description": "기간 지표의 집계 기간. 생략하면 30d",
+            "schema": {
+              "default": "30d",
+              "type": "string",
+              "enum": [
+                "7d",
+                "30d",
+                "90d"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagerDashboardDemandDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "range 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "수요 분석 (학과 · 회사 · 관심 분야 TOP 5)",
+        "tags": [
+          "어드민 대시보드"
+        ]
+      }
+    },
+    "/api/manager/v1/dashboard/todo": {
+      "get": {
+        "operationId": "ManagerDashboardController_getTodo",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagerDashboardTodoDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "처리할 일과 알림 상태",
+        "tags": [
+          "어드민 대시보드"
+        ]
+      }
+    },
+    "/api/manager/v1/user": {
+      "get": {
+        "operationId": "ManagerUserController_listUsers",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "1부터 시작",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "size",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "student",
+                "graduated"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "active"
+              ]
+            }
+          },
+          {
+            "name": "withdrawal",
+            "required": false,
+            "in": "query",
+            "description": "none: 정상, requested: 탈퇴 유예 중, deleted: 탈퇴 완료. 생략하거나 all이면 전체",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "none",
+                "requested",
+                "deleted"
+              ]
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "pk · 이름 · 이메일 (부분 일치, 대소문자 무시). 탈퇴 완료 회원은 pk로 찾음",
+            "schema": {
+              "maxLength": 255,
+              "type": "string"
+            }
+          },
+          {
+            "name": "created_from",
+            "required": false,
+            "in": "query",
+            "description": "이 시각부터 (포함). UTC 오프셋이 있는 ISO 8601",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "created_to",
+            "required": false,
+            "in": "query",
+            "description": "이 시각 전까지 (미포함). UTC 오프셋이 있는 ISO 8601",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PageResponseDto"
+                    },
+                    {
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/UserListItemDto"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "query 형식 오류, created_from이 created_to보다 늦음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "회원 목록 (가입 최신순)",
+        "tags": [
+          "어드민 회원"
+        ]
+      }
+    },
+    "/api/manager/v1/user/{pk}": {
+      "get": {
+        "operationId": "ManagerUserController_getUser",
+        "parameters": [
+          {
+            "name": "pk",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDetailDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "pk 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "없는 회원",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "회원 상세. 연락처 값은 포함하지 않음",
+        "tags": [
+          "어드민 회원"
+        ]
+      }
+    },
+    "/api/manager/v1/user/{pk}/contact": {
+      "get": {
+        "operationId": "ManagerUserController_getContact",
+        "parameters": [
+          {
+            "name": "pk",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserContactDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "pk 형식 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "access token이 없거나 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "없는 회원, 탈퇴 처리 완료, 연락수단 미입력",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "열람 기록 저장 실패 (값을 내려주지 않음)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "커피챗 연락처 값 조회 (열람 기록을 남김)",
+        "tags": [
+          "어드민 회원"
         ]
       }
     },
@@ -6542,11 +6976,11 @@
       "SentRequestDto": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string"
-          },
           "graduated": {
             "$ref": "#/components/schemas/RequestGraduatedDto"
+          },
+          "id": {
+            "type": "string"
           },
           "graduated_withdrawn": {
             "type": "boolean",
@@ -6568,12 +7002,63 @@
           }
         },
         "required": [
-          "id",
           "graduated",
+          "id",
           "graduated_withdrawn",
           "message",
           "status",
           "created_at"
+        ]
+      },
+      "RequestGraduatedDetailDto": {
+        "type": "object",
+        "properties": {
+          "graduated_id": {
+            "type": "string"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "company": {
+            "type": "string"
+          },
+          "department": {
+            "type": "string",
+            "nullable": true,
+            "description": "선택 입력이라 없으면 null. 선배가 탈퇴했거나 유예기간 중이면 null"
+          },
+          "job": {
+            "type": "string"
+          },
+          "hashtags": {
+            "description": "선배가 탈퇴했거나 유예기간 중이면 []",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "company_logo_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "회사 로고 presigned GET URL. 로고가 없거나 선배가 탈퇴했으면 null"
+          },
+          "links": {
+            "description": "links[0]이 LinkedIn. 선배가 탈퇴했거나 유예기간 중이면 []",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "graduated_id",
+          "nickname",
+          "company",
+          "department",
+          "job",
+          "hashtags",
+          "company_logo_url",
+          "links"
         ]
       },
       "SharedContactDto": {
@@ -6605,29 +7090,8 @@
       "SentRequestDetailDto": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string"
-          },
           "graduated": {
-            "$ref": "#/components/schemas/RequestGraduatedDto"
-          },
-          "graduated_withdrawn": {
-            "type": "boolean",
-            "description": "현업자가 탈퇴했거나 탈퇴 유예기간 중이면 true (프론트는 탈퇴 안내를 보여 줌)"
-          },
-          "message": {
-            "type": "string"
-          },
-          "status": {
-            "enum": [
-              "contact_shared",
-              "requested",
-              "viewed"
-            ],
-            "type": "string"
-          },
-          "created_at": {
-            "type": "string"
+            "$ref": "#/components/schemas/RequestGraduatedDetailDto"
           },
           "shared_contact": {
             "nullable": true,
@@ -6638,16 +7102,37 @@
                 "$ref": "#/components/schemas/SharedContactDto"
               }
             ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "graduated_withdrawn": {
+            "type": "boolean",
+            "description": "현업자가 탈퇴했거나 탈퇴 유예기간 중이면 true (프론트는 탈퇴 안내를 보여 줌)"
+          },
+          "message": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "contact_shared",
+              "requested",
+              "viewed"
+            ]
+          },
+          "created_at": {
+            "type": "string"
           }
         },
         "required": [
-          "id",
           "graduated",
+          "shared_contact",
+          "id",
           "graduated_withdrawn",
           "message",
           "status",
-          "created_at",
-          "shared_contact"
+          "created_at"
         ]
       },
       "ReceivedRequestDto": {
@@ -6687,8 +7172,7 @@
             "enum": [
               "contact_shared",
               "requested",
-              "viewed",
-              "accepted"
+              "viewed"
             ]
           },
           "created_at": {
@@ -6769,7 +7253,7 @@
           "email": {
             "type": "string",
             "nullable": true,
-            "description": "재학생의 현재 연락 설정에서 고른 값. 수락 전이거나 고르지 않았으면 null"
+            "description": "재학생의 현재 연락 설정에서 고른 값. 고르지 않았으면 null"
           },
           "phone": {
             "type": "string",
@@ -6800,17 +7284,11 @@
             "enum": [
               "contact_shared",
               "requested",
-              "viewed",
-              "accepted"
+              "viewed"
             ]
           },
           "created_at": {
             "type": "string"
-          },
-          "accepted_at": {
-            "type": "string",
-            "nullable": true,
-            "description": "수락한 시각. 수락 전이면 null"
           },
           "contact_shared_at": {
             "type": "string",
@@ -6825,24 +7303,7 @@
           "message",
           "status",
           "created_at",
-          "accepted_at",
           "contact_shared_at",
-          "student"
-        ]
-      },
-      "AcceptResponseDto": {
-        "type": "object",
-        "properties": {
-          "accepted_at": {
-            "type": "string"
-          },
-          "student": {
-            "type": "object",
-            "description": "재학생의 현재 연락 설정에서 고른 값. 고르지 않았으면 null"
-          }
-        },
-        "required": [
-          "accepted_at",
           "student"
         ]
       },
@@ -7024,6 +7485,7 @@
           "target_type": {
             "enum": [
               "business_card",
+              "user_contact",
               "dev_user_hard_delete"
             ],
             "type": "string"
@@ -7037,7 +7499,7 @@
           },
           "target_id": {
             "type": "string",
-            "description": "business_card: graduated.pk, dev_user_hard_delete: 지운 users.pk"
+            "description": "business_card: graduated.pk, user_contact: 연락처를 본 users.pk, dev_user_hard_delete: 지운 users.pk"
           },
           "created_at": {
             "format": "date-time",
@@ -7746,6 +8208,731 @@
             "maxLength": 14
           }
         }
+      },
+      "DashboardFunnelRatesDto": {
+        "type": "object",
+        "properties": {
+          "viewed": {
+            "type": "number",
+            "nullable": true,
+            "description": "현업자 확인 / 요청. 요청이 없으면 null"
+          },
+          "contact_shared": {
+            "type": "number",
+            "nullable": true,
+            "description": "연락처 공유 / 현업자 확인"
+          }
+        },
+        "required": [
+          "viewed",
+          "contact_shared"
+        ]
+      },
+      "DashboardFunnelAvgHoursDto": {
+        "type": "object",
+        "properties": {
+          "to_viewed": {
+            "type": "number",
+            "nullable": true
+          },
+          "to_shared": {
+            "type": "number",
+            "nullable": true
+          }
+        },
+        "required": [
+          "to_viewed",
+          "to_shared"
+        ]
+      },
+      "DashboardFunnelStaleDto": {
+        "type": "object",
+        "properties": {
+          "unviewed_3d": {
+            "type": "number",
+            "description": "3일이 넘도록 현업자가 확인하지 않은 요청 (기간과 무관, 현재 시점)"
+          },
+          "unshared_3d": {
+            "type": "number",
+            "description": "확인한 지 3일이 넘도록 연락처를 공유하지 않은 요청"
+          }
+        },
+        "required": [
+          "unviewed_3d",
+          "unshared_3d"
+        ]
+      },
+      "DashboardFunnelDto": {
+        "type": "object",
+        "properties": {
+          "requested": {
+            "type": "number"
+          },
+          "graduated_viewed": {
+            "type": "number"
+          },
+          "contact_shared": {
+            "type": "number"
+          },
+          "student_viewed": {
+            "type": "number"
+          },
+          "rates": {
+            "$ref": "#/components/schemas/DashboardFunnelRatesDto"
+          },
+          "avg_hours": {
+            "$ref": "#/components/schemas/DashboardFunnelAvgHoursDto"
+          },
+          "stale": {
+            "$ref": "#/components/schemas/DashboardFunnelStaleDto"
+          }
+        },
+        "required": [
+          "requested",
+          "graduated_viewed",
+          "contact_shared",
+          "student_viewed",
+          "rates",
+          "avg_hours",
+          "stale"
+        ]
+      },
+      "DashboardMonthlyRequestDto": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "description": "Asia/Seoul 기준 YYYY-MM"
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "month",
+          "count"
+        ]
+      },
+      "ManagerDashboardCoffeeChatDto": {
+        "type": "object",
+        "properties": {
+          "range": {
+            "type": "string",
+            "enum": [
+              "7d",
+              "30d",
+              "90d"
+            ]
+          },
+          "generated_at": {
+            "type": "string"
+          },
+          "funnel": {
+            "$ref": "#/components/schemas/DashboardFunnelDto"
+          },
+          "monthly_requests": {
+            "description": "최근 6개월. 요청이 없는 달은 0",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardMonthlyRequestDto"
+            }
+          }
+        },
+        "required": [
+          "range",
+          "generated_at",
+          "funnel",
+          "monthly_requests"
+        ]
+      },
+      "DashboardMemberTypeDto": {
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": "number",
+            "description": "가입을 마친 회원"
+          },
+          "pending": {
+            "type": "number",
+            "description": "가입 진행 중인 회원"
+          },
+          "new": {
+            "type": "number",
+            "description": "range 안에 가입을 마친 회원"
+          },
+          "active_7d": {
+            "type": "number"
+          },
+          "active_30d": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "active",
+          "pending",
+          "new",
+          "active_7d",
+          "active_30d"
+        ]
+      },
+      "ManagerDashboardMemberDto": {
+        "type": "object",
+        "properties": {
+          "range": {
+            "type": "string",
+            "enum": [
+              "7d",
+              "30d",
+              "90d"
+            ]
+          },
+          "generated_at": {
+            "type": "string"
+          },
+          "student": {
+            "$ref": "#/components/schemas/DashboardMemberTypeDto"
+          },
+          "graduated": {
+            "$ref": "#/components/schemas/DashboardMemberTypeDto"
+          },
+          "withdraw_pending": {
+            "type": "number",
+            "description": "탈퇴 요청 후 유예기간 중인 회원"
+          }
+        },
+        "required": [
+          "range",
+          "generated_at",
+          "student",
+          "graduated",
+          "withdraw_pending"
+        ]
+      },
+      "DashboardNameCountDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "count"
+        ]
+      },
+      "ManagerDashboardDemandDto": {
+        "type": "object",
+        "properties": {
+          "range": {
+            "type": "string",
+            "enum": [
+              "7d",
+              "30d",
+              "90d"
+            ]
+          },
+          "generated_at": {
+            "type": "string"
+          },
+          "departments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardNameCountDto"
+            }
+          },
+          "companies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardNameCountDto"
+            }
+          },
+          "interests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardNameCountDto"
+            }
+          },
+          "graduated_requested_ratio": {
+            "type": "number",
+            "nullable": true,
+            "description": "range 안에 요청을 한 번이라도 받은 현업자 / 활성 현업자. 활성 현업자가 없으면 null"
+          },
+          "student_requested_ratio": {
+            "type": "number",
+            "nullable": true,
+            "description": "range 안에 요청을 한 번이라도 보낸 재학생 / 활성 재학생"
+          }
+        },
+        "required": [
+          "range",
+          "generated_at",
+          "departments",
+          "companies",
+          "interests",
+          "graduated_requested_ratio",
+          "student_requested_ratio"
+        ]
+      },
+      "DashboardNotificationDto": {
+        "type": "object",
+        "properties": {
+          "failed": {
+            "type": "number",
+            "description": "최근 7일, 재시도까지 끝난 최종 실패"
+          },
+          "retry_waiting": {
+            "type": "number",
+            "description": "최근 7일, 재시도 대기 중"
+          },
+          "delivery_unknown": {
+            "type": "number",
+            "description": "최근 7일, 알림톡 결과를 받지 못함"
+          }
+        },
+        "required": [
+          "failed",
+          "retry_waiting",
+          "delivery_unknown"
+        ]
+      },
+      "ManagerDashboardTodoDto": {
+        "type": "object",
+        "properties": {
+          "generated_at": {
+            "type": "string"
+          },
+          "business_card_pending": {
+            "type": "number",
+            "description": "명함을 올렸지만 아직 인증하지 않은 현업자"
+          },
+          "company_needs_review": {
+            "type": "number"
+          },
+          "notification": {
+            "$ref": "#/components/schemas/DashboardNotificationDto"
+          }
+        },
+        "required": [
+          "generated_at",
+          "business_card_pending",
+          "company_needs_review",
+          "notification"
+        ]
+      },
+      "UserAffiliationDto": {
+        "type": "object",
+        "properties": {
+          "school": {
+            "type": "string",
+            "nullable": true,
+            "description": "재학생의 학교"
+          },
+          "department": {
+            "type": "string",
+            "nullable": true,
+            "description": "재학생의 학과"
+          },
+          "company": {
+            "type": "string",
+            "nullable": true,
+            "description": "현업자의 회사"
+          },
+          "job": {
+            "type": "string",
+            "nullable": true,
+            "description": "현업자의 직무"
+          }
+        },
+        "required": [
+          "school",
+          "department",
+          "company",
+          "job"
+        ]
+      },
+      "UserListItemDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "student",
+              "graduated"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "active"
+            ],
+            "type": "string"
+          },
+          "withdrawal_state": {
+            "enum": [
+              "none",
+              "requested",
+              "deleted"
+            ],
+            "type": "string"
+          },
+          "pk": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "추가 정보 입력 전이거나 탈퇴 처리 후에는 null"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "affiliation": {
+            "$ref": "#/components/schemas/UserAffiliationDto"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "last_active_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "status",
+          "withdrawal_state",
+          "pk",
+          "name",
+          "email",
+          "affiliation",
+          "created_at",
+          "last_active_at"
+        ]
+      },
+      "UserOauthAccountDto": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "enum": [
+              "google",
+              "apple",
+              "naver"
+            ],
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "last_login_at": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "provider",
+          "email",
+          "created_at",
+          "last_login_at"
+        ]
+      },
+      "UserContactMethodsDto": {
+        "type": "object",
+        "properties": {
+          "kakao_enabled": {
+            "type": "boolean"
+          },
+          "email_enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "kakao_enabled",
+          "email_enabled"
+        ]
+      },
+      "UserConsentDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "agreed_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "revoked_at": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "agreed_at",
+          "revoked_at"
+        ]
+      },
+      "UserStudentDto": {
+        "type": "object",
+        "properties": {
+          "student_pk": {
+            "type": "string"
+          },
+          "school_email": {
+            "type": "string",
+            "nullable": true
+          },
+          "verified_at": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "school": {
+            "type": "string",
+            "nullable": true
+          },
+          "department": {
+            "type": "string",
+            "nullable": true
+          },
+          "interests": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "activities": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "student_pk",
+          "school_email",
+          "verified_at",
+          "school",
+          "department",
+          "interests",
+          "activities"
+        ]
+      },
+      "UserGraduatedDto": {
+        "type": "object",
+        "properties": {
+          "graduated_pk": {
+            "type": "string"
+          },
+          "verified_at": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "has_business_card": {
+            "type": "boolean"
+          },
+          "nickname": {
+            "type": "string",
+            "nullable": true
+          },
+          "company": {
+            "type": "string",
+            "nullable": true
+          },
+          "department": {
+            "type": "string",
+            "nullable": true
+          },
+          "job": {
+            "type": "string",
+            "nullable": true
+          },
+          "hashtags": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "links": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "graduated_pk",
+          "verified_at",
+          "has_business_card",
+          "nickname",
+          "company",
+          "department",
+          "job",
+          "hashtags",
+          "links"
+        ]
+      },
+      "UserDetailDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "student",
+              "graduated"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "active"
+            ],
+            "type": "string"
+          },
+          "withdrawal_state": {
+            "enum": [
+              "none",
+              "requested",
+              "deleted"
+            ],
+            "type": "string"
+          },
+          "pk": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "last_active_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "withdraw_requested_at": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "oauth_accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserOauthAccountDto"
+            }
+          },
+          "contact_methods": {
+            "nullable": true,
+            "description": "연락수단을 입력하기 전(가입 중)이거나 탈퇴 처리 후에는 null",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserContactMethodsDto"
+              }
+            ]
+          },
+          "consents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserConsentDto"
+            }
+          },
+          "student": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserStudentDto"
+              }
+            ]
+          },
+          "graduated": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserGraduatedDto"
+              }
+            ]
+          },
+          "coffee_chat_request_count": {
+            "type": "number",
+            "description": "재학생은 보낸 요청 수, 현업자는 받은 요청 수"
+          }
+        },
+        "required": [
+          "type",
+          "status",
+          "withdrawal_state",
+          "pk",
+          "name",
+          "email",
+          "created_at",
+          "updated_at",
+          "last_active_at",
+          "withdraw_requested_at",
+          "oauth_accounts",
+          "contact_methods",
+          "consents",
+          "student",
+          "graduated",
+          "coffee_chat_request_count"
+        ]
+      },
+      "UserContactDto": {
+        "type": "object",
+        "properties": {
+          "kakao_enabled": {
+            "type": "boolean"
+          },
+          "email_enabled": {
+            "type": "boolean"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "kakao_enabled",
+          "email_enabled",
+          "phone",
+          "email"
+        ]
       },
       "ConsentVersionListItemDto": {
         "type": "object",

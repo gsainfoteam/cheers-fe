@@ -81,7 +81,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** 탈퇴 요청 (유예기간 뒤 삭제, 유예기간 안에 다시 로그인하면 취소) */
+        /** 탈퇴 요청 (가입 완료 사용자는 즉시 삭제) */
         post: operations["UserController_withdraw"];
         delete?: never;
         options?: never;
@@ -389,23 +389,6 @@ export interface paths {
         get: operations["CheersGraduatedController_getReceivedDetail"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/cheers/received/{id}/accept": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** 커피챗 수락. 수락하면 재학생 연락처를 볼 수 있음 (알림 없음) */
-        post: operations["CheersGraduatedController_accept"];
         delete?: never;
         options?: never;
         head?: never;
@@ -754,6 +737,125 @@ export interface paths {
         head?: never;
         /** 알림톡 템플릿 수정. 알리고에 등록한 템플릿과 글자 하나까지 같아야 전송됨 (CRB-78) */
         patch: operations["ManagerCoffeeChatController_updateAlimtalkTemplate"];
+        trace?: never;
+    };
+    "/api/manager/v1/dashboard/coffee-chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 커피챗 요청 퍼널과 최근 6개월 월별 추이 */
+        get: operations["ManagerDashboardController_getCoffeeChat"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/manager/v1/dashboard/member": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 회원 현황 */
+        get: operations["ManagerDashboardController_getMember"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/manager/v1/dashboard/demand": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 수요 분석 (학과 · 회사 · 관심 분야 TOP 5) */
+        get: operations["ManagerDashboardController_getDemand"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/manager/v1/dashboard/todo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 처리할 일과 알림 상태 */
+        get: operations["ManagerDashboardController_getTodo"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/manager/v1/user": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 회원 목록 (가입 최신순) */
+        get: operations["ManagerUserController_listUsers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/manager/v1/user/{pk}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 회원 상세. 연락처 값은 포함하지 않음 */
+        get: operations["ManagerUserController_getUser"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/manager/v1/user/{pk}/contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 커피챗 연락처 값 조회 (열람 기록을 남김) */
+        get: operations["ManagerUserController_getContact"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/manager/v1/consent": {
@@ -1417,14 +1519,28 @@ export interface components {
             hashtags: string[];
         };
         SentRequestDto: {
-            id: string;
             graduated: components["schemas"]["RequestGraduatedDto"];
+            id: string;
             /** @description 현업자가 탈퇴했거나 탈퇴 유예기간 중이면 true (프론트는 탈퇴 안내를 보여 줌) */
             graduated_withdrawn: boolean;
             message: string;
             /** @enum {string} */
             status: "contact_shared" | "requested" | "viewed";
             created_at: string;
+        };
+        RequestGraduatedDetailDto: {
+            graduated_id: string;
+            nickname: string;
+            company: string;
+            /** @description 선택 입력이라 없으면 null. 선배가 탈퇴했거나 유예기간 중이면 null */
+            department: string | null;
+            job: string;
+            /** @description 선배가 탈퇴했거나 유예기간 중이면 [] */
+            hashtags: string[];
+            /** @description 회사 로고 presigned GET URL. 로고가 없거나 선배가 탈퇴했으면 null */
+            company_logo_url: string | null;
+            /** @description links[0]이 LinkedIn. 선배가 탈퇴했거나 유예기간 중이면 [] */
+            links: string[];
         };
         SharedContactDto: {
             /** @description 현업자가 탈퇴했거나 탈퇴 유예기간 중이면 "탈퇴한 계정", email · phone은 null */
@@ -1434,16 +1550,16 @@ export interface components {
             shared_at: string;
         };
         SentRequestDetailDto: {
+            graduated: components["schemas"]["RequestGraduatedDetailDto"];
+            /** @description 공유 전이면 null */
+            shared_contact: components["schemas"]["SharedContactDto"] | null;
             id: string;
-            graduated: components["schemas"]["RequestGraduatedDto"];
             /** @description 현업자가 탈퇴했거나 탈퇴 유예기간 중이면 true (프론트는 탈퇴 안내를 보여 줌) */
             graduated_withdrawn: boolean;
             message: string;
             /** @enum {string} */
             status: "contact_shared" | "requested" | "viewed";
             created_at: string;
-            /** @description 공유 전이면 null */
-            shared_contact: components["schemas"]["SharedContactDto"] | null;
         };
         ReceivedRequestDto: {
             id: string;
@@ -1458,7 +1574,7 @@ export interface components {
             /** @description true면 상세를 열람할 수 없음 (프론트는 목록 클릭을 막음) */
             student_withdrawn: boolean;
             /** @enum {string} */
-            status: "contact_shared" | "requested" | "viewed" | "accepted";
+            status: "contact_shared" | "requested" | "viewed";
             created_at: string;
         };
         AttachmentDto: {
@@ -1476,7 +1592,7 @@ export interface components {
             interests: string[];
             activities: string[];
             attachments: components["schemas"]["AttachmentDto"][];
-            /** @description 재학생의 현재 연락 설정에서 고른 값. 수락 전이거나 고르지 않았으면 null */
+            /** @description 재학생의 현재 연락 설정에서 고른 값. 고르지 않았으면 null */
             email: string | null;
             phone: string | null;
         };
@@ -1484,17 +1600,10 @@ export interface components {
             id: string;
             message: string;
             /** @enum {string} */
-            status: "contact_shared" | "requested" | "viewed" | "accepted";
+            status: "contact_shared" | "requested" | "viewed";
             created_at: string;
-            /** @description 수락한 시각. 수락 전이면 null */
-            accepted_at: string | null;
             contact_shared_at: string | null;
             student: components["schemas"]["RequestStudentDto"];
-        };
-        AcceptResponseDto: {
-            accepted_at: string;
-            /** @description 재학생의 현재 연락 설정에서 고른 값. 고르지 않았으면 null */
-            student: Record<string, never>;
         };
         ShareContactResponseDto: {
             contact_shared_at: string;
@@ -1558,11 +1667,11 @@ export interface components {
         };
         AdminAccessLogDto: {
             /** @enum {string} */
-            target_type: "business_card" | "dev_user_hard_delete";
+            target_type: "business_card" | "user_contact" | "dev_user_hard_delete";
             pk: string;
             /** @description 열람 시점의 어드민 이메일 */
             admin_email: string;
-            /** @description business_card: graduated.pk, dev_user_hard_delete: 지운 users.pk */
+            /** @description business_card: graduated.pk, user_contact: 연락처를 본 users.pk, dev_user_hard_delete: 지운 users.pk */
             target_id: string;
             /** Format: date-time */
             created_at: string;
@@ -1802,6 +1911,197 @@ export interface components {
             title?: string;
             message?: string;
             button_name?: string;
+        };
+        DashboardFunnelRatesDto: {
+            /** @description 현업자 확인 / 요청. 요청이 없으면 null */
+            viewed: number | null;
+            /** @description 연락처 공유 / 현업자 확인 */
+            contact_shared: number | null;
+        };
+        DashboardFunnelAvgHoursDto: {
+            to_viewed: number | null;
+            to_shared: number | null;
+        };
+        DashboardFunnelStaleDto: {
+            /** @description 3일이 넘도록 현업자가 확인하지 않은 요청 (기간과 무관, 현재 시점) */
+            unviewed_3d: number;
+            /** @description 확인한 지 3일이 넘도록 연락처를 공유하지 않은 요청 */
+            unshared_3d: number;
+        };
+        DashboardFunnelDto: {
+            requested: number;
+            graduated_viewed: number;
+            contact_shared: number;
+            student_viewed: number;
+            rates: components["schemas"]["DashboardFunnelRatesDto"];
+            avg_hours: components["schemas"]["DashboardFunnelAvgHoursDto"];
+            stale: components["schemas"]["DashboardFunnelStaleDto"];
+        };
+        DashboardMonthlyRequestDto: {
+            /** @description Asia/Seoul 기준 YYYY-MM */
+            month: string;
+            count: number;
+        };
+        ManagerDashboardCoffeeChatDto: {
+            /** @enum {string} */
+            range: "7d" | "30d" | "90d";
+            generated_at: string;
+            funnel: components["schemas"]["DashboardFunnelDto"];
+            /** @description 최근 6개월. 요청이 없는 달은 0 */
+            monthly_requests: components["schemas"]["DashboardMonthlyRequestDto"][];
+        };
+        DashboardMemberTypeDto: {
+            /** @description 가입을 마친 회원 */
+            active: number;
+            /** @description 가입 진행 중인 회원 */
+            pending: number;
+            /** @description range 안에 가입을 마친 회원 */
+            new: number;
+            active_7d: number;
+            active_30d: number;
+        };
+        ManagerDashboardMemberDto: {
+            /** @enum {string} */
+            range: "7d" | "30d" | "90d";
+            generated_at: string;
+            student: components["schemas"]["DashboardMemberTypeDto"];
+            graduated: components["schemas"]["DashboardMemberTypeDto"];
+            /** @description 탈퇴 요청 후 유예기간 중인 회원 */
+            withdraw_pending: number;
+        };
+        DashboardNameCountDto: {
+            name: string;
+            count: number;
+        };
+        ManagerDashboardDemandDto: {
+            /** @enum {string} */
+            range: "7d" | "30d" | "90d";
+            generated_at: string;
+            departments: components["schemas"]["DashboardNameCountDto"][];
+            companies: components["schemas"]["DashboardNameCountDto"][];
+            interests: components["schemas"]["DashboardNameCountDto"][];
+            /** @description range 안에 요청을 한 번이라도 받은 현업자 / 활성 현업자. 활성 현업자가 없으면 null */
+            graduated_requested_ratio: number | null;
+            /** @description range 안에 요청을 한 번이라도 보낸 재학생 / 활성 재학생 */
+            student_requested_ratio: number | null;
+        };
+        DashboardNotificationDto: {
+            /** @description 최근 7일, 재시도까지 끝난 최종 실패 */
+            failed: number;
+            /** @description 최근 7일, 재시도 대기 중 */
+            retry_waiting: number;
+            /** @description 최근 7일, 알림톡 결과를 받지 못함 */
+            delivery_unknown: number;
+        };
+        ManagerDashboardTodoDto: {
+            generated_at: string;
+            /** @description 명함을 올렸지만 아직 인증하지 않은 현업자 */
+            business_card_pending: number;
+            company_needs_review: number;
+            notification: components["schemas"]["DashboardNotificationDto"];
+        };
+        UserAffiliationDto: {
+            /** @description 재학생의 학교 */
+            school: string | null;
+            /** @description 재학생의 학과 */
+            department: string | null;
+            /** @description 현업자의 회사 */
+            company: string | null;
+            /** @description 현업자의 직무 */
+            job: string | null;
+        };
+        UserListItemDto: {
+            /** @enum {string} */
+            type: "student" | "graduated";
+            /** @enum {string} */
+            status: "pending" | "active";
+            /** @enum {string} */
+            withdrawal_state: "none" | "requested" | "deleted";
+            pk: string;
+            /** @description 추가 정보 입력 전이거나 탈퇴 처리 후에는 null */
+            name: string | null;
+            email: string | null;
+            affiliation: components["schemas"]["UserAffiliationDto"];
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            last_active_at: string;
+        };
+        UserOauthAccountDto: {
+            /** @enum {string} */
+            provider: "google" | "apple" | "naver";
+            email: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            last_login_at: string | null;
+        };
+        UserContactMethodsDto: {
+            kakao_enabled: boolean;
+            email_enabled: boolean;
+        };
+        UserConsentDto: {
+            type: string;
+            version: string;
+            /** Format: date-time */
+            agreed_at: string;
+            /** Format: date-time */
+            revoked_at: string | null;
+        };
+        UserStudentDto: {
+            student_pk: string;
+            school_email: string | null;
+            /** Format: date-time */
+            verified_at: string | null;
+            school: string | null;
+            department: string | null;
+            interests: string[] | null;
+            activities: string[] | null;
+        };
+        UserGraduatedDto: {
+            graduated_pk: string;
+            /** Format: date-time */
+            verified_at: string | null;
+            has_business_card: boolean;
+            nickname: string | null;
+            company: string | null;
+            department: string | null;
+            job: string | null;
+            hashtags: string[] | null;
+            links: string[] | null;
+        };
+        UserDetailDto: {
+            /** @enum {string} */
+            type: "student" | "graduated";
+            /** @enum {string} */
+            status: "pending" | "active";
+            /** @enum {string} */
+            withdrawal_state: "none" | "requested" | "deleted";
+            pk: string;
+            name: string | null;
+            email: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+            /** Format: date-time */
+            last_active_at: string;
+            /** Format: date-time */
+            withdraw_requested_at: string | null;
+            oauth_accounts: components["schemas"]["UserOauthAccountDto"][];
+            /** @description 연락수단을 입력하기 전(가입 중)이거나 탈퇴 처리 후에는 null */
+            contact_methods: components["schemas"]["UserContactMethodsDto"] | null;
+            consents: components["schemas"]["UserConsentDto"][];
+            student: components["schemas"]["UserStudentDto"] | null;
+            graduated: components["schemas"]["UserGraduatedDto"] | null;
+            /** @description 재학생은 보낸 요청 수, 현업자는 받은 요청 수 */
+            coffee_chat_request_count: number;
+        };
+        UserContactDto: {
+            kakao_enabled: boolean;
+            email_enabled: boolean;
+            phone: string | null;
+            email: string | null;
         };
         ConsentVersionListItemDto: {
             /** @description 이 종류의 최신 버전 (사용자에게 보여 주는 버전) */
@@ -3156,72 +3456,6 @@ export interface operations {
             };
         };
     };
-    CheersGraduatedController_accept: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AcceptResponseDto"];
-                };
-            };
-            /** @description id가 UUID 형식이 아님 */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponseDto"];
-                };
-            };
-            /** @description access token이 없거나 유효하지 않음 */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponseDto"];
-                };
-            };
-            /** @description 가입을 마치지 않음, 현업자가 아님, 명함 인증이 취소됨 */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponseDto"];
-                };
-            };
-            /** @description 요청이 없거나 내가 받은 요청이 아님 */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponseDto"];
-                };
-            };
-            /** @description 재학생이 탈퇴했거나 탈퇴 유예기간 중 */
-            410: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponseDto"];
-                };
-            };
-        };
-    };
     CheersGraduatedController_shareContact: {
         parameters: {
             query?: never;
@@ -3277,7 +3511,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
-            /** @description 수락하지 않은 요청이거나, 내 연락 설정이 희망하지 않음이라 공유할 연락처가 없음 */
+            /** @description 내 연락 설정이 희망하지 않음이라 공유할 연락처가 없음 */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -3684,7 +3918,7 @@ export interface operations {
                 size?: number;
                 /** @description 어드민 이메일 (부분 일치, 대소문자 무시) */
                 admin_email?: string;
-                target_type?: "business_card" | "dev_user_hard_delete";
+                target_type?: "business_card" | "user_contact" | "dev_user_hard_delete";
                 /** @description 이 시각부터 (포함). UTC 오프셋이 있는 ISO 8601 */
                 created_from?: string;
                 /** @description 이 시각 전까지 (미포함). UTC 오프셋이 있는 ISO 8601 */
@@ -4354,6 +4588,312 @@ export interface operations {
             };
             /** @description 없는 템플릿 */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    ManagerDashboardController_getCoffeeChat: {
+        parameters: {
+            query?: {
+                /** @description 기간 지표의 집계 기간. 생략하면 30d */
+                range?: "7d" | "30d" | "90d";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagerDashboardCoffeeChatDto"];
+                };
+            };
+            /** @description range 형식 오류 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    ManagerDashboardController_getMember: {
+        parameters: {
+            query?: {
+                /** @description 기간 지표의 집계 기간. 생략하면 30d */
+                range?: "7d" | "30d" | "90d";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagerDashboardMemberDto"];
+                };
+            };
+            /** @description range 형식 오류 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    ManagerDashboardController_getDemand: {
+        parameters: {
+            query?: {
+                /** @description 기간 지표의 집계 기간. 생략하면 30d */
+                range?: "7d" | "30d" | "90d";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagerDashboardDemandDto"];
+                };
+            };
+            /** @description range 형식 오류 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    ManagerDashboardController_getTodo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagerDashboardTodoDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    ManagerUserController_listUsers: {
+        parameters: {
+            query?: {
+                /** @description 1부터 시작 */
+                page?: number;
+                size?: number;
+                type?: "student" | "graduated";
+                status?: "pending" | "active";
+                /** @description none: 정상, requested: 탈퇴 유예 중, deleted: 탈퇴 완료. 생략하거나 all이면 전체 */
+                withdrawal?: "all" | "none" | "requested" | "deleted";
+                /** @description pk · 이름 · 이메일 (부분 일치, 대소문자 무시). 탈퇴 완료 회원은 pk로 찾음 */
+                q?: string;
+                /** @description 이 시각부터 (포함). UTC 오프셋이 있는 ISO 8601 */
+                created_from?: string;
+                /** @description 이 시각 전까지 (미포함). UTC 오프셋이 있는 ISO 8601 */
+                created_to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageResponseDto"] & {
+                        items?: components["schemas"]["UserListItemDto"][];
+                    };
+                };
+            };
+            /** @description query 형식 오류, created_from이 created_to보다 늦음 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    ManagerUserController_getUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pk: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserDetailDto"];
+                };
+            };
+            /** @description pk 형식 오류 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 없는 회원 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    ManagerUserController_getContact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pk: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserContactDto"];
+                };
+            };
+            /** @description pk 형식 오류 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description access token이 없거나 유효하지 않음 */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 없는 회원, 탈퇴 처리 완료, 연락수단 미입력 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description 열람 기록 저장 실패 (값을 내려주지 않음) */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };

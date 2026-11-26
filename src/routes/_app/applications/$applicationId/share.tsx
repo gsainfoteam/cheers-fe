@@ -6,7 +6,6 @@ import {
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   isApiError,
-  isNotAcceptedError,
   receivedRequestQuery,
   useShareContact,
   userInfoQuery,
@@ -35,9 +34,7 @@ import { formatPhone } from "@/lib/profile-form";
  * 채널의 이메일 · 휴대전화번호. 시안은 이메일 · 전화번호 두 줄을 늘 그리고 빈
  * 값은 `등록하지 않음` 이다. 이름도 함께 가지만 시안에 줄이 없다(D6-6).
  *
- * **수락한 신청에서만 열린다**(#46). 서버도 수락 전 공유를 409
- * (`Coffee chat is not accepted`)로 막는다. 주소로 바로 들어오면 loader 가
- * 상세로 되돌린다.
+ * 수락 단계 없이 바로 열린다(이슈 #85).
  */
 export const Route = createFileRoute("/_app/applications/$applicationId/share")({
   // `_app` 가드가 세션을 실어 준다. 학생이 주소로 들어오면 상세로 되돌린다
@@ -55,8 +52,7 @@ export const Route = createFileRoute("/_app/applications/$applicationId/share")(
     );
     // 이미 보낸 신청이면 다시 물을 일이 없다. 공유 API 는 멱등이라 보내도
     // 사고는 아니지만, "보낼까요?" 를 다시 묻는 건 거짓말이 된다.
-    // 수락 전이면 서버가 409 로 막으므로 묻지 않고 상세(수락 버튼)로 보낸다
-    if (request.contact_shared_at || request.status !== "accepted") {
+    if (request.contact_shared_at) {
       throw redirect({
         to: "/applications/$applicationId",
         params: { applicationId: params.applicationId },
@@ -121,10 +117,7 @@ function RouteComponent() {
 function describeShareError(error: unknown): string {
   if (!isApiError(error)) return "연락처를 보내지 못했어요. 다시 시도해 주세요.";
 
-  // 409 는 둘이다 — message 로 가른다. 수락하지 않은 요청(다른 기기에서 상태가
-  // 어긋난 경우 등)과, 내 연락 설정이 "희망하지 않음" 이라 공유할 연락처가 없음
-  if (isNotAcceptedError(error))
-    return "아직 수락하지 않은 신청이에요. 커피챗을 먼저 수락해 주세요.";
+  // 409 는 내 연락 설정이 "희망하지 않음" 이라 공유할 연락처가 없는 경우다
   if (error.status === 409)
     return "공유할 연락처가 없어요. 정보 수정에서 커피챗 참여 설정을 등록해 주세요.";
   if (error.status === 410) return "학생이 탈퇴해 연락처를 보낼 수 없어요.";

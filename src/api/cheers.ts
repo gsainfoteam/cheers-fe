@@ -6,7 +6,6 @@ import {
 } from "@tanstack/react-query";
 import { api } from "./client";
 import {
-  AcceptResultSchema,
   CheersListSchema,
   CheersRequestResultSchema,
   ReceivedListSchema,
@@ -14,7 +13,6 @@ import {
   SentListSchema,
   SentRequestDetailSchema,
   ShareContactResultSchema,
-  type SentRequestDetail,
 } from "./dto";
 import { unwrap } from "./errors";
 import { keys, type PageParams } from "./keys";
@@ -69,15 +67,13 @@ export function sentRequestQuery(id: string) {
   return queryOptions({
     queryKey: keys.sentDetail(id),
     queryFn: async ({ signal }) =>
-      // 명세의 `graduated` 에는 로고 · 링크가 빠져 있어(dto.ts
-      // `RequestGraduatedDetailSchema` 참고) 타입을 명세가 아닌 스키마에 맞춘다
       unwrap(
         await api.GET("/api/v1/cheers/sent/{id}", {
           params: { path: { id } },
           signal,
         }),
         SentRequestDetailSchema
-      ) as SentRequestDetail,
+      ),
   });
 }
 
@@ -138,44 +134,10 @@ export function useRequestCheers() {
 }
 
 /**
- * 커피챗 수락 (현업자). body 없음.
- *
- * - 수락하면 받은 요청 상세의 `student.email` · `phone` 이 채워진다(수락 전에는
- *   늘 null). 연락처 화면은 상세만으로 그리므로 **상세를 다시 받은 뒤에** 끝난
- *   것으로 친다 — `onSuccess` 가 무효화를 기다리게 해서, 버튼의 처리 중 상태가
- *   연락처가 실제로 보일 때까지 이어진다.
- * - 이미 수락한 요청에 다시 부르면 처음 결과를 그대로 준다. 중복 클릭에 안전하다.
- * - 수락만으로는 메일 · 알림톡이 나가지 않고, 재학생에게도 수락 사실이 보이지
- *   않는다(보낸 요청은 계속 `viewed`).
- *
- * 에러: 400 id 형식, 403 가입 미완료 · 현업자 아님 · 명함 인증 취소,
- * 404 없거나 내가 받은 요청이 아님, 410 재학생 탈퇴(유예 포함).
- */
-export function useAcceptRequest() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id: string) =>
-      unwrap(
-        await api.POST("/api/v1/cheers/received/{id}/accept", {
-          params: { path: { id } },
-        }),
-        AcceptResultSchema
-      ),
-    onSuccess: (_data, id) =>
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: keys.receivedDetail(id) }),
-        queryClient.invalidateQueries({ queryKey: keys.received }),
-      ]),
-  });
-}
-
-/**
  * 연락처 공유 (현업자). 재학생에게 내 연락 수단이 메일 · 알림톡으로 간다.
  *
- * **수락한 요청에서만 부를 수 있다.** 409 가 두 가지라 `message` 로 가른다
- * (`isNotAcceptedError`): 수락하지 않은 요청(`Coffee chat is not accepted`),
- * 내 연락 설정이 "희망하지 않음"(`No contact to share`).
+ * 수락 단계 없이 바로 부를 수 있다(이슈 #85). 409 는 내 연락 설정이
+ * "희망하지 않음" 이라 공유할 연락처가 없는 경우다(`No contact to share`).
  *
  * 이미 공유한 요청에 다시 호출해도 알림을 다시 보내지 않고 처음 결과를
  * 그대로 돌려준다. 버튼 중복 클릭을 서버가 받아주므로 낙관적 업데이트까지는

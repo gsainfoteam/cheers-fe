@@ -144,12 +144,13 @@ function StudentMyPage() {
       </MyPageSection>
 
       {/*
-       * 피그마 `연락처`(1251:9170 / 1251:9722). 선배가 수락한 뒤에만 공개된다
-       * (정책 변경 D5-1). 순서가 전화번호 → 이메일이다 — 신청 화면과 반대
+       * 피그마 `연락처`(1251:9170 / 1251:9722). 커피챗을 신청한 선배에게만
+       * 공개된다(수락 단계는 이슈 #85 에서 없어졌다). 순서가 전화번호 →
+       * 이메일이다 — 신청 화면과 반대
        */}
       <MyPageSection
         title="연락처"
-        description="커피챗을 수락한 선배에게만 연락처가 공개 돼요."
+        description="커피챗을 신청한 선배에게만 연락처가 공개돼요."
       >
         <dl>
           <ProfileRow label="카카오 알림톡" value={contact.phone} size="document" />
@@ -173,7 +174,7 @@ function MentorMyPage() {
   const profile = me.graduated?.profile;
   if (!profile) return <MissingProfile />;
 
-  // 커피챗 참여 설정에서 켠 채널만 — 수락한 학생에게 공유되는 값과 같다(D3-3)
+  // 커피챗 참여 설정에서 켠 채널만 — 학생에게 공유되는 값과 같다(D3-3)
   const contact = mySharedContactOf(me);
   const linkedin = httpUrlOrNull(profile.links[0]);
 
@@ -230,7 +231,7 @@ function MentorMyPage() {
       {/* 피그마 `비공개 정보`(1197:10569 / 1200:12952) — 두 폭 모두 같은 제목이 됐다 */}
       <MyPageSection
         title="비공개 정보"
-        description="커피챗 수락 시 학생에게 연락처를 공유할 수 있어요."
+        description="커피챗 신청을 받으면 학생에게 연락처를 공유할 수 있어요."
       >
         <dl>
           <ProfileRow label="이름" value={me.name ?? null} size="document" />

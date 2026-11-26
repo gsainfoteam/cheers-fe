@@ -31,6 +31,8 @@ const PATHS: Record<UserType, Record<NextStep, OnboardingPath[]>> = {
   graduated: {
     // 약관은 유형과 무관하게 한 화면이다
     consent: ["/onboarding/terms"],
+    // 가입 중에는 오지 않는다(CRB-107) — 서버가 약관 다음에 곧장 `profile` 을
+    // 준다. 어드민이 인증을 취소한 선배가 명함을 다시 올릴 때만 온다
     verify: ["/onboarding/mentor/verify"],
     profile: ["/onboarding/mentor/profile", "/onboarding/mentor/extra"],
   },

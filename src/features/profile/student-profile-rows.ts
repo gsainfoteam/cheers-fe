@@ -31,7 +31,8 @@ export function studentBasicRowsOf(me: UserInfo): Row[] {
 
 /**
  * 연락처. **켠 채널의 값만** 돌려준다(가이드 2.6.3) — 카카오를 끄면 번호도
- * 가지 않는다. 선배에게는 커피챗을 수락한 뒤에만 보인다(05장 D5-1).
+ * 가지 않는다. 선배에게는 커피챗을 신청한 상대에게만 보인다(수락 단계는 이슈 #85 에서
+ * 없어졌다).
  */
 export function studentContactOf(me: UserInfo): { email: string | null; phone: string | null } {
   const contact = me.student?.profile?.contact;
