@@ -203,7 +203,10 @@ function StudentProfile({
 
       <h2 className="text-card-title text-ink">궁금한 점</h2>
       {/* 피그마 `Student question` — 캔버스 바탕 + 왼쪽 2px 주황 띠. 보낸 신청 내용과 같은 모양 */}
-      <p className="bg-canvas border-brand-accent text-body text-ink border-l-2 px-4 py-3 break-words whitespace-pre-wrap">
+      <p
+        data-amp-mask
+        className="bg-canvas border-brand-accent text-body text-ink border-l-2 px-4 py-3 break-words whitespace-pre-wrap"
+      >
         {request.message}
       </p>
     </div>
@@ -435,7 +438,10 @@ function SentDetail({ applicationId }: { applicationId: string }) {
         )}
 
         <h3 className="text-card-title text-ink">궁금한 점</h3>
-        <p className="bg-canvas border-brand-accent text-body text-ink border-l-2 px-4 py-3 break-words whitespace-pre-wrap">
+        <p
+        data-amp-mask
+        className="bg-canvas border-brand-accent text-body text-ink border-l-2 px-4 py-3 break-words whitespace-pre-wrap"
+      >
           {request.message}
         </p>
       </div>

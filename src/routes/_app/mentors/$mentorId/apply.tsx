@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import {
@@ -15,7 +15,9 @@ import { AttachmentGroup } from "@/components/ui/attachment-group";
 import { ProfileRow } from "@/components/ui/profile-row";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { studentProfileRowsOf } from "@/features/profile/student-profile-rows";
+import { track } from "@/lib/analytics";
 import { useSession } from "@/lib/session";
+import { useIsMounted } from "@/lib/use-is-mounted";
 import { useAutosize } from "@/lib/use-autosize";
 import { BELOW_LG, useMediaQuery } from "@/lib/use-media-query";
 import { cn } from "@/lib/utils";
@@ -57,6 +59,7 @@ function RouteComponent() {
   const { data: me } = useSuspenseQuery(userInfoQuery());
   const { data: list } = useSuspenseQuery(cheersListQuery(MENTOR_LIST_PARAMS));
   const request = useRequestCheers();
+  const mounted = useIsMounted();
   const formId = useId();
 
   const [message, setMessage] = useState(() => readDraft(mentorId));
@@ -65,6 +68,15 @@ function RouteComponent() {
   useAutosize(textareaRef, message, useMediaQuery(BELOW_LG));
 
   const mentor = list.items.find((item) => item.graduated_id === mentorId);
+  const hasMentor = mentor !== undefined;
+
+  // 신청 화면이 실제로 열린 경우만 센다. 선배끼리 보는 안내나 "찾을 수 없어요"
+  // 상태는 신청을 시작한 게 아니다
+  useEffect(() => {
+    if (role === "student" && hasMentor) {
+      track("Coffee Chat Apply Started", { mentor_id: mentorId });
+    }
+  }, [role, hasMentor, mentorId]);
 
   const close = () => void navigate({ to: "/mentors" });
 
@@ -109,19 +121,30 @@ function RouteComponent() {
     writeDraft(mentorId, value);
   };
 
-  const send = () =>
-    request.mutate(
-      { graduated_id: mentorId, message: trimmed },
-      {
-        onSuccess: () => {
-          writeDraft(mentorId, "");
-          void navigate({
-            to: "/mentors/$mentorId/sent",
-            params: { mentorId },
-          });
-        },
-      }
-    );
+  const send = async () => {
+    try {
+      await request.mutateAsync({ graduated_id: mentorId, message: trimmed });
+    } catch (error) {
+      // 오류 문구는 `request.error` 가 그린다. 여기서는 기록만 한다
+      track("Coffee Chat Request Failed", {
+        mentor_id: mentorId,
+        status: isApiError(error) ? error.status : undefined,
+      });
+      return;
+    }
+
+    // 응답 전에 화면을 떠났어도 보낸 신청은 센다. 질문 본문은 길이만 센다
+    track("Coffee Chat Requested", {
+      mentor_id: mentorId,
+      message_length: trimmed.length,
+    });
+    writeDraft(mentorId, "");
+    if (!mounted.current) return;
+    void navigate({
+      to: "/mentors/$mentorId/sent",
+      params: { mentorId },
+    });
+  };
 
   /** presigned 첨부 URL 이 만료됐을 수 있어 누를 때 내 정보를 다시 받는다 */
   const refreshAttachments = async () =>
@@ -196,7 +219,7 @@ function RouteComponent() {
               id={formId}
               onSubmit={(e) => {
                 e.preventDefault();
-                if (canSend) send();
+                if (canSend) void send();
               }}
               className={cn(
                 "bg-surface border-control flex flex-col rounded-md border",
@@ -232,6 +255,7 @@ function RouteComponent() {
              */}
             <a
               href={FAQ_URL}
+              onClick={() => track("FAQ Clicked", { placement: "apply" })}
               target="_blank"
               rel="noopener noreferrer"
               className="text-body-sm text-ink-soft -my-3 flex min-h-11 items-center gap-1 self-start underline"

@@ -30,6 +30,7 @@ import {
 import { PageContainer } from "@/components/layout/page-container";
 import { PageShell } from "@/components/layout/page-shell";
 import { action } from "@/components/ui/action";
+import { track } from "@/lib/analytics";
 import { redirectIfSignedIn } from "@/lib/guards";
 import { cn } from "@/lib/utils";
 
@@ -77,16 +78,19 @@ function PrimaryAction({
   search,
   children,
   className,
+  onClick,
 }: {
   to: string;
   search?: Record<string, unknown>;
   children: React.ReactNode;
   className?: string;
+  onClick?: () => void;
 }) {
   return (
     <Link
       to={to}
       search={search}
+      onClick={onClick}
       className={cn(action({ size: "lg" }), "w-full", className)}
     >
       {children}
@@ -99,16 +103,19 @@ function GhostAction({
   search,
   children,
   className,
+  onClick,
 }: {
   to: string;
   search?: Record<string, unknown>;
   children: React.ReactNode;
   className?: string;
+  onClick?: () => void;
 }) {
   return (
     <Link
       to={to}
       search={search}
+      onClick={onClick}
       className={cn(action({ variant: "ghost", size: "lg" }), "h-12 w-full", className)}
     >
       {children}
@@ -178,10 +185,19 @@ function Hero() {
               to="/login"
               search={{ role: "student" }}
               className="lg:w-70"
+              onClick={() =>
+                track("Role Selected", { user_type: "student", placement: "hero" })
+              }
             >
               취업 준비 중이에요 →
             </PrimaryAction>
-            <GhostAction to="/login" search={{ role: "mentor" }}>
+            <GhostAction
+              to="/login"
+              search={{ role: "mentor" }}
+              onClick={() =>
+                track("Role Selected", { user_type: "graduated", placement: "hero" })
+              }
+            >
               취업했어요, 경험을 나눌래요
             </GhostAction>
           </div>
@@ -364,6 +380,9 @@ function ClosingInvitation() {
           to="/login"
           search={{ role: "student" }}
           className="lg:w-70"
+          onClick={() =>
+            track("Role Selected", { user_type: "student", placement: "closing" })
+          }
         >
           취업 준비 중이에요 →
         </PrimaryAction>
