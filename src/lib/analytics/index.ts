@@ -67,6 +67,12 @@ export function initAnalytics({
       formInteractions: false,
       fileDownloads: false,
     },
+    /**
+     * 원격 설정(Amplitude 콘솔의 Autocapture 설정)을 받아 오지 않는다. 받아 오면
+     * 콘솔 값이 위의 `autocapture` 를 덮어써서, 클릭 수집 범위를 좁혀 둔 개인정보
+     * 방어가 코드 밖에서 풀릴 수 있다. 수집 범위는 이 파일만 정한다.
+     */
+    remoteConfig: { fetchRemoteConfig: false },
     // IP 도 개인정보다. 서비스 대상이 한 학교라 국가·도시 구분도 쓸 일이 없다
     trackingOptions: { ipAddress: false },
   });
